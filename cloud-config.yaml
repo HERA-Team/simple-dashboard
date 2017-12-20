@@ -1,0 +1,32 @@
+#cloud-config
+
+users:
+- name: hera
+  uid: 2110
+  ssh-authorized-keys:
+  - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDMjGn+AllK/5fdkxkKJ07+OdSC6blFJH5R3WB+DuJSRMuT+jRPfJkUraw6ayNYJfQaJ8nJTxIHRaAYfq77uq/bXsfQ9SECFWNPOqAgje9K85E2QrStyGKY7BDxTLrq/niAuCe3uuW9NyK2NOiJRnkIcKBtlJCCb6whd4daVXCQ+O7Me901986lcaW7ZGE88ZPmPA9kHDCBlZN6CMqFjZMsGOrGmLYTWaW7DX43xziN5czE0Fy7MA1Horz5R22nNRXlFo3j+aqDGiBti56MLOTFtT7qeoPHb8+nGXeUljuKNhvnzyy4WHtPOxClhNGFP44LadFKoSbZbEB3NMe0C/fV hera@dashboard
+
+write_files:
+- path: /etc/systemd/system/hera-nginx.service
+  permissions: 0644
+  owner: root
+  content: |
+    [Unit]
+    Description=Serve HERA dashboards with nginx
+
+    [Service]
+    ExecStart=/usr/bin/docker run --rm --name=hera-nginx -v /home/hera/html:/usr/share/nginx/html:ro -p 80:80 nginx:latest
+    ExecStop=/usr/bin/docker stop hera-nginx
+    ExecStopPost=/usr/bin/docker rm hera-nginx
+- path: /home/hera/html/index.html
+  permissions: 0644
+  owner: hera:hera
+  content: |
+    Hello, world!
+
+runcmd:
+- [ chown, "hera:hera", /home/hera/html ]
+- [ docker, pull, "nginx:latest" ]
+- [ systemctl, daemon-reload ]
+- [ systemctl, start, hera-nginx.service ]
+- [ systemctl, start, sshd.service ]
