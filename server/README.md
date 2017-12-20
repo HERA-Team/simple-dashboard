@@ -14,7 +14,7 @@ HTTP.
    ```
    gcloud compute images list --project cos-cloud --no-standard-images
    ```
-4. Create server:
+5. Create server:
    ```
    gcloud compute instances create server \
      --zone us-east1-d \
@@ -23,7 +23,7 @@ HTTP.
      --image-project cos-cloud \
      --image IMAGE_NAME
    ```
-5. Allow HTTP connections to server:
+6. Allow HTTP connections to server:
    ```
    gcloud compute firewall-rules create default-allow-http \
      --network default \
@@ -42,4 +42,11 @@ To log in, this should suffice if the active project is configured correctly:
 
 ```
 gcloud compute ssh server
+```
+
+It is easy to blow the server away and shoudn't cause problems, although the
+IP address and SSH host keys change when it gets recreated:
+
+```
+gcloud compute instances delete server
 ```
