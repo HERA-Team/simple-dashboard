@@ -164,7 +164,7 @@ layout = {{
     yaxis: {{title: 'Load % per CPU'}},
     height: 200,
     margin: {{t: 2, r: 10, b: 2, l: 40}},
-    legend: {{orientation: 'h', x: 0.1, y: -0.15}},
+    legend: {{orientation: 'h', x: 0.15, y: -0.15}},
     showlegend: true,
     hovermode: 'closest'
 }};
@@ -203,7 +203,7 @@ layout = {{
     yaxis: {{title: 'Gigabytes', zeroline: true}},
     height: 200,
     margin: {{t: 2, r: 10, b: 2, l: 40}},
-    legend: {{orientation: 'h', x: 0.1, y: -0.15}},
+    legend: {{orientation: 'h', x: 0.15, y: -0.15}},
     showlegend: true,
     hovermode: 'closest'
 }};
@@ -232,7 +232,7 @@ layout = {{
     yaxis: {{title: 'Minutes'}},
     height: 200,
     margin: {{t: 2, r: 10, b: 2, l: 40}},
-    legend: {{orientation: 'h', x: 0.1, y: -0.15}},
+    legend: {{orientation: 'h', x: 0.15, y: -0.15}},
     showlegend: true,
     hovermode: 'closest'
 }};
@@ -267,7 +267,7 @@ layout = {{
     yaxis: {{title: 'MB/s'}},
     height: 200,
     margin: {{t: 2, r: 10, b: 2, l: 40}},
-    legend: {{orientation: 'h', x: 0.1, y: -0.15}},
+    legend: {{orientation: 'h', x: 0.15, y: -0.15}},
     showlegend: true,
     hovermode: 'closest'
 }};
@@ -302,7 +302,7 @@ layout = {{
     yaxis: {{title: 'ms', rangemode: 'tozero', zeroline: true}},
     height: 200,
     margin: {{t: 2, r: 10, b: 2, l: 40}},
-    legend: {{orientation: 'h', x: 0.1, y: -0.15}},
+    legend: {{orientation: 'h', x: 0.15, y: -0.15}},
     showlegend: true,
     hovermode: 'closest'
 }};
@@ -331,7 +331,7 @@ layout = {{
     yaxis: {{title: 'Number'}},
     height: 200,
     margin: {{t: 2, r: 10, b: 2, l: 40}},
-    legend: {{orientation: 'h', x: 0.1, y: -0.15}},
+    legend: {{orientation: 'h', x: 0.15, y: -0.15}},
     showlegend: true,
     hovermode: 'closest'
 }};
