@@ -129,6 +129,11 @@ document.getElementById("age").textContent = age_text;
         self.do_raid_status()
 
         self.emit_html("""\
+  <div class="row">
+    <div class="col-md-12">
+        <p class="text-center"><a href="https://github.com/HERA-Team/simple-dashboard">Source code</a>.</p>
+    </div>
+  </div>
 </div>
 <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 <script src="librarian.js"></script>
