@@ -8,9 +8,7 @@
 from __future__ import absolute_import, division, print_function
 
 from astropy.time import Time, TimeDelta
-from cgi import escape
 from hera_mc import mc
-from hera_mc.observations import Observation
 from hera_mc.qm import AntMetrics, ArrayMetrics
 import sqlalchemy
 
