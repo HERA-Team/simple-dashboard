@@ -64,6 +64,9 @@ if (report_age < 300) {{
   age_text = (report_age / 86400).toFixed(1) + " days";
 }}
 document.getElementById("age").textContent = age_text;
+if (report_age > 1800) {{
+    document.getElementById("age").style.color = 'red';
+}}
 
 function extract(data, keyname) {{
   var items = [];
