@@ -373,7 +373,7 @@ Plotly.plot('num-files', {{data: data, layout: layout}});\
             self.emit_html('<tr><td>{time}<td>{rec.hostname}<td>{rec.disk}<td>{e_message}</tr>',
                            time = Time(rec.time, format='gps').iso,
                            rec = rec,
-                           e_message = escape(rec.message),
+                           e_message = escape(rec.log),
             )
             did_any = True
 
