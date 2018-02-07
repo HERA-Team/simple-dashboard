@@ -10,6 +10,7 @@ from __future__ import absolute_import, division, print_function
 from astropy.time import Time, TimeDelta
 from hera_mc import mc
 from hera_mc.qm import AntMetrics, ArrayMetrics
+import math
 import sqlalchemy
 
 
@@ -282,7 +283,10 @@ Plotly.plot('{div_id}', {{data: data, layout: layout}});\
                 first = False
             else:
                 self.emit_js(',', end='')
-            self.emit_js(fmt, x=x, end='')
+            if nonfinite(x):
+                self.emit_js('null', end='')
+            else:
+                self.emit_js(fmt, x=x, end='')
 
         self.emit_js(']', end='')
 
@@ -303,6 +307,10 @@ Plotly.plot('{div_id}', {{data: data, layout: layout}});\
 
     def emit_obsid_as_time_array(self, data):
         self.emit_gpstime_array(x + 300. for x in data)
+
+
+def nonfinite(x):
+    return math.isinf(x) or math.isnan(x)
 
 
 if __name__ == '__main__':
