@@ -50,16 +50,32 @@ HTML_HEADER="""\
 </head>
 """
 
-HOSTNAMES = ['qmaster', 'pot1', 'pot6.karoo.kat.ac.za', 'pot7.still.pvt', 'pot8.still.pvt']
+HOSTNAMES = ['qmaster', 'pot1', 'pot6.karoo.kat.ac.za', 'pot7.rtp.pvt', 'pot8.rtp.pvt']
 
 UI_HOSTNAMES = {
     'pot6.karoo.kat.ac.za': 'pot6',
-    'pot7.still.pvt': 'pot7',
-    'pot8.still.pvt': 'pot8',
-    'per715-1.still.pvt': 'still1',
-    'per715-2.still.pvt': 'still2',
-    'per715-3.still.pvt': 'still3',
-    'per715-4.still.pvt': 'still4',
+    'pot7.rtp.pvt': 'pot7',
+    'pot8.rtp.pvt': 'pot8',
+    'per510-1.rtp.pvt': 'cask0',
+    'per510-2.rtp.pvt': 'cask1',
+    'per715-1.rtp.pvt': 'still1',
+    'per715-2.rtp.pvt': 'still2',
+    'per715-3.rtp.pvt': 'still3',
+    'per715-4.rtp.pvt': 'still4',
+    'snb2.rtp.pvt': 'gpu3',
+    'snb4.rtp.pvt': 'gpu6',
+    'snb5.rtp.pvt': 'gpu8',
+    'snb6.rtp.pvt': 'gpu7',
+    'snb7.rtp.pvt': 'gpu4',
+    'snb8.rtp.pvt': 'gpu2',
+    'snb9.rtp.pvt': 'gpu5',
+    'snb10.rtp.pvt': 'gpu1',
+    'per715-1.rtp.pvt': 'still1',
+    'per715-2.rtp.pvt': 'still2',
+    'per715-3.rtp.pvt': 'still3',
+    'per715-4.rtp.pvt': 'still4',
+    'bigmem1.rtp.pvt': 'bigmem1',
+    'bigmem2.rtp.pvt': 'bigmem2',
 }
 
 REMOTES = ['aoc-uploads', 'shredder']
