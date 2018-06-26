@@ -55,9 +55,7 @@ HOSTNAMES = [
     'pot1',
     'pot6.karoo.kat.ac.za',
     'pot7.rtp.pvt',
-    'pot7.still.pvt',
     'pot8.rtp.pvt',
-    'pot8.still.pvt',
 ]
 
 UI_HOSTNAMES = {
