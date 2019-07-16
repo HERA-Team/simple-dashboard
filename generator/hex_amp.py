@@ -69,10 +69,15 @@ def main():
     except RuntimeError as e:
         raise SystemExit(str(e))
 
+    try:
+        redis_db = redis.Redis('localhost', port=9932)
+        redis_db.keys()
+    except ConnectionError as err:
+        raise SystemExit(str(err))
+
     with db.sessionmaker() as session, \
-         redis.Redis('localhost', port=9932) as redis_db, \
          open('hex_amp.html', 'wt') as html_file, \
-         open('hex_amp.jx', 'wt') as js_file:
+         open('hex_amp.js', 'wt') as js_file:
 
         def emit_html(f, end='\n', **kwargs):
             print(f.format(**kwargs), file=html_file, end=end)
@@ -88,6 +93,7 @@ class Emitter(object):
     def __init__(self, session, redis_db, emit_html, emit_js):
         self.session = session
         self.redis_db = redis_db
+
         self.emit_html = emit_html
         self.emit_js = emit_js
 
@@ -406,17 +412,17 @@ Plotly.plot("div-amps-vs-pos", data, layout);
         self.prep_data()
 
         self.emit_html("""\
-          <div class="row">
-            <div class="col-md-12">
-                <p class="text-center"><a href="https://github.com/HERA-Team/simple-dashboard">Source code</a>.</p>
-            </div>
-          </div>
-        </div>
-        <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-        <script src="compute.js"></script>
-        </body>
-        </html>
-        """)
+  <div class="row">
+    <div class="col-md-12">
+        <p class="text-center"><a href="https://github.com/HERA-Team/simple-dashboard">Source code</a>.</p>
+    </div>
+  </div>
+</div>
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+<script src="hex_amp.js"></script>
+</body>
+</html>
+""")
 
 
 if __name__ == '__main__':
