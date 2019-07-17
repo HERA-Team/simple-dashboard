@@ -303,7 +303,6 @@ class Emitter(object):
         self.emit_js("Amp [dB]: N/A<extra></extra>'", end='')
         self.emit_js('}},', end='\n')
 
-
         # E PAM power
         self.emit_js('{{x:', end='')
         self.emit_data_array(xs.compressed(), '{x:.3f}')
@@ -347,7 +346,7 @@ class Emitter(object):
         self.emit_js(",\nmarker: {{  color:'orange'", end='')
         self.emit_js(", size: 14", end='')
         self.emit_js("}},\nvisible: false,\nhovertemplate: '%{{text}}<br>", end='')
-        self.emit_js("Amp [dB]: %{{marker.color:.3f}}<extra></extra>'", end='')
+        self.emit_js("Amp [dB]: N/A<extra></extra>'", end='')
         self.emit_js('}},', end='\n')
 
         # Bad N PAM power
@@ -361,7 +360,7 @@ class Emitter(object):
         self.emit_js(",\nmarker: {{  color:'orange'", end='')
         self.emit_js(", size: 14", end='')
         self.emit_js("}},\nvisible: false,\nhovertemplate: '%{{text}}<br>", end='')
-        self.emit_js("Amp [dB]: %{{marker.color:.3f}}<extra></extra>'", end='')
+        self.emit_js("Amp [dB]: N/A<extra></extra>'", end='')
         self.emit_js('}},', end='\n')
 
         # E ADC power
@@ -407,21 +406,21 @@ class Emitter(object):
         self.emit_js(",\nmarker: {{  color:'orange'", end='')
         self.emit_js(", size: 14", end='')
         self.emit_js("}},\nvisible: false,\nhovertemplate: '%{{text}}<br>", end='')
-        self.emit_js("Amp [dB]: %{{marker.color:.3f}}<extra></extra>'", end='')
+        self.emit_js("Amp [dB]: N/A<extra></extra>'", end='')
         self.emit_js('}},', end='\n')
 
         # Bad N ADC power
         self.emit_js('{{x:', end='')
         self.emit_data_array(xs.data[_adc_power[1].mask], '{x:.3f}')
         self.emit_js(',\ny:', end='')
-        self.emit_data_array(ys[0].data[_adc_power[1].mask], '{x:.3f}')
+        self.emit_data_array(ys[1].data[_adc_power[1].mask], '{x:.3f}')
         self.emit_js(",\nmode: 'markers'", end='')
         self.emit_js(",\ntext:", end='')
         self.emit_text_array(_text[1].data[_adc_power[1].mask], '{x}')
         self.emit_js(",\nmarker: {{  color:'orange'", end='')
         self.emit_js(", size: 14", end='')
         self.emit_js("}},\nvisible: false,\nhovertemplate: '%{{text}}<br>", end='')
-        self.emit_js("Amp [dB]: %{{marker.color:.3f}}<extra></extra>'", end='')
+        self.emit_js("Amp [dB]: N/A<extra></extra>'", end='')
         self.emit_js('}},', end='\n')
         self.emit_js(']', end='\n')
 
@@ -471,8 +470,8 @@ var layout = {{
     title: 'Median Auto Amplitude',
     xaxis: {{title: 'East-Westh Position [m]'}},
     yaxis: {{title: 'North-South Position [m]'}},
-    height: 1600,
-    width:  1600,
+    height: 800,
+    width: 1000,
     showlegend: false,
     updatemenus: updatemenus,
     hovermode: 'closest'
