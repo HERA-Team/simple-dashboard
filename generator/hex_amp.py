@@ -253,7 +253,7 @@ class Emitter(object):
         self.emit_data_array(_amps[0].compressed(), '{x:.3f}')
         self.emit_js(", cmin: 0, cmax: 15, colorscale: 'Viridis', size: 14,", end='')
         self.emit_js("colorbar: {{thickness: 20, title: 'dB'}}", end='')
-        self.emit_js("}},\nhovertemplate='%{{text}}<br>", end='')
+        self.emit_js("}},\nhovertemplate: '%{{text}}<br>", end='')
         self.emit_js("Amp [dB]: %{{marker.color:.3f}}<extra></extra>'", end='')
         self.emit_js('}},', end='\n')
 
@@ -298,7 +298,7 @@ class Emitter(object):
         self.emit_data_array(_pam_power[0].compressed(), '{x:.3f}')
         self.emit_js(", cmin:0, cmax: 15, colorscale: 'Viridis', size: 14,", end='')
         self.emit_js("colorbar: {{thickness: 20, title: 'dB'}}", end='')
-        self.emit_js("}},\nhovertemplate='%{{text}}<br>", end='')
+        self.emit_js("}},\nhovertemplate: '%{{text}}<br>", end='')
         self.emit_js("Amp [dB]: %{{marker.color:.3f}}<extra></extra>'", end='')
         self.emit_js('}},', end='\n')
 
@@ -330,7 +330,7 @@ class Emitter(object):
         self.emit_data_array(_adc_power[0].compressed(), '{x:.3f}')
         self.emit_js(", cmin: 0, cmax: 15, colorscale: 'Viridis', size: 14,", end='')
         self.emit_js("colorbar: {{thickness: 20, title: 'dB'}}", end='')
-        self.emit_js("}},\nhovertemplate='%{{text}}<br>", end='')
+        self.emit_js("}},\nhovertemplate: '%{{text}}<br>", end='')
         self.emit_js("Amp [dB]: %{{marker.color:.3f}}<extra></extra>'", end='')
         self.emit_js('}},', end='\n')
 
