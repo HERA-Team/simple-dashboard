@@ -345,7 +345,7 @@ class Emitter(object):
         # Amplitude Button
         self.emit_js('{{')
         self.emit_js('args: [')
-        self.emit_js("{'visible':[true, true, true, true, false, false, false, false]},")
+        self.emit_js("{{'visible':[true, true, true, true, false, false, false, false]}},")
         self.emit_js("{{'title': 'Median Auto Power',")
         self.emit_js("'annotations': {{}} }}")
         self.emit_js('],')
