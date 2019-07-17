@@ -231,27 +231,27 @@ class Emitter(object):
         # Offline antennas
         self.emit_js('{{x: ', end='')
         self.emit_data_array(xs_offline, '{x:.3f}')
-        self.emit_js(',\ny:', end='')
+        self.emit_js(',\ny :', end='')
         self.emit_data_array(ys_offline, '{x:.3f}')
-        self.emit_js(',\ntext :', end='')
+        self.emit_js(',\ntext:', end='')
         self.emit_text_array(name_offline, '{x}')
-        self.emit_js(",\nmode : 'markers'", end='')
-        self.emit_js(",\nmarker : {{color : 'black', size : 14,", end='')
-        self.emit_js("opacity : .5, symbol : 'hexagon' }}", end='')
-        self.emit_js(",\nhovertemplate='%{{text}}<br>OFFLINE<extra></extra>' ", end='')
+        self.emit_js(",\nmode: 'markers'", end='')
+        self.emit_js(",\nmarker: {{color: 'black', size : 14,", end='')
+        self.emit_js("opacity: .5, symbol: 'hexagon' }}", end='')
+        self.emit_js(",\nhovertemplate: '%{{text}}<br>OFFLINE<extra></extra>' ", end='')
         self.emit_js('}},', end='\n')
 
         # E polarizatoin antennas
-        self.emit_js('{{x:', end='')
+        self.emit_js('{{x: ', end='')
         self.emit_data_array(xs.compressed(), '{x:.3f}')
-        self.emit_js(',\ny:', end='')
+        self.emit_js(',\ny: ', end='')
         self.emit_data_array(ys[0].compressed(), '{x:.3f}')
         self.emit_js(",\nmode: 'markers'", end='')
-        self.emit_js(",\ntext:", end='')
+        self.emit_js(",\ntext: ", end='')
         self.emit_text_array(_text[0].compressed(), '{x}')
         self.emit_js(', marker: {{  color:', end='')
         self.emit_data_array(_amps[0].compressed(), '{x:.3f}')
-        self.emit_js(", cmin:0, cmin=0, colorscale='Virids', size: 14,", end='')
+        self.emit_js(", cmin: 0, cmax: 15, colorscale='Virids', size: 14,", end='')
         self.emit_js("colorbar: {{thickness: 20, title: 'dB'}}", end='')
         self.emit_js("}},\nhovertemplate='%{{text}}<br>", end='')
         self.emit_js("Amp [dB]: %{{marker.color:.3f}}<extra></extra>'", end='')
@@ -260,29 +260,29 @@ class Emitter(object):
         # N polarizatoin antennas
         self.emit_js('{{x:', end='')
         self.emit_data_array(xs.compressed(), '{x:.3f}')
-        self.emit_js(',\ny:', end='')
+        self.emit_js(',\ny: ', end='')
         self.emit_data_array(ys[1].compressed(), '{x:.3f}')
         self.emit_js(",\nmode: 'markers'", end='')
         self.emit_js(",\ntext:", end='')
         self.emit_text_array(_text[1].compressed(), '{x}')
         self.emit_js(',\nmarker: {{  color:', end='')
         self.emit_data_array(_amps[1].compressed(), '{x:.3f}')
-        self.emit_js(", cmin:0, cmin=0, colorscale='Virids', size: 14,", end='')
+        self.emit_js(", cmin:0, cmax: 15, colorscale='Virids', size: 14,", end='')
         self.emit_js("colorbar: {{thickness: 20, title: 'dB'}}", end='')
-        self.emit_js("}},\nhovertemplate='%{{text}}<br>", end='')
+        self.emit_js("}},\nhovertemplate: '%{{text}}<br>", end='')
         self.emit_js("Amp [dB]: %{{marker.color:.3f}}<extra></extra>'", end='')
         self.emit_js('}},', end='\n')
 
         # BAD AUTOS
-        self.emit_js('{{x:', end='')
+        self.emit_js('{{x: ', end='')
         self.emit_data_array(xs.data[xs.mask], '{x:.3f}')
-        self.emit_js(',\ny:', end='')
+        self.emit_js(',\ny: ', end='')
         self.emit_data_array(ys[0].data[ys[0].mask], '{x:.3f}')
         self.emit_js(",\ntext:", end='')
         self.emit_text_array(_text[0][_text[0].mask], '{x}')
-        self.emit_js(",\nmode: markers'", end='')
-        self.emit_js(',\nmarker: {{  color: black, opacity : .5, size: 14', end='')
-        self.emit_js("}},\nhovertemplate='%{{text}}<br>", end='')
+        self.emit_js(",\nmode: 'markers'", end='')
+        self.emit_js(",\nmarker: {{  color: 'black', opacity : .5, size: 14", end='')
+        self.emit_js("}},\nhovertemplate: '%{{text}}<br>", end='')
         self.emit_js("Amp [dB]: N/A<extra></extra>'", end='')
         self.emit_js('}},', end='\n')
 
@@ -296,7 +296,7 @@ class Emitter(object):
         self.emit_text_array(_text[0].compressed(), '{x}')
         self.emit_js(',\nmarker: {{ color:', end='')
         self.emit_data_array(_pam_power[0].compressed(), '{x:.3f}')
-        self.emit_js(", cmin:0, cmin=0, colorscale='Virids', size: 14,", end='')
+        self.emit_js(", cmin:0, cmax: 15, colorscale='Virids', size: 14,", end='')
         self.emit_js("colorbar: {{thickness: 20, title: 'dB'}}", end='')
         self.emit_js("}},\nhovertemplate='%{{text}}<br>", end='')
         self.emit_js("Amp [dB]: %{{marker.color:.3f}}<extra></extra>'", end='')
@@ -312,41 +312,41 @@ class Emitter(object):
         self.emit_text_array(_text[1].compressed(), '{x}')
         self.emit_js(',\nmarker: {{  color:', end='')
         self.emit_data_array(_pam_power[1].compressed(), '{x:.3f}')
-        self.emit_js(", cmin:0, cmin=0, colorscale='Virids', size: 14,", end='')
+        self.emit_js(", cmin:0, cmax: 15, colorscale='Virids', size: 14,", end='')
         self.emit_js("colorbar: {{thickness: 20, title: 'dB'}}", end='')
-        self.emit_js("}},\nhovertemplate='%{{text}}<br>", end='')
+        self.emit_js("}},\nhovertemplate: '%{{text}}<br>", end='')
         self.emit_js("Amp [dB]: %{{marker.color:.3f}}<extra></extra>'", end='')
         self.emit_js('}},', end='\n')
 
         # E ADC power
-        self.emit_js('{{x:', end='')
+        self.emit_js('{{x: ', end='')
         self.emit_data_array(xs.compressed(), '{x:.3f}')
-        self.emit_js(',\ny:', end='')
+        self.emit_js(',\ny: ', end='')
         self.emit_data_array(ys[0].compressed(), '{x:.3f}')
         self.emit_js(",\nmode: 'markers'", end='')
         self.emit_js(",\ntext:", end='')
         self.emit_text_array(_text[0].compressed(), '{x}')
         self.emit_js(',\nmarker: {{  color:', end='')
         self.emit_data_array(_adc_power[0].compressed(), '{x:.3f}')
-        self.emit_js(", cmin:0, cmin=0, colorscale='Virids', size: 14,", end='')
+        self.emit_js(", cmin: 0, cmax: 15, colorscale='Virids', size: 14,", end='')
         self.emit_js("colorbar: {{thickness: 20, title: 'dB'}}", end='')
         self.emit_js("}},\nhovertemplate='%{{text}}<br>", end='')
         self.emit_js("Amp [dB]: %{{marker.color:.3f}}<extra></extra>'", end='')
         self.emit_js('}},', end='\n')
 
         # N ADC power
-        self.emit_js('{{x:', end='')
+        self.emit_js('{{x: ', end='')
         self.emit_data_array(xs.compressed(), '{x:.3f}')
-        self.emit_js(',\ny:', end='')
+        self.emit_js(',\ny: ', end='')
         self.emit_data_array(ys[1].compressed(), '{x:.3f}')
         self.emit_js(",\nmode: 'markers'", end='')
-        self.emit_js(",\ntext:", end='')
+        self.emit_js(",\ntext: ", end='')
         self.emit_text_array(_text[1].compressed(), '{x}')
         self.emit_js(',\nmarker: {{  color:', end='')
         self.emit_data_array(_adc_power[1].compressed(), '{x:.3f}')
-        self.emit_js(", cmin:0, cmin=0, colorscale='Virids', size: 14,", end='')
+        self.emit_js(", cmin:0, cmax: 15, colorscale='Virids', size: 14,", end='')
         self.emit_js("colorbar: {{thickness: 20, title: 'dB'}}", end='')
-        self.emit_js("}},\nhovertemplate='%{{text}}<br>", end='')
+        self.emit_js("}},\nhovertemplate: '%{{text}}<br>", end='')
         self.emit_js("Amp [dB]: %{{marker.color:.3f}}<extra></extra>'", end='')
         self.emit_js('}},', end='\n')
 
@@ -367,6 +367,7 @@ class Emitter(object):
         self.emit_js('}},')
 
         # PAMS buttons
+        self.emit_js('{{')
         self.emit_js('args: [')
         self.emit_js("{{'visible':[true, false, false, false, true, true, false, false]}},")
         self.emit_js("{{'title': 'PAM Power',")
@@ -377,6 +378,7 @@ class Emitter(object):
         self.emit_js('}},')
 
         # ADC buttons
+        self.emit_js('{{')
         self.emit_js('args: [')
         self.emit_js("{{'visible':[true, false, false, false, false, false, true, true]}},")
         self.emit_js("{{'title': 'ADC Power',")
@@ -402,7 +404,7 @@ var layout = {{
     hovermode: 'closest'
 }};
 
-Plotly.plot("div-amps-vs-pos", data, layout);
+Plotly.plot("plotly-div", data, layout);
         """)
 
     def emit(self):
@@ -417,7 +419,7 @@ Plotly.plot("div-amps-vs-pos", data, layout);
     </div>
   </div>
   <div class="row">
-    <div id="div-amps-vs-pos" class="col-md-6"></div>
+    <div id="plotly-div" class="col-md-12"></div>
   </div>
 """, gen_date=self.now.iso)
 
