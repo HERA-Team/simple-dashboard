@@ -323,10 +323,11 @@ class Emitter(object):
         self.emit_js('}},', end='\n')
 
         # Bad PAM power
+        _mask = np.any(_pam_power.mask, axis=0)
         self.emit_js('{{x:', end='')
-        self.emit_data_array(xs.data[xs.mask], '{x:.3f}')
+        self.emit_data_array(xs.data[_mask], '{x:.3f}')
         self.emit_js(',\ny:', end='')
-        self.emit_data_array(ys[0].data[_pam_power[0].mask], '{x:.3f}')
+        self.emit_data_array(ys[0].data[_mask], '{x:.3f}')
         self.emit_js(",\nmode: 'markers'", end='')
         self.emit_js(",\ntext:", end='')
         self.emit_text_array(_text[1].compressed(), '{x}')
@@ -369,10 +370,11 @@ class Emitter(object):
         self.emit_js('}},', end='\n')
 
         # Bad ADC power
+        _mask = np.any(_adc_power.mask, axis=0)
         self.emit_js('{{x:', end='')
-        self.emit_data_array(xs.data[xs.mask], '{x:.3f}')
+        self.emit_data_array(xs.data[_mask], '{x:.3f}')
         self.emit_js(',\ny:', end='')
-        self.emit_data_array(ys[0].data[_adc_power[0].mask], '{x:.3f}')
+        self.emit_data_array(ys[0].data[_mask], '{x:.3f}')
         self.emit_js(",\nmode: 'markers'", end='')
         self.emit_js(",\ntext:", end='')
         self.emit_text_array(_text[1].compressed(), '{x}')
@@ -429,7 +431,8 @@ var layout = {{
     title: 'Median Auto Amplitude',
     xaxis: {{title: 'East-Westh Position [m]'}},
     yaxis: {{title: 'North-South Position [m]'}},
-    height: 800,
+    height: 1600,
+    width:  1600,
     showlegend: false,
     updatemenus: updatemenus,
     hovermode: 'closest'
