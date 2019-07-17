@@ -66,6 +66,8 @@ def main():
 
     try:
         db = mc.connect_to_mc_db(args)
+        args.mc_db_name = 'hera_mc'
+        db2 = mc.connect_to_mc_db(args)
     except RuntimeError as e:
         raise SystemExit(str(e))
 
@@ -76,6 +78,7 @@ def main():
         raise SystemExit(str(err))
 
     with db.sessionmaker() as session, \
+         db2.sessionmaker() as session2, \
          open('hex_amp.html', 'wt') as html_file, \
          open('hex_amp.js', 'wt') as js_file:
 
@@ -85,13 +88,14 @@ def main():
         def emit_js(f, end='\n', **kwargs):
             print(f.format(**kwargs), file=js_file, end=end)
 
-        Emitter(session, redis_db, emit_html, emit_js).emit()
+        Emitter(session, session2, redis_db, emit_html, emit_js).emit()
 
 
 class Emitter(object):
 
-    def __init__(self, session, redis_db, emit_html, emit_js):
+    def __init__(self, session, session2, redis_db, emit_html, emit_js):
         self.session = session
+        self.session2 = session2
         self.redis_db = redis_db
 
         self.emit_html = emit_html
@@ -177,9 +181,9 @@ class Emitter(object):
             adc_power.setdefault(key, np.Inf)
 
         for ant_cnt, ant in enumerate(ants):
-            station_status = self.session.get_antenna_status(starttime=latest,
-                                                             stoptime=latest,
-                                                             antenna_number=int(ant))
+            station_status = self.session2.get_antenna_status(starttime=latest,
+                                                              stoptime=latest,
+                                                              antenna_number=int(ant))
             for status in station_status:
                 pam_power[(status.antenna_number, status.antenna_feed_pol)] = status.pam_power
                 adc_power[(status.antenna_number, status.antenna_feed_pol)] = status.adc_power
@@ -282,7 +286,7 @@ class Emitter(object):
         self.emit_text_array(_text[0][_text[0].mask], '{x}')
         self.emit_js(",\nmode: 'markers'", end='')
         self.emit_js(",\nmarker: {{  color: 'black', opacity : .5, size: 14", end='')
-        self.emit_js("}},\nhovertemplate: '%{{text}}<br>", end='')
+        self.emit_js("}},\nvisible: false,\nhovertemplate: '%{{text}}<br>", end='')
         self.emit_js("Amp [dB]: N/A<extra></extra>'", end='')
         self.emit_js('}},', end='\n')
 
@@ -298,7 +302,7 @@ class Emitter(object):
         self.emit_data_array(_pam_power[0].compressed(), '{x:.3f}')
         self.emit_js(", cmin:0, cmax: 15, colorscale: 'Viridis', size: 14,", end='')
         self.emit_js("colorbar: {{thickness: 20, title: 'dB'}}", end='')
-        self.emit_js("}},\nhovertemplate: '%{{text}}<br>", end='')
+        self.emit_js("}},\nvisible: false,\nhovertemplate: '%{{text}}<br>", end='')
         self.emit_js("Amp [dB]: %{{marker.color:.3f}}<extra></extra>'", end='')
         self.emit_js('}},', end='\n')
 
@@ -314,7 +318,7 @@ class Emitter(object):
         self.emit_data_array(_pam_power[1].compressed(), '{x:.3f}')
         self.emit_js(", cmin:0, cmax: 15, colorscale: 'Viridis', size: 14,", end='')
         self.emit_js("colorbar: {{thickness: 20, title: 'dB'}}", end='')
-        self.emit_js("}},\nhovertemplate: '%{{text}}<br>", end='')
+        self.emit_js("}},\nvisible: false,\nhovertemplate: '%{{text}}<br>", end='')
         self.emit_js("Amp [dB]: %{{marker.color:.3f}}<extra></extra>'", end='')
         self.emit_js('}},', end='\n')
 
@@ -330,7 +334,7 @@ class Emitter(object):
         self.emit_data_array(_adc_power[0].compressed(), '{x:.3f}')
         self.emit_js(", cmin: 0, cmax: 15, colorscale: 'Viridis', size: 14,", end='')
         self.emit_js("colorbar: {{thickness: 20, title: 'dB'}}", end='')
-        self.emit_js("}},\nhovertemplate: '%{{text}}<br>", end='')
+        self.emit_js("}},\nvisible: false,\nhovertemplate: '%{{text}}<br>", end='')
         self.emit_js("Amp [dB]: %{{marker.color:.3f}}<extra></extra>'", end='')
         self.emit_js('}},', end='\n')
 
@@ -346,7 +350,7 @@ class Emitter(object):
         self.emit_data_array(_adc_power[1].compressed(), '{x:.3f}')
         self.emit_js(", cmin:0, cmax: 15, colorscale: 'Viridis', size: 14,", end='')
         self.emit_js("colorbar: {{thickness: 20, title: 'dB'}}", end='')
-        self.emit_js("}},\nhovertemplate: '%{{text}}<br>", end='')
+        self.emit_js("}},\nvisible: false,\nhovertemplate: '%{{text}}<br>", end='')
         self.emit_js("Amp [dB]: %{{marker.color:.3f}}<extra></extra>'", end='')
         self.emit_js('}},', end='\n')
 
@@ -362,7 +366,7 @@ class Emitter(object):
         self.emit_js("{{'title': 'Median Auto Power',")
         self.emit_js("'annotations': {{}} }}")
         self.emit_js('],')
-        self.emit_js("label: 'AMPS',")
+        self.emit_js("label: 'Auto Corr',")
         self.emit_js("method: 'update'")
         self.emit_js('}},')
 
@@ -373,7 +377,7 @@ class Emitter(object):
         self.emit_js("{{'title': 'PAM Power',")
         self.emit_js("'annotations': {{}} }}")
         self.emit_js('],')
-        self.emit_js("label: 'PAMS',")
+        self.emit_js("label: 'Pam Power',")
         self.emit_js("method: 'update'")
         self.emit_js('}},')
 
@@ -384,7 +388,7 @@ class Emitter(object):
         self.emit_js("{{'title': 'ADC Power',")
         self.emit_js("'annotations': {{}} }}")
         self.emit_js('],')
-        self.emit_js("label: 'ADC',")
+        self.emit_js("label: 'ADC Power',")
         self.emit_js("method: 'update'")
         self.emit_js('}},')
 
