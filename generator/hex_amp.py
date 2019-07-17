@@ -395,8 +395,8 @@ class Emitter(object):
         self.emit_js("""
 
 var layout = {{
-    title: 'Median Auto Amplitude'
-    xaxis: {{title: 'East-West Position [m]'}},
+    title: 'Median Auto Amplitude',
+    xaxis: {{title: 'East-Westh Position [m]'}},
     yaxis: {{title: 'North-South Position [m]'}},
     height: 800,
     showlegend: false,
