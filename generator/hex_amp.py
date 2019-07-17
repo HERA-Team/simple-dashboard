@@ -254,7 +254,7 @@ class Emitter(object):
         self.emit_js(", cmin:0, cmin=0, colorscale='Virids', size: 14,", end='')
         self.emit_js("colorbar: {{thickness: 20, title: 'dB'}}", end='')
         self.emit_js("}},\nhovertemplate='%{{text}}<br>", end='')
-        self.emit_js('Amp [dB]: %{{marker.color:.3f}}<extra></extra>', end='')
+        self.emit_js("Amp [dB]: %{{marker.color:.3f}}<extra></extra>'", end='')
         self.emit_js('}},', end='\n')
 
         # N polarizatoin antennas
@@ -270,7 +270,7 @@ class Emitter(object):
         self.emit_js(", cmin:0, cmin=0, colorscale='Virids', size: 14,", end='')
         self.emit_js("colorbar: {{thickness: 20, title: 'dB'}}", end='')
         self.emit_js("}},\nhovertemplate='%{{text}}<br>", end='')
-        self.emit_js('Amp [dB]: %{{marker.color:.3f}}<extra></extra>', end='')
+        self.emit_js("Amp [dB]: %{{marker.color:.3f}}<extra></extra>'", end='')
         self.emit_js('}},', end='\n')
 
         # BAD AUTOS
@@ -283,7 +283,7 @@ class Emitter(object):
         self.emit_js(",\nmode: markers'", end='')
         self.emit_js(',\nmarker: {{  color: black, opacity : .5, size: 14', end='')
         self.emit_js("}},\nhovertemplate='%{{text}}<br>", end='')
-        self.emit_js('Amp [dB]: N/A<extra></extra>', end='')
+        self.emit_js("Amp [dB]: N/A<extra></extra>'", end='')
         self.emit_js('}},', end='\n')
 
         # E PAM power
@@ -299,7 +299,7 @@ class Emitter(object):
         self.emit_js(", cmin:0, cmin=0, colorscale='Virids', size: 14,", end='')
         self.emit_js("colorbar: {{thickness: 20, title: 'dB'}}", end='')
         self.emit_js("}},\nhovertemplate='%{{text}}<br>", end='')
-        self.emit_js('Amp [dB]: %{{marker.color:.3f}}<extra></extra>', end='')
+        self.emit_js("Amp [dB]: %{{marker.color:.3f}}<extra></extra>'", end='')
         self.emit_js('}},', end='\n')
 
         # N PAM power
@@ -315,7 +315,7 @@ class Emitter(object):
         self.emit_js(", cmin:0, cmin=0, colorscale='Virids', size: 14,", end='')
         self.emit_js("colorbar: {{thickness: 20, title: 'dB'}}", end='')
         self.emit_js("}},\nhovertemplate='%{{text}}<br>", end='')
-        self.emit_js('Amp [dB]: %{{marker.color:.3f}}<extra></extra>', end='')
+        self.emit_js("Amp [dB]: %{{marker.color:.3f}}<extra></extra>'", end='')
         self.emit_js('}},', end='\n')
 
         # E ADC power
@@ -331,7 +331,7 @@ class Emitter(object):
         self.emit_js(", cmin:0, cmin=0, colorscale='Virids', size: 14,", end='')
         self.emit_js("colorbar: {{thickness: 20, title: 'dB'}}", end='')
         self.emit_js("}},\nhovertemplate='%{{text}}<br>", end='')
-        self.emit_js('Amp [dB]: %{{marker.color:.3f}}<extra></extra>', end='')
+        self.emit_js("Amp [dB]: %{{marker.color:.3f}}<extra></extra>'", end='')
         self.emit_js('}},', end='\n')
 
         # N ADC power
@@ -347,7 +347,7 @@ class Emitter(object):
         self.emit_js(", cmin:0, cmin=0, colorscale='Virids', size: 14,", end='')
         self.emit_js("colorbar: {{thickness: 20, title: 'dB'}}", end='')
         self.emit_js("}},\nhovertemplate='%{{text}}<br>", end='')
-        self.emit_js('Amp [dB]: %{{marker.color:.3f}}<extra></extra>', end='')
+        self.emit_js("Amp [dB]: %{{marker.color:.3f}}<extra></extra>'", end='')
         self.emit_js('}},', end='\n')
 
         self.emit_js(']', end='\n')
