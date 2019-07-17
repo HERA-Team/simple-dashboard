@@ -277,7 +277,7 @@ class Emitter(object):
         self.emit_js("Amp [dB]: %{{marker.color:.3f}}<extra></extra>'", end='')
         self.emit_js('}},', end='\n')
 
-        # BAD AUTOS
+        # BAD E AUTOS
         self.emit_js('{{x: ', end='')
         self.emit_data_array(xs.data[xs.mask], '{x:.3f}')
         self.emit_js(',\ny: ', end='')
@@ -289,6 +289,20 @@ class Emitter(object):
         self.emit_js("}},\nvisible: false,\nhovertemplate: '%{{text}}<br>", end='')
         self.emit_js("Amp [dB]: N/A<extra></extra>'", end='')
         self.emit_js('}},', end='\n')
+
+        # BAD N AUTOS
+        self.emit_js('{{x: ', end='')
+        self.emit_data_array(xs.data[xs.mask], '{x:.3f}')
+        self.emit_js(',\ny: ', end='')
+        self.emit_data_array(ys[1].data[ys[1].mask], '{x:.3f}')
+        self.emit_js(",\ntext:", end='')
+        self.emit_text_array(_text[1][_text[1].mask], '{x}')
+        self.emit_js(",\nmode: 'markers'", end='')
+        self.emit_js(",\nmarker: {{  color: 'black', opacity : .5, size: 14", end='')
+        self.emit_js("}},\nvisible: false,\nhovertemplate: '%{{text}}<br>", end='')
+        self.emit_js("Amp [dB]: N/A<extra></extra>'", end='')
+        self.emit_js('}},', end='\n')
+
 
         # E PAM power
         self.emit_js('{{x:', end='')
@@ -322,12 +336,25 @@ class Emitter(object):
         self.emit_js("Amp [dB]: %{{marker.color:.3f}}<extra></extra>'", end='')
         self.emit_js('}},', end='\n')
 
-        # Bad PAM power
-        _mask = np.any(_pam_power.mask, axis=0)
+        # Bad E PAM power
         self.emit_js('{{x:', end='')
-        self.emit_data_array(xs.data[_mask], '{x:.3f}')
+        self.emit_data_array(xs.data[_pam_power[0].mask], '{x:.3f}')
         self.emit_js(',\ny:', end='')
-        self.emit_data_array(ys[0].data[_mask], '{x:.3f}')
+        self.emit_data_array(ys[0].data[_pam_power[0].mask], '{x:.3f}')
+        self.emit_js(",\nmode: 'markers'", end='')
+        self.emit_js(",\ntext:", end='')
+        self.emit_text_array(_text[1].compressed(), '{x}')
+        self.emit_js(",\nmarker: {{  color:'orange'", end='')
+        self.emit_js(", size: 14", end='')
+        self.emit_js("}},\nvisible: false,\nhovertemplate: '%{{text}}<br>", end='')
+        self.emit_js("Amp [dB]: %{{marker.color:.3f}}<extra></extra>'", end='')
+        self.emit_js('}},', end='\n')
+
+        # Bad N PAM power
+        self.emit_js('{{x:', end='')
+        self.emit_data_array(xs.data[_pam_power[1].mask], '{x:.3f}')
+        self.emit_js(',\ny:', end='')
+        self.emit_data_array(ys[0].data[_pam_power[1].mask], '{x:.3f}')
         self.emit_js(",\nmode: 'markers'", end='')
         self.emit_js(",\ntext:", end='')
         self.emit_text_array(_text[1].compressed(), '{x}')
@@ -369,12 +396,26 @@ class Emitter(object):
         self.emit_js("Amp [dB]: %{{marker.color:.3f}}<extra></extra>'", end='')
         self.emit_js('}},', end='\n')
 
-        # Bad ADC power
-        _mask = np.any(_adc_power.mask, axis=0)
+        # Bad E ADC power
         self.emit_js('{{x:', end='')
-        self.emit_data_array(xs.data[_mask], '{x:.3f}')
+        self.emit_data_array(xs.data[_adc_power[0].mask], '{x:.3f}')
         self.emit_js(',\ny:', end='')
-        self.emit_data_array(ys[0].data[_mask], '{x:.3f}')
+        self.emit_data_array(ys[0].data[_adc_power[0].mask], '{x:.3f}')
+        self.emit_js(",\nmode: 'markers'", end='')
+        self.emit_js(",\ntext:", end='')
+        self.emit_text_array(_text[1].compressed(), '{x}')
+        self.emit_js(",\nmarker: {{  color:'orange'", end='')
+        self.emit_js(", size: 14", end='')
+        self.emit_js("}},\nvisible: false,\nhovertemplate: '%{{text}}<br>", end='')
+        self.emit_js("Amp [dB]: %{{marker.color:.3f}}<extra></extra>'", end='')
+        self.emit_js('}},', end='\n')
+        self.emit_js(']', end='\n')
+
+        # Bad N ADC power
+        self.emit_js('{{x:', end='')
+        self.emit_data_array(xs.data[_adc_power[1].mask], '{x:.3f}')
+        self.emit_js(',\ny:', end='')
+        self.emit_data_array(ys[0].data[_adc_power[1].mask], '{x:.3f}')
         self.emit_js(",\nmode: 'markers'", end='')
         self.emit_js(",\ntext:", end='')
         self.emit_text_array(_text[1].compressed(), '{x}')
@@ -391,7 +432,7 @@ class Emitter(object):
         # Amplitude Button
         self.emit_js('{{')
         self.emit_js('args: [')
-        self.emit_js("{{'visible':[true, true, true, true, false, false, false, false, false, false]}},")
+        self.emit_js("{{'visible':[true, true, true, true, true, false, false, false, false, false, false, false, false]}},")
         self.emit_js("{{'title': 'Median Auto Power',")
         self.emit_js("'annotations': {{}} }}")
         self.emit_js('],')
@@ -402,7 +443,7 @@ class Emitter(object):
         # PAMS buttons
         self.emit_js('{{')
         self.emit_js('args: [')
-        self.emit_js("{{'visible':[true, false, false, false, true, true, true, false, false, false]}},")
+        self.emit_js("{{'visible':[true, false, false, false, false, true, true, true, true, false, false, false, false]}},")
         self.emit_js("{{'title': 'PAM Power',")
         self.emit_js("'annotations': {{}} }}")
         self.emit_js('],')
@@ -413,7 +454,7 @@ class Emitter(object):
         # ADC buttons
         self.emit_js('{{')
         self.emit_js('args: [')
-        self.emit_js("{{'visible':[true, false, false, false, false, false, false, true, true, true]}},")
+        self.emit_js("{{'visible':[true, false, false, false, false, false, false, false, false, true, true, true, true]}},")
         self.emit_js("{{'title': 'ADC Power',")
         self.emit_js("'annotations': {{}} }}")
         self.emit_js('],')
