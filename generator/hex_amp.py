@@ -215,9 +215,9 @@ class Emitter(object):
 
         _amps = np.ma.masked_invalid([[amps[ant, pol] if ant is not None else np.Inf
                                        for ant_cnt, ant in enumerate(ants)] for pol in pols])
-        _adc_power = np.ma.masked_invalid([[adc_power[ant, pol] if ant is not None else np.Inf
+        _adc_power = np.ma.masked_invalid([[adc_power[ant, pol] if adc_power[ant, pol] is not None else np.Inf
                                             for ant_cnt, ant in enumerate(ants)] for pol in pols])
-        _pam_power = np.ma.masked_invalid([[pam_power[ant, pol] if ant is not None else np.Inf
+        _pam_power = np.ma.masked_invalid([[pam_power[ant, pol] if pam_power[ant, pol] is not None else np.Inf
                                             for ant_cnt, ant in enumerate(ants)] for pol in pols])
         xs = np.ma.masked_array(antpos[0, ant_index], mask=_amps[0].mask)
         ys = np.ma.masked_array([antpos[1, ant_index] + 3 * (pol_cnt -.5)
@@ -322,6 +322,20 @@ class Emitter(object):
         self.emit_js("Amp [dB]: %{{marker.color:.3f}}<extra></extra>'", end='')
         self.emit_js('}},', end='\n')
 
+        # Bad PAM power
+        self.emit_js('{{x:', end='')
+        self.emit_data_array(xs.data[xs.mask], '{x:.3f}')
+        self.emit_js(',\ny:', end='')
+        self.emit_data_array(ys[0].data[_pam_power[0].mask], '{x:.3f}')
+        self.emit_js(",\nmode: 'markers'", end='')
+        self.emit_js(",\ntext:", end='')
+        self.emit_text_array(_text[1].compressed(), '{x}')
+        self.emit_js(",\nmarker: {{  color:'orange'", end='')
+        self.emit_js(", size: 14", end='')
+        self.emit_js("}},\nvisible: false,\nhovertemplate: '%{{text}}<br>", end='')
+        self.emit_js("Amp [dB]: %{{marker.color:.3f}}<extra></extra>'", end='')
+        self.emit_js('}},', end='\n')
+
         # E ADC power
         self.emit_js('{{x: ', end='')
         self.emit_data_array(xs.compressed(), '{x:.3f}')
@@ -354,6 +368,19 @@ class Emitter(object):
         self.emit_js("Amp [dB]: %{{marker.color:.3f}}<extra></extra>'", end='')
         self.emit_js('}},', end='\n')
 
+        # Bad ADC power
+        self.emit_js('{{x:', end='')
+        self.emit_data_array(xs.data[xs.mask], '{x:.3f}')
+        self.emit_js(',\ny:', end='')
+        self.emit_data_array(ys[0].data[_adc_power[0].mask], '{x:.3f}')
+        self.emit_js(",\nmode: 'markers'", end='')
+        self.emit_js(",\ntext:", end='')
+        self.emit_text_array(_text[1].compressed(), '{x}')
+        self.emit_js(",\nmarker: {{  color:'orange'", end='')
+        self.emit_js(", size: 14", end='')
+        self.emit_js("}},\nvisible: false,\nhovertemplate: '%{{text}}<br>", end='')
+        self.emit_js("Amp [dB]: %{{marker.color:.3f}}<extra></extra>'", end='')
+        self.emit_js('}},', end='\n')
         self.emit_js(']', end='\n')
 
         self.emit_js(' var updatemenus=[')
@@ -362,7 +389,7 @@ class Emitter(object):
         # Amplitude Button
         self.emit_js('{{')
         self.emit_js('args: [')
-        self.emit_js("{{'visible':[true, true, true, true, false, false, false, false]}},")
+        self.emit_js("{{'visible':[true, true, true, true, false, false, false, false, false, false]}},")
         self.emit_js("{{'title': 'Median Auto Power',")
         self.emit_js("'annotations': {{}} }}")
         self.emit_js('],')
@@ -373,7 +400,7 @@ class Emitter(object):
         # PAMS buttons
         self.emit_js('{{')
         self.emit_js('args: [')
-        self.emit_js("{{'visible':[true, false, false, false, true, true, false, false]}},")
+        self.emit_js("{{'visible':[true, false, false, false, true, true, true, false, false, false]}},")
         self.emit_js("{{'title': 'PAM Power',")
         self.emit_js("'annotations': {{}} }}")
         self.emit_js('],')
@@ -384,7 +411,7 @@ class Emitter(object):
         # ADC buttons
         self.emit_js('{{')
         self.emit_js('args: [')
-        self.emit_js("{{'visible':[true, false, false, false, false, false, true, true]}},")
+        self.emit_js("{{'visible':[true, false, false, false, false, false, false, true, true, true]}},")
         self.emit_js("{{'title': 'ADC Power',")
         self.emit_js("'annotations': {{}} }}")
         self.emit_js('],')
