@@ -112,6 +112,19 @@ class Emitter(object):
 
         self.emit_js(']', end='')
 
+    def emit_text_array(self, data, fmt):
+        self.emit_js('[', end='')
+        first = True
+
+        for x in data:
+            if first:
+                first = False
+            else:
+                self.emit_js(',', end='')
+            self.emit_js("'" + fmt + "'", x=x, end='')
+
+        self.emit_js(']', end='')
+
     def prep_data(self):
         autos = {}
         autos_raw = {}
@@ -221,7 +234,7 @@ class Emitter(object):
         self.emit_js(',\ny:', end='')
         self.emit_data_array(ys_offline, '{x:.3f}')
         self.emit_js(',\ntext :', end='')
-        self.emit_data_array(name_offline, '{x}')
+        self.emit_text_array(name_offline, '{x}')
         self.emit_js(",\nmode : 'markers'", end='')
         self.emit_js(",\nmarker : {{color : 'black', size : 14,", end='')
         self.emit_js("opacity : .5, symbol : 'hexagon' }}", end='')
@@ -233,9 +246,9 @@ class Emitter(object):
         self.emit_data_array(xs.compressed(), '{x:.3f}')
         self.emit_js(',\ny:', end='')
         self.emit_data_array(ys[0].compressed(), '{x:.3f}')
-        self.emit_js(",\nmode: markers'", end='')
+        self.emit_js(",\nmode: 'markers'", end='')
         self.emit_js(",\ntext:", end='')
-        self.emit_data_array(_text[0].compressed(), '{x}')
+        self.emit_text_array(_text[0].compressed(), '{x}')
         self.emit_js(', marker: {{  color:', end='')
         self.emit_data_array(_amps[0].compressed(), '{x:.3f}')
         self.emit_js(", cmin:0, cmin=0, colorscale='Virids', size: 14,", end='')
@@ -249,9 +262,9 @@ class Emitter(object):
         self.emit_data_array(xs.compressed(), '{x:.3f}')
         self.emit_js(',\ny:', end='')
         self.emit_data_array(ys[1].compressed(), '{x:.3f}')
-        self.emit_js(",\nmode: markers'", end='')
+        self.emit_js(",\nmode: 'markers'", end='')
         self.emit_js(",\ntext:", end='')
-        self.emit_data_array(_text[1].compressed(), '{x}')
+        self.emit_text_array(_text[1].compressed(), '{x}')
         self.emit_js(',\nmarker: {{  color:', end='')
         self.emit_data_array(_amps[1].compressed(), '{x:.3f}')
         self.emit_js(", cmin:0, cmin=0, colorscale='Virids', size: 14,", end='')
@@ -266,7 +279,7 @@ class Emitter(object):
         self.emit_js(',\ny:', end='')
         self.emit_data_array(ys[0].data[ys[0].mask], '{x:.3f}')
         self.emit_js(",\ntext:", end='')
-        self.emit_data_array(_text[0][_text[0].mask], '{x}')
+        self.emit_text_array(_text[0][_text[0].mask], '{x}')
         self.emit_js(",\nmode: markers'", end='')
         self.emit_js(',\nmarker: {{  color: black, opacity : .5, size: 14', end='')
         self.emit_js("}},\nhovertemplate='%{{text}}<br>", end='')
@@ -278,9 +291,9 @@ class Emitter(object):
         self.emit_data_array(xs.compressed(), '{x:.3f}')
         self.emit_js(',\ny:', end='')
         self.emit_data_array(ys[0].compressed(), '{x:.3f}')
-        self.emit_js(",\nmode: markers'", end='')
+        self.emit_js(",\nmode: 'markers'", end='')
         self.emit_js(",\ntext:", end='')
-        self.emit_data_array(_text[0].compressed(), '{x}')
+        self.emit_text_array(_text[0].compressed(), '{x}')
         self.emit_js(',\nmarker: {{ color:', end='')
         self.emit_data_array(_pam_power[0].compressed(), '{x:.3f}')
         self.emit_js(", cmin:0, cmin=0, colorscale='Virids', size: 14,", end='')
@@ -294,9 +307,9 @@ class Emitter(object):
         self.emit_data_array(xs.compressed(), '{x:.3f}')
         self.emit_js(',\ny:', end='')
         self.emit_data_array(ys[1].compressed(), '{x:.3f}')
-        self.emit_js(",\nmode: markers'", end='')
+        self.emit_js(",\nmode: 'markers'", end='')
         self.emit_js(",\ntext:", end='')
-        self.emit_data_array(_text[1].compressed(), '{x}')
+        self.emit_text_array(_text[1].compressed(), '{x}')
         self.emit_js(',\nmarker: {{  color:', end='')
         self.emit_data_array(_pam_power[1].compressed(), '{x:.3f}')
         self.emit_js(", cmin:0, cmin=0, colorscale='Virids', size: 14,", end='')
@@ -310,9 +323,9 @@ class Emitter(object):
         self.emit_data_array(xs.compressed(), '{x:.3f}')
         self.emit_js(',\ny:', end='')
         self.emit_data_array(ys[0].compressed(), '{x:.3f}')
-        self.emit_js(",\nmode: markers'", end='')
+        self.emit_js(",\nmode: 'markers'", end='')
         self.emit_js(",\ntext:", end='')
-        self.emit_data_array(_text[0].compressed(), '{x}')
+        self.emit_text_array(_text[0].compressed(), '{x}')
         self.emit_js(',\nmarker: {{  color:', end='')
         self.emit_data_array(_adc_power[0].compressed(), '{x:.3f}')
         self.emit_js(", cmin:0, cmin=0, colorscale='Virids', size: 14,", end='')
@@ -326,9 +339,9 @@ class Emitter(object):
         self.emit_data_array(xs.compressed(), '{x:.3f}')
         self.emit_js(',\ny:', end='')
         self.emit_data_array(ys[1].compressed(), '{x:.3f}')
-        self.emit_js(",\nmode: markers'", end='')
+        self.emit_js(",\nmode: 'markers'", end='')
         self.emit_js(",\ntext:", end='')
-        self.emit_data_array(_text[1].compressed(), '{x}')
+        self.emit_text_array(_text[1].compressed(), '{x}')
         self.emit_js(',\nmarker: {{  color:', end='')
         self.emit_data_array(_adc_power[1].compressed(), '{x:.3f}')
         self.emit_js(", cmin:0, cmin=0, colorscale='Virids', size: 14,", end='')
