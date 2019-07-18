@@ -470,14 +470,13 @@ var layout = {{
     title: 'Median Auto Amplitude',
     xaxis: {{title: 'East-Westh Position [m]'}},
     yaxis: {{title: 'North-South Position [m]'}},
-    height: 800,
-    width: 1000,
+    autosize: true,
     showlegend: false,
     updatemenus: updatemenus,
     hovermode: 'closest'
 }};
 
-Plotly.plot("plotly-div", data, layout);
+Plotly.plot("plotly-div", data, layout, {responsive: true});
         """)
 
     def emit(self):
