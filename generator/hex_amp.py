@@ -252,6 +252,7 @@ class Emitter(object):
         #  for each type of power, loop over pols and print out the data
         #  save up a mask array used for the buttons later
         #  also plot the bad ones!
+        colorscale = "Jet"
         for pow_ind, power in enumerate([_amps, _pam_power, _adc_power]):
             for pol_ind, pol in enumerate(pols):
                 if pow_ind == 0:
@@ -287,7 +288,7 @@ class Emitter(object):
                 self.emit_js(',\n marker: {{  color:', end='')
                 self.emit_data_array(power[pol_ind].data[~power[pol_ind].mask], '{x:.3f}')
                 self.emit_js(", cmin: {vmin}, cmax: {vmax}, ", vmin=vmin, vmax=vmax, end='')
-                self.emit_js("colorscale: 'Viridis', size: 14,", end='')
+                self.emit_js("colorscale: '{colorscale}', size: 14,", colorscale=colorscale, end='')
                 self.emit_js("colorbar: {{thickness: 20, title: 'dB'}}", end='')
                 self.emit_js("}},\nhovertemplate: '%{{text}}<br>", end='')
                 self.emit_js("Amp [dB]: %{{marker.color:.3f}}<extra></extra>'", end='')
@@ -303,7 +304,8 @@ class Emitter(object):
                 self.emit_text_array(_text[pol_ind].data[power[pol_ind].mask], '{x}')
                 self.emit_js(",\n marker: {{  color: 'orange'", end='')
                 self.emit_js(", cmin: {vmin}, cmax: {vmax}, ", vmin=vmin, vmax=vmax, end='')
-                self.emit_js("colorscale: 'Viridis', size: 14,", end='')                self.emit_js(",\ncolorbar: {{thickness: 20, title: 'dB'}}", end='')
+                self.emit_js("colorscale: '{colorscale}', size: 14,", colorscale=colorscale, end='')
+                self.emit_js(",\ncolorbar: {{thickness: 20, title: 'dB'}}", end='')
                 self.emit_js("}},\nhovertemplate: '%{{text}}<br>", end='')
                 self.emit_js("Amp [dB]: N/A<extra></extra>'", end='')
                 self.emit_js('}},\n', end='\n')
