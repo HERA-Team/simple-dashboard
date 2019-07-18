@@ -537,7 +537,7 @@ window.onresize = function() {{
         <p class="text-center"><big>Report generated <span id="age">???</span> ago (at {gen_date} UTC)<big></p>
     </div>
     <div class="col-md-12">
-        <p class="text-center"><big><big>Data observerd at {iso_date} (JD: {jd_date})</big></big></p>
+        <p class="text-center"><big><big>Data observerd on {iso_date} (JD: {jd_date})</big></big></p>
     </div>
   </div>
   <div class="row">
