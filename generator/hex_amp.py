@@ -422,7 +422,7 @@ window.onresize = function() {{
                         self.emit_js("// ADC DATA ")
 
                         self.emit_js('{{x: ', end='')
-                        self.emit_data_array(xs.data[~power[pol_ind].mask], '{x:.3f}')
+                        self.emit_data_array(xs[pol_ind].data[~power[pol_ind].mask], '{x:.3f}')
                         self.emit_js(',\ny: ', end='')
                         self.emit_data_array(ys[pol_ind].data[~power[pol_ind].mask], '{x:.3f}')
                         self.emit_js(",\nmode: 'markers'", end='')
@@ -439,7 +439,7 @@ window.onresize = function() {{
                         self.emit_js('}},', end='\n')
 
                         self.emit_js('{{x: ', end='')
-                        self.emit_data_array(xs.data[power[pol_ind].mask], '{x:.3f}')
+                        self.emit_data_array(xs[pol_ind].data[power[pol_ind].mask], '{x:.3f}')
                         self.emit_js(',\ny: ', end='')
                         self.emit_data_array(ys[pol_ind].data[power[pol_ind].mask], '{x:.3f}')
                         self.emit_js(",\nmode: 'markers'", end='')
