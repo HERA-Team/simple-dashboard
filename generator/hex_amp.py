@@ -523,7 +523,7 @@ var layout = {{
     hovermode: 'closest'
 }};
 
-Plotly.plot("plotly-div", data, layout, {responsive: true});
+Plotly.plot("plotly-div", data, layout, {{responsive: true}});
         """)
 
     def emit(self):
