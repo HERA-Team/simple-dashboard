@@ -265,6 +265,13 @@ class Emitter(object):
         #  also plot the bad ones!
         colorscale = "Viridis"
         for pow_ind, power in enumerate([_amps, _pam_power, _adc_power]):
+            if pow_ind == 0:
+                self.emit_js("// AMPLITUDE DATA ")
+            elif pow_ind == 1:
+                self.emit_js("// PAM DATA ")
+            else:
+                self.emit_js("// ADC DATA ")
+
             vmax = np.max(power.compressed())
             vmin = np.min(power.compressed())
             for pol_ind, pol in enumerate(pols):
@@ -273,20 +280,17 @@ class Emitter(object):
                     pam_mask.extend(['false'] * 2)
                     adc_mask.extend(['false'] * 2)
                     visible = 'true'
-                    self.emit_js("// AMPLITUDE DATA ")
 
                 elif pow_ind == 1:
                     amp_mask.extend(['false'] * 2)
                     pam_mask.extend(['true'] * 2)
                     adc_mask.extend(['false'] * 2)
                     visible = 'false'
-                    self.emit_js("// PAM DATA ")
                 else:
                     amp_mask.extend(['false'] * 2)
                     pam_mask.extend(['false'] * 2)
                     adc_mask.extend(['true'] * 2)
                     visible = 'false'
-                    self.emit_js("// ADC DATA ")
 
                 self.emit_js('{{x: ', end='')
                 self.emit_data_array(xs.data[~power[pol_ind].mask], '{x:.3f}')
@@ -385,7 +389,7 @@ window.onresize = function() {{
  }}
         """)
 
-        self.emit_js("var data_2 = [")
+        self.emit_js("var data2 = [")
         amp_mask = []
         pam_mask = []
         adc_mask = []
@@ -421,36 +425,36 @@ window.onresize = function() {{
                         visible = 'false'
                         self.emit_js("// ADC DATA ")
 
-                        self.emit_js('{{x: ', end='')
-                        self.emit_data_array(xs[pol_ind].data[~power[pol_ind].mask], '{x:.3f}')
-                        self.emit_js(',\ny: ', end='')
-                        self.emit_data_array(ys[pol_ind].data[~power[pol_ind].mask], '{x:.3f}')
-                        self.emit_js(",\nmode: 'markers'", end='')
-                        self.emit_js(",\nvisible: {visible}", visible=visible, end='')
-                        self.emit_js(",\ntext: ", end='')
-                        self.emit_text_array(_text[pol_ind].data[~power[pol_ind].mask], '{x}')
-                        self.emit_js(',\n marker: {{  color:', end='')
-                        self.emit_data_array(power[pol_ind].data[~power[pol_ind].mask], '{x:.3f}')
-                        self.emit_js(", cmin: {vmin}, cmax: {vmax}, ", vmin=vmin, vmax=vmax, end='')
-                        self.emit_js("colorscale: '{colorscale}', size: 14,", colorscale=colorscale, end='')
-                        self.emit_js("\ncolorbar: {{thickness: 20, title: 'dB'}}", end='')
-                        self.emit_js("}},\nhovertemplate: '%{{text}}<br>", end='')
-                        self.emit_js("Amp [dB]: %{{marker.color:.3f}}<extra></extra>'", end='')
-                        self.emit_js('}},', end='\n')
+                    self.emit_js('{{x: ', end='')
+                    self.emit_data_array(xs[pol_ind].data[~power[pol_ind].mask], '{x:.3f}')
+                    self.emit_js(',\ny: ', end='')
+                    self.emit_data_array(ys[pol_ind].data[~power[pol_ind].mask], '{x:.3f}')
+                    self.emit_js(",\nmode: 'markers'", end='')
+                    self.emit_js(",\nvisible: {visible}", visible=visible, end='')
+                    self.emit_js(",\ntext: ", end='')
+                    self.emit_text_array(_text[pol_ind].data[~power[pol_ind].mask], '{x}')
+                    self.emit_js(',\n marker: {{  color:', end='')
+                    self.emit_data_array(power[pol_ind].data[~power[pol_ind].mask], '{x:.3f}')
+                    self.emit_js(", cmin: {vmin}, cmax: {vmax}, ", vmin=vmin, vmax=vmax, end='')
+                    self.emit_js("colorscale: '{colorscale}', size: 14,", colorscale=colorscale, end='')
+                    self.emit_js("\ncolorbar: {{thickness: 20, title: 'dB'}}", end='')
+                    self.emit_js("}},\nhovertemplate: '%{{text}}<br>", end='')
+                    self.emit_js("Amp [dB]: %{{marker.color:.3f}}<extra></extra>'", end='')
+                    self.emit_js('}},', end='\n')
 
-                        self.emit_js('{{x: ', end='')
-                        self.emit_data_array(xs[pol_ind].data[power[pol_ind].mask], '{x:.3f}')
-                        self.emit_js(',\ny: ', end='')
-                        self.emit_data_array(ys[pol_ind].data[power[pol_ind].mask], '{x:.3f}')
-                        self.emit_js(",\nmode: 'markers'", end='')
-                        self.emit_js(",\nvisible: {visible}", visible=visible, end='')
-                        self.emit_js(",\ntext: ", end='')
-                        self.emit_text_array(_text[pol_ind].data[power[pol_ind].mask], '{x}')
-                        self.emit_js(",\n marker: {{  color: 'orange'", end='')
-                        self.emit_js(", size: 14", end='')
-                        self.emit_js("}},\nhovertemplate: '%{{text}}<br>", end='')
-                        self.emit_js("Amp [dB]: NO DATA AVAILABLE<extra></extra>'", end='')
-                        self.emit_js('}},\n', end='\n')
+                    self.emit_js('{{x: ', end='')
+                    self.emit_data_array(xs[pol_ind].data[power[pol_ind].mask], '{x:.3f}')
+                    self.emit_js(',\ny: ', end='')
+                    self.emit_data_array(ys[pol_ind].data[power[pol_ind].mask], '{x:.3f}')
+                    self.emit_js(",\nmode: 'markers'", end='')
+                    self.emit_js(",\nvisible: {visible}", visible=visible, end='')
+                    self.emit_js(",\ntext: ", end='')
+                    self.emit_text_array(_text[pol_ind].data[power[pol_ind].mask], '{x}')
+                    self.emit_js(",\n marker: {{  color: 'orange'", end='')
+                    self.emit_js(", size: 14", end='')
+                    self.emit_js("}},\nhovertemplate: '%{{text}}<br>", end='')
+                    self.emit_js("Amp [dB]: NO DATA AVAILABLE<extra></extra>'", end='')
+                    self.emit_js('}},\n', end='\n')
 
         self.emit_js(']', end='\n')
 
