@@ -548,7 +548,7 @@ window.onresize = function() {{
     <div id="plotly-div" class="col-md-1s", style="height: 1000px"></div>
   </div>
    <div class="row">
-     <div id="plotly-div2" class="col-md-1s", style="height: 1000px"></div>
+     <div id="plotly-div2" class="col-md-1s", style="height: 500px"></div>
    </div>
 """, gen_date=self.now.iso)
 
