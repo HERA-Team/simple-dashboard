@@ -259,16 +259,19 @@ class Emitter(object):
                     pam_mask.extend(['false'] * 2)
                     adc_mask.extend(['false'] * 2)
                     visible = 'true'
+                    self.emit_js("// AMPLITUDE DATA ")
                 elif pow_ind == 1:
                     amp_mask.extend(['false'] * 2)
-                    pam_mask.extend(['false'] * 2)
-                    adc_mask.extend(['flse'] * 2)
+                    pam_mask.extend(['true'] * 2)
+                    adc_mask.extend(['false'] * 2)
                     visible = 'false'
+                    self.emit_js("// PAM DATA ")
                 else:
                     amp_mask.extend(['false'] * 2)
                     pam_mask.extend(['false'] * 2)
                     adc_mask.extend(['true'] * 2)
                     visible = 'false'
+                    self.emit_js("// ADC DATA ")
 
                 self.emit_js('{{x: ', end='')
                 self.emit_data_array(xs.data[~power[pol_ind].mask], '{x:.3f}')
@@ -278,7 +281,7 @@ class Emitter(object):
                 self.emit_js(",\nvisible: {visible}", visible=visible, end='')
                 self.emit_js(",\ntext: ", end='')
                 self.emit_text_array(_text[pol_ind].data[~power[pol_ind].mask], '{x}')
-                self.emit_js(', marker: {{  color:', end='')
+                self.emit_js(',\n marker: {{  color:', end='')
                 self.emit_data_array(power[pol_ind].data[~power[pol_ind].mask], '{x:.3f}')
                 self.emit_js(", cmin: 0, cmax: 15, colorscale: 'Viridis', size: 14,", end='')
                 self.emit_js("colorbar: {{thickness: 20, title: 'dB'}}", end='')
@@ -294,12 +297,12 @@ class Emitter(object):
                 self.emit_js(",\nvisible: {visible}", visible=visible, end='')
                 self.emit_js(",\ntext: ", end='')
                 self.emit_text_array(_text[pol_ind].data[power[pol_ind].mask], '{x}')
-                self.emit_js(", marker: {{  color: 'orange'", end='')
+                self.emit_js(",\n marker: {{  color: 'orange'", end='')
                 self.emit_js(",\n size: 14", end='')
                 self.emit_js(",\ncolorbar: {{thickness: 20, title: 'dB'}}", end='')
                 self.emit_js("}},\nhovertemplate: '%{{text}}<br>", end='')
                 self.emit_js("Amp [dB]: N/A<extra></extra>'", end='')
-                self.emit_js('}},', end='\n')
+                self.emit_js('}},\n', end='\n')
 
 
         # # N polarizatoin antennas
@@ -524,6 +527,20 @@ var layout = {{
 }};
 
 Plotly.plot("plotly-div", data, layout, {{responsive: true}});
+    width: 0.8 * window.innerWidth,
+    height: 0.8 * window.innerHeight,
+    showlegend: false,
+    updatemenus: updatemenus,
+    hovermode: 'closest'
+}};
+
+Plotly.plot("plotly-div", data, layout, {{responsive: true}});
+window.onresize = function() {{
+Plotly.relayout("plotly-div", {{
+                   width: 0.8 * window.innerWidth,
+                   height: 0.8 * window.innerHeight
+                         }})
+ }}
         """)
 
     def emit(self):
