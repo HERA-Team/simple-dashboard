@@ -372,7 +372,7 @@ var layout = {{
     title: 'Median Auto Amplitude',
     xaxis: {{title: 'East-Westh Position [m]'}},
     yaxis: {{title: 'North-South Position [m]'}},
-    width: 0.8 * window.innerWidth,
+    width: 0.7 * window.innerWidth,
     height: 0.8 * window.innerHeight,
     showlegend: false,
     updatemenus: updatemenus,
@@ -382,7 +382,7 @@ var layout = {{
 Plotly.plot("plotly-div", data, layout, {{responsive: true}});
 window.onresize = function() {{
 Plotly.relayout("plotly-div", {{
-                   width: 0.8 * window.innerWidth,
+                   width: 0.7 * window.innerWidth,
                    height: 0.8 * window.innerHeight
                          }})
  }}
