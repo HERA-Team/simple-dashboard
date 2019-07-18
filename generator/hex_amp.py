@@ -8,11 +8,10 @@
 from __future__ import absolute_import, division, print_function
 
 import os
-import argparse
 import numpy as np
 import re
 import redis
-from hera_mc import mc, cm_utils, cm_sysutils
+from hera_mc import mc, cm_sysutils
 from astropy.time import Time
 
 
@@ -49,14 +48,6 @@ document.getElementById("age").textContent = age_text;
 if (report_age > 1800) {{
     document.getElementById("age").style.color = 'red';
 }}
-
-function extract(data, keyname) {{
-  var items = [];
-  for (var h in data) {{
-    items.push({{x: data[h].t, y: data[h][keyname], name: h, type: "scatter"}});
-  }}
-  return items;
-}}\
 """
 
 
@@ -138,7 +129,7 @@ class Emitter(object):
         # without item this will be an array which will break database queries
         timestamp = np.frombuffer(self.redis_db.get('auto:timestamp'),
                                   dtype=np.float64).item()
-        latest = Time(timestamp, format='jd')
+        self.latest = Time(timestamp, format='jd')
         for key in keys:
             match = re.search(r'auto:(?P<ant>\d+)(?P<pol>e|n)', key)
             if match is not None:
@@ -168,7 +159,7 @@ class Emitter(object):
         array_center = np.mean(antpos, axis=1, keepdims=True)
         antpos -= array_center
 
-        stations = hsession.get_all_fully_connected_at_date(at_date=latest)
+        stations = hsession.get_all_fully_connected_at_date(at_date=self.latest)
 
         for station in stations:
             if station.antenna_number not in ants:
@@ -188,21 +179,21 @@ class Emitter(object):
                 adc_power.setdefault((ant, pol), np.Inf)
 
         for ant_cnt, ant in enumerate(ants):
-            station_status = self.session2.get_antenna_status(starttime=latest,
-                                                              stoptime=latest,
+            station_status = self.session2.get_antenna_status(starttime=self.latest,
+                                                              stoptime=self.latest,
                                                               antenna_number=int(ant))
             for status in station_status:
                 pam_power[(status.antenna_number, status.antenna_feed_pol)] = status.pam_power
                 adc_power[(status.antenna_number, status.antenna_feed_pol)] = status.adc_power
 
-            pam_info = hsession.get_part_at_station_from_type('HH{:d}'.format(ant), latest, 'post-amp')
+            pam_info = hsession.get_part_at_station_from_type('HH{:d}'.format(ant), self.latest, 'post-amp')
             if pam_info[list(pam_info.keys())[0]]['e'] is not None:
                 _pam_num = re.findall(r'PAM(\d+)', pam_info[list(pam_info.keys())[0]]['e'])[0]
                 pam_ind[ant_cnt] = np.int(_pam_num)
             else:
                 pam_ind[ant_cnt] = -1
 
-            node_info = hsession.get_part_at_station_from_type('HH{:d}'.format(ant), latest, 'node')
+            node_info = hsession.get_part_at_station_from_type('HH{:d}'.format(ant), self.latest, 'node')
             if node_info[list(node_info.keys())[0]]['e'] is not None:
                 _node_num = re.findall(r'N(\d+)', node_info[list(node_info.keys())[0]]['e'])[0]
                 node_ind[ant_cnt] = np.int(_node_num)
@@ -543,14 +534,19 @@ window.onresize = function() {{
     <div class="col-md-12">
         <p class="text-center">Report generated <span id="age">???</span> ago (at {gen_date} UTC)</p>
     </div>
+    <div class="col-md-12">
+        <p class="text-cneter">Data observerd at {iso_date} (JD: {jd_date})</p>
+    </div>
   </div>
   <div class="row">
-    <div id="plotly-div" class="col-md-1s", style="height: 1000px"></div>
+    <div id="plotly-div" class="col-md-12", style="height: 1000px"></div>
   </div>
    <div class="row">
-     <div id="plotly-div2" class="col-md-1s", style="height: 500px"></div>
+     <div id="plotly-div2" class="col-md-12", style="height: 500px"></div>
    </div>
-""", gen_date=self.now.iso)
+""", gen_date=self.now.iso,
+     iso_date=self.latest.iso,
+     jd_date=self.latest.jd)
 
         self.emit_js(JS_HEADER,
                      gen_time_unix_ms=self.now.unix * 1000,
