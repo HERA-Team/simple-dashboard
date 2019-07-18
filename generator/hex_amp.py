@@ -263,8 +263,10 @@ class Emitter(object):
         #  for each type of power, loop over pols and print out the data
         #  save up a mask array used for the buttons later
         #  also plot the bad ones!
-        colorscale = "Jet"
+        colorscale = "Viridis"
         for pow_ind, power in enumerate([_amps, _pam_power, _adc_power]):
+            vmax = np.max(power.compressed())
+            vmin = np.min(power.compressed())
             for pol_ind, pol in enumerate(pols):
                 if pow_ind == 0:
                     amp_mask.extend(['true'] * 2)
@@ -286,8 +288,6 @@ class Emitter(object):
                     visible = 'false'
                     self.emit_js("// ADC DATA ")
 
-                vmax = np.max(power[pol_ind].compressed())
-                vmin = np.min(power[pol_ind].compressed())
                 self.emit_js('{{x: ', end='')
                 self.emit_data_array(xs.data[~power[pol_ind].mask], '{x:.3f}')
                 self.emit_js(',\ny: ', end='')
@@ -314,11 +314,9 @@ class Emitter(object):
                 self.emit_js(",\ntext: ", end='')
                 self.emit_text_array(_text[pol_ind].data[power[pol_ind].mask], '{x}')
                 self.emit_js(",\n marker: {{  color: 'orange'", end='')
-                # self.emit_js(", cmin: {vmin}, cmax: {vmax}, ", vmin=vmin, vmax=vmax, end='')
-                # self.emit_js("colorscale: '{colorscale}', size: 14", colorscale=colorscale, end='')
-                # self.emit_js(",\ncolorbar: {{thickness: 20, title: 'dB'}}", end='')
+                self.emit_js(", size: 14", end='')
                 self.emit_js("}},\nhovertemplate: '%{{text}}<br>", end='')
-                self.emit_js("Amp [dB]: N/A<extra></extra>'", end='')
+                self.emit_js("Amp [dB]: NO DATA AVAILABLE<extra></extra>'", end='')
                 self.emit_js('}},\n', end='\n')
 
         self.emit_js(']', end='\n')
@@ -400,7 +398,7 @@ Plotly.relayout("plotly-div", {{
     </div>
   </div>
   <div class="row">
-    <div id="plotly-div" class="col-md-12"></div>
+    <div id="plotly-div" class="col-md-12", width="75vw"></div>
   </div>
 """, gen_date=self.now.iso)
 
