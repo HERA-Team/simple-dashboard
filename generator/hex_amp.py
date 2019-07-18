@@ -558,7 +558,7 @@ window.onresize = function() {{
         self.emit_html("""\
   <div class="row">
     <div class="col-md-12">
-        <p class="text-center"><a href="https://github.com/HERA-Team/simple-dashboard">Source code</a>.</p>
+        <p class="text-center"><a href="https://github.com/HERA-Team/simple-dashboard">Source code</a></p>
     </div>
   </div>
 </div>
