@@ -166,19 +166,26 @@ class Emitter(object):
                            antpos['NORTH'],
                            antpos['UP']])
         array_center = np.mean(antpos, axis=1, keepdims=True)
-
         antpos -= array_center
 
-        # Get Node and PAM info
-        nodes = np.zeros_like(ants, dtype=str)
-        node_nums = np.zeros_like(ants, dtype=int)
-        pams = np.zeros_like(ants, dtype=str)
+        stations = hsession.get_all_fully_connected_at_date(at_date=latest)
+
+        for station in stations:
+            if station.antenna_number not in ants:
+                np.append(ants, station.antenna_number)
+        ants = np.unique(ants)
+
+        # Get node and PAM info
+        node_ind = np.zeros_like(ants, dtype=np.int)
+        pam_ind = np.zeros_like(ants, dtype=np.int)
         pam_power = {}
         adc_power = {}
 
-        for key in amps:
-            pam_power.setdefault(key, np.Inf)
-            adc_power.setdefault(key, np.Inf)
+        for ant in ants:
+            for pol in pols:
+                amps.setdefault((ant, pol), np.Inf)
+                pam_power.setdefault((ant, pol), np.Inf)
+                adc_power.setdefault((ant, pol), np.Inf)
 
         for ant_cnt, ant in enumerate(ants):
             station_status = self.session2.get_antenna_status(starttime=latest,
@@ -191,16 +198,20 @@ class Emitter(object):
             pam_info = hsession.get_part_at_station_from_type('HH{:d}'.format(ant), latest, 'post-amp')
             if pam_info[list(pam_info.keys())[0]]['e'] is not None:
                 _pam_num = re.findall(r'PAM(\d+)', pam_info[list(pam_info.keys())[0]]['e'])[0]
-                pams[ant_cnt] = np.int(_pam_num)
+                pam_ind[ant_cnt] = np.int(_pam_num)
             else:
-                pams[ant_cnt] = -1
+                pam_ind[ant_cnt] = -1
 
             node_info = hsession.get_part_at_station_from_type('HH{:d}'.format(ant), latest, 'node')
             if node_info[list(node_info.keys())[0]]['e'] is not None:
                 _node_num = re.findall(r'N(\d+)', node_info[list(node_info.keys())[0]]['e'])[0]
-                nodes[ant_cnt] = np.int(_node_num)
+                node_ind[ant_cnt] = np.int(_node_num)
             else:
-                nodes[ant_cnt] = -1
+                node_ind[ant_cnt] = -1
+
+        pams, _pam_ind = np.unique(pam_ind, return_inverse=True)
+        nodes, _node_ind = np.unique(node_ind, return_inverse=True)
+
         xs_offline = np.ma.masked_array(antpos[0, :],
                                         mask=[True if int(name[2:]) in ants
                                               else False for name in antnames])
@@ -210,7 +221,7 @@ class Emitter(object):
                                           mask=xs_offline.mask).compressed()
         xs_offline = xs_offline.compressed()
 
-        ant_index = np.array([np.argwhere('HH{:d}'.format(ant)==antnames)
+        ant_index = np.array([np.argwhere('HH{:d}'.format(ant) == antnames)
                               for ant in ants]).squeeze()
 
         _amps = np.ma.masked_invalid([[amps[ant, pol] if ant is not None else np.Inf
@@ -220,12 +231,12 @@ class Emitter(object):
         _pam_power = np.ma.masked_invalid([[pam_power[ant, pol] if pam_power[ant, pol] is not None else np.Inf
                                             for ant_cnt, ant in enumerate(ants)] for pol in pols])
         xs = np.ma.masked_array(antpos[0, ant_index], mask=_amps[0].mask)
-        ys = np.ma.masked_array([antpos[1, ant_index] + 3 * (pol_cnt -.5)
+        ys = np.ma.masked_array([antpos[1, ant_index] + 3 * (pol_cnt - .5)
                                  for pol_cnt, pol in enumerate(pols)],
                                 mask=_amps.mask)
-        _text = np.ma.masked_array([[antnames[ant_index[ant_cnt]] + pol + \
-                                     '<br>' + 'PAM: ' + pams[ant_cnt] + \
-                                     '<br>' + 'Node:' + nodes[ant_cnt] \
+        _text = np.ma.masked_array([[antnames[ant_index[ant_cnt]] + pol
+                                     + '<br>' + 'PAM: ' + str(pam_ind[ant_cnt])
+                                     + '<br>' + 'Node:' + str(node_ind[ant_cnt])
                                      for ant_cnt, ant in enumerate(ants)]
                                    for pol in pols], mask=_amps.mask)
 
@@ -276,7 +287,7 @@ class Emitter(object):
                     self.emit_js("// ADC DATA ")
 
                 vmax = np.max(power[pol_ind].compressed())
-                vmin = np.max(power[pol_ind].compressed())
+                vmin = np.min(power[pol_ind].compressed())
                 self.emit_js('{{x: ', end='')
                 self.emit_data_array(xs.data[~power[pol_ind].mask], '{x:.3f}')
                 self.emit_js(',\ny: ', end='')
@@ -289,7 +300,7 @@ class Emitter(object):
                 self.emit_data_array(power[pol_ind].data[~power[pol_ind].mask], '{x:.3f}')
                 self.emit_js(", cmin: {vmin}, cmax: {vmax}, ", vmin=vmin, vmax=vmax, end='')
                 self.emit_js("colorscale: '{colorscale}', size: 14,", colorscale=colorscale, end='')
-                self.emit_js("colorbar: {{thickness: 20, title: 'dB'}}", end='')
+                self.emit_js("\ncolorbar: {{thickness: 20, title: 'dB'}}", end='')
                 self.emit_js("}},\nhovertemplate: '%{{text}}<br>", end='')
                 self.emit_js("Amp [dB]: %{{marker.color:.3f}}<extra></extra>'", end='')
                 self.emit_js('}},', end='\n')
@@ -304,7 +315,7 @@ class Emitter(object):
                 self.emit_text_array(_text[pol_ind].data[power[pol_ind].mask], '{x}')
                 self.emit_js(",\n marker: {{  color: 'orange'", end='')
                 self.emit_js(", cmin: {vmin}, cmax: {vmax}, ", vmin=vmin, vmax=vmax, end='')
-                self.emit_js("colorscale: '{colorscale}', size: 14,", colorscale=colorscale, end='')
+                self.emit_js("colorscale: '{colorscale}', size: 14", colorscale=colorscale, end='')
                 self.emit_js(",\ncolorbar: {{thickness: 20, title: 'dB'}}", end='')
                 self.emit_js("}},\nhovertemplate: '%{{text}}<br>", end='')
                 self.emit_js("Amp [dB]: N/A<extra></extra>'", end='')
