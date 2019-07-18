@@ -365,6 +365,8 @@ class Emitter(object):
         self.emit_js('}},')
 
         self.emit_js('],', end='\n')
+        self.emit_js('showactive: true,')
+        self.emit_js("type: 'buttons',")
         self.emit_js('}},')
         self.emit_js(']', end='\n')
 
@@ -403,8 +405,10 @@ window.onresize = function() {{
             __amps = _amps[:, node_index]
             __adc = _adc_power[:, node_index]
             __pam = _pam_power[:, node_index]
-            for pol_ind, pol in enumerate(pols):
-                for pow_ind, power in enumerate([__amps, __adc, __pam]):
+            for pow_ind, power in enumerate([__amps, __adc, __pam]):
+                vmax = np.max(power.compressed())
+                vmin = np.min(power.compressed())
+                for pol_ind, pol in enumerate(pols):
                     if pow_ind == 0:
                         amp_mask.extend(['true'] * 2)
                         pam_mask.extend(['false'] * 2)
@@ -498,6 +502,8 @@ window.onresize = function() {{
         self.emit_js('}},')
 
         self.emit_js('],', end='\n')
+        self.emit_js('showactive: true,')
+        self.emit_js("type: 'buttons',")
         self.emit_js('}},')
         self.emit_js(']', end='\n')
 
