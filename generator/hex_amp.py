@@ -50,6 +50,18 @@ if (report_age > 1800) {{
 }}
 """
 
+HTML_FOOTER = """\
+<div class="row">
+<div class="col-md-12">
+<p class="text-center"><a href="https://github.com/HERA-Team/simple-dashboard">Source code</a></p>
+</div>
+</div>
+</div>
+<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+<script src="{js_name}.js"></script>
+</body>
+</html>
+"""
 
 def main():
     parser = mc.get_mc_argument_parser()
@@ -70,57 +82,71 @@ def main():
 
     with db.sessionmaker() as session, \
          db2.sessionmaker() as session2, \
-         open('hex_amp.html', 'wt') as html_file, \
-         open('hex_amp.js', 'wt') as js_file:
+         open('hex_amp.html', 'wt') as html_hex, \
+         open('hex_amp.js', 'wt') as js_hex, \
+         open('node_amp.html', 'wt') as html_node, \
+         open('node_amp.js', 'wt') as js_node:
 
-        def emit_html(f, end='\n', **kwargs):
-            print(f.format(**kwargs), file=html_file, end=end)
+        def emit_html_hex(f, end='\n', **kwargs):
+            print(f.format(**kwargs), file=html_hex, end=end)
 
-        def emit_js(f, end='\n', **kwargs):
-            print(f.format(**kwargs), file=js_file, end=end)
+        def emit_js_hex(f, end='\n', **kwargs):
+            print(f.format(**kwargs), file=js_hex, end=end)
 
-        Emitter(session, session2, redis_db, emit_html, emit_js).emit()
+        def emit_html_node(f, end='\n', **kwargs):
+            print(f.format(**kwargs), file=html_node, end=end)
+
+        def emit_js_node(f, end='\n', **kwargs):
+            print(f.format(**kwargs), file=js_node, end=end)
+
+        Emitter(session, session2, redis_db,
+                emit_html_hex, emit_js_hex,
+                emit_html_node, emit_js_node).emit()
 
 
 class Emitter(object):
 
-    def __init__(self, session, session2, redis_db, emit_html, emit_js):
+    def __init__(self, session, session2, redis_db,
+                 emit_html_hex, emit_js_hex,
+                 emit_html_node, emit_js_node):
         self.session = session
         self.session2 = session2
         self.redis_db = redis_db
 
-        self.emit_html = emit_html
-        self.emit_js = emit_js
+        self.emit_html_hex = emit_html_hex
+        self.emit_js_hex = emit_js_hex
+        self.emit_html_node = emit_html_node
+        self.emit_js_node = emit_html_node
         self.latest = Time(np.frombuffer(self.redis_db.get('auto:timestamp'),
                            dtype=np.float64).item(), format='jd')
 
         self.now = Time.now()
 
-    def emit_data_array(self, data, fmt):
-        self.emit_js('[', end='')
+    def emit_data_array(self, data, fmt, emit_fn):
+        emit_fn('[', end='')
         first = True
 
         for x in data:
             if first:
                 first = False
             else:
-                self.emit_js(',', end='')
-            self.emit_js(fmt, x=x, end='')
+                emit_fn(',', end='')
+            emit_fn(fmt, x=x, end='')
 
-        self.emit_js(']', end='')
+        emit_fn(']', end='')
 
-    def emit_text_array(self, data, fmt):
-        self.emit_js('[', end='')
+    def emit_text_array(self, data, fmt, emit_fn):
+        emit_fn('[', end='')
         first = True
 
         for x in data:
             if first:
                 first = False
             else:
-                self.emit_js(',', end='')
-            self.emit_js("'" + fmt + "'", x=x, end='')
+                emit_fn(',', end='')
+            emit_fn("'" + fmt + "'", x=x, end='')
 
-        self.emit_js(']', end='')
+        emit_fn(']', end='')
 
     def prep_data(self):
         autos = {}
@@ -234,24 +260,24 @@ class Emitter(object):
                                    for pol in pols], mask=_amps.mask)
 
         sep = ''
-        self.emit_js('var data = [')
+        self.emit_js_hex('var data = [')
 
         amp_mask = ['true']
         pam_mask = ['true']
         adc_mask = ['true']
         # Offline antennas
-        self.emit_js('{{x: ', end='')
-        self.emit_data_array(xs_offline, '{x:.3f}')
-        self.emit_js(',\ny :', end='')
-        self.emit_data_array(ys_offline, '{x:.3f}')
-        self.emit_js(',\ntext:', end='')
-        self.emit_text_array(name_offline, '{x}')
-        self.emit_js(",\nmode: 'markers'", end='')
-        self.emit_js(",\nvisible: true", end='')
-        self.emit_js(",\nmarker: {{color: 'black', size : 14,", end='')
-        self.emit_js("opacity: .5, symbol: 'hexagon' }}", end='')
-        self.emit_js(",\nhovertemplate: '%{{text}}<br>OFFLINE<extra></extra>' ", end='')
-        self.emit_js('}},', end='\n')
+        self.emit_js_hex('{{x: ', end='')
+        self.emit_data_array(xs_offline, '{x:.3f}', self.emit_js_hex)
+        self.emit_js_hex(',\ny :', end='')
+        self.emit_data_array(ys_offline, '{x:.3f}', self.emit_js_hex)
+        self.emit_js_hex(',\ntext:', end='')
+        self.emit_text_array(name_offline, '{x}', self.emit_js_hex)
+        self.emit_js_hex(",\nmode: 'markers'", end='')
+        self.emit_js_hex(",\nvisible: true", end='')
+        self.emit_js_hex(",\nmarker: {{color: 'black', size : 14,", end='')
+        self.emit_js_hex("opacity: .5, symbol: 'hexagon' }}", end='')
+        self.emit_js_hex(",\nhovertemplate: '%{{text}}<br>OFFLINE<extra></extra>' ", end='')
+        self.emit_js_hex('}},', end='\n')
 
         #  for each type of power, loop over pols and print out the data
         #  save up a mask array used for the buttons later
@@ -259,11 +285,11 @@ class Emitter(object):
         colorscale = "Viridis"
         for pow_ind, power in enumerate([_amps, _pam_power, _adc_power]):
             if pow_ind == 0:
-                self.emit_js("// AMPLITUDE DATA ")
+                self.emit_js_hex("// AMPLITUDE DATA ")
             elif pow_ind == 1:
-                self.emit_js("// PAM DATA ")
+                self.emit_js_hex("// PAM DATA ")
             else:
-                self.emit_js("// ADC DATA ")
+                self.emit_js_hex("// ADC DATA ")
 
             vmax = np.max(power.compressed())
             vmin = np.min(power.compressed())
@@ -285,85 +311,85 @@ class Emitter(object):
                     adc_mask.extend(['true'] * 2)
                     visible = 'false'
 
-                self.emit_js('{{x: ', end='')
-                self.emit_data_array(xs.data[~power[pol_ind].mask], '{x:.3f}')
-                self.emit_js(',\ny: ', end='')
-                self.emit_data_array(ys[pol_ind].data[~power[pol_ind].mask], '{x:.3f}')
-                self.emit_js(",\nmode: 'markers'", end='')
-                self.emit_js(",\nvisible: {visible}", visible=visible, end='')
-                self.emit_js(",\ntext: ", end='')
-                self.emit_text_array(_text[pol_ind].data[~power[pol_ind].mask], '{x}')
-                self.emit_js(',\n marker: {{  color:', end='')
-                self.emit_data_array(power[pol_ind].data[~power[pol_ind].mask], '{x:.3f}')
-                self.emit_js(", cmin: {vmin}, cmax: {vmax}, ", vmin=vmin, vmax=vmax, end='')
-                self.emit_js("colorscale: '{colorscale}', size: 14,", colorscale=colorscale, end='')
-                self.emit_js("\ncolorbar: {{thickness: 20, title: 'dB'}}", end='')
-                self.emit_js("}},\nhovertemplate: '%{{text}}<br>", end='')
-                self.emit_js("Amp [dB]: %{{marker.color:.3f}}<extra></extra>'", end='')
-                self.emit_js('}},', end='\n')
+                self.emit_js_hex('{{x: ', end='')
+                self.emit_data_array(xs.data[~power[pol_ind].mask], '{x:.3f}', self.emit_js_hex)
+                self.emit_js_hex(',\ny: ', end='')
+                self.emit_data_array(ys[pol_ind].data[~power[pol_ind].mask], '{x:.3f}', self.emit_js_hex)
+                self.emit_js_hex(",\nmode: 'markers'", end='')
+                self.emit_js_hex(",\nvisible: {visible}", visible=visible, end='')
+                self.emit_js_hex(",\ntext: ", end='')
+                self.emit_text_array(_text[pol_ind].data[~power[pol_ind].mask], '{x}', self.emit_js_hex)
+                self.emit_js_hex(',\n marker: {{  color:', end='')
+                self.emit_data_array(power[pol_ind].data[~power[pol_ind].mask], '{x:.3f}', self.emit_js_hex)
+                self.emit_js_hex(", cmin: {vmin}, cmax: {vmax}, ", vmin=vmin, vmax=vmax, end='')
+                self.emit_js_hex("colorscale: '{colorscale}', size: 14,", colorscale=colorscale, end='')
+                self.emit_js_hex("\ncolorbar: {{thickness: 20, title: 'dB'}}", end='')
+                self.emit_js_hex("}},\nhovertemplate: '%{{text}}<br>", end='')
+                self.emit_js_hex("Amp [dB]: %{{marker.color:.3f}}<extra></extra>'", end='')
+                self.emit_js_hex('}},', end='\n')
 
-                self.emit_js('{{x: ', end='')
-                self.emit_data_array(xs.data[power[pol_ind].mask], '{x:.3f}')
-                self.emit_js(',\ny: ', end='')
-                self.emit_data_array(ys[pol_ind].data[power[pol_ind].mask], '{x:.3f}')
-                self.emit_js(",\nmode: 'markers'", end='')
-                self.emit_js(",\nvisible: {visible}", visible=visible, end='')
-                self.emit_js(",\ntext: ", end='')
-                self.emit_text_array(_text[pol_ind].data[power[pol_ind].mask], '{x}')
-                self.emit_js(",\n marker: {{  color: 'orange'", end='')
-                self.emit_js(", size: 14", end='')
-                self.emit_js("}},\nhovertemplate: '%{{text}}<br>", end='')
-                self.emit_js("Amp [dB]: NO DATA AVAILABLE<extra></extra>'", end='')
-                self.emit_js('}},\n', end='\n')
+                self.emit_js_hex('{{x: ', end='')
+                self.emit_data_array(xs.data[power[pol_ind].mask], '{x:.3f}', self.emit_js_hex)
+                self.emit_js_hex(',\ny: ', end='')
+                self.emit_data_array(ys[pol_ind].data[power[pol_ind].mask], '{x:.3f}', self.emit_js_hex)
+                self.emit_js_hex(",\nmode: 'markers'", end='')
+                self.emit_js_hex(",\nvisible: {visible}", visible=visible, end='')
+                self.emit_js_hex(",\ntext: ", end='')
+                self.emit_text_array(_text[pol_ind].data[power[pol_ind].mask], '{x}', self.emit_js_hex)
+                self.emit_js_hex(",\n marker: {{  color: 'orange'", end='')
+                self.emit_js_hex(", size: 14", end='')
+                self.emit_js_hex("}},\nhovertemplate: '%{{text}}<br>", end='')
+                self.emit_js_hex("Amp [dB]: NO DATA AVAILABLE<extra></extra>'", end='')
+                self.emit_js_hex('}},\n', end='\n')
 
-        self.emit_js(']', end='\n')
+        self.emit_js_hex(']', end='\n')
 
-        self.emit_js(' var updatemenus=[')
-        self.emit_js('{{buttons : [')
+        self.emit_js_hex(' var updatemenus=[')
+        self.emit_js_hex('{{buttons : [')
 
         # Amplitude Button
-        self.emit_js('{{')
-        self.emit_js('args: [')
-        self.emit_js("{{'visible': ", end='')
-        self.emit_data_array(amp_mask, '{x}')
-        self.emit_js("}},\n{{'title': 'Median Auto Power',")
-        self.emit_js("'annotations': {{}} }}")
-        self.emit_js('],')
-        self.emit_js("label: 'Auto Corr',")
-        self.emit_js("method: 'update'")
-        self.emit_js('}},')
+        self.emit_js_hex('{{')
+        self.emit_js_hex('args: [')
+        self.emit_js_hex("{{'visible': ", end='')
+        self.emit_data_array(amp_mask, '{x}', self.emit_js_hex)
+        self.emit_js_hex("}},\n{{'title': 'Median Auto Power',")
+        self.emit_js_hex("'annotations': {{}} }}")
+        self.emit_js_hex('],')
+        self.emit_js_hex("label: 'Auto Corr',")
+        self.emit_js_hex("method: 'update'")
+        self.emit_js_hex('}},')
 
         # PAMS buttons
-        self.emit_js('{{')
-        self.emit_js('args: [')
-        self.emit_js("{{'visible': ", end='')
-        self.emit_data_array(pam_mask, '{x}')
-        self.emit_js("}},\n{{'title': 'PAM Power',")
-        self.emit_js("'annotations': {{}} }}")
-        self.emit_js('],')
-        self.emit_js("label: 'Pam Power',")
-        self.emit_js("method: 'update'")
-        self.emit_js('}},')
+        self.emit_js_hex('{{')
+        self.emit_js_hex('args: [')
+        self.emit_js_hex("{{'visible': ", end='')
+        self.emit_data_array(pam_mask, '{x}', self.emit_js_hex)
+        self.emit_js_hex("}},\n{{'title': 'PAM Power',")
+        self.emit_js_hex("'annotations': {{}} }}")
+        self.emit_js_hex('],')
+        self.emit_js_hex("label: 'Pam Power',")
+        self.emit_js_hex("method: 'update'")
+        self.emit_js_hex('}},')
 
         # ADC buttons
-        self.emit_js('{{')
-        self.emit_js('args: [')
-        self.emit_js("{{'visible': ", end='')
-        self.emit_data_array(adc_mask, '{x}')
-        self.emit_js("}},\n{{'title': 'ADC Power',")
-        self.emit_js("'annotations': {{}} }}")
-        self.emit_js('],')
-        self.emit_js("label: 'ADC Power',")
-        self.emit_js("method: 'update'")
-        self.emit_js('}},')
+        self.emit_js_hex('{{')
+        self.emit_js_hex('args: [')
+        self.emit_js_hex("{{'visible': ", end='')
+        self.emit_data_array(adc_mask, '{x}', self.emit_js_hex)
+        self.emit_js_hex("}},\n{{'title': 'ADC Power',")
+        self.emit_js_hex("'annotations': {{}} }}")
+        self.emit_js_hex('],')
+        self.emit_js_hex("label: 'ADC Power',")
+        self.emit_js_hex("method: 'update'")
+        self.emit_js_hex('}},')
 
-        self.emit_js('],', end='\n')
-        self.emit_js('showactive: true,')
-        self.emit_js("type: 'buttons',")
-        self.emit_js('}},')
-        self.emit_js(']', end='\n')
+        self.emit_js_hex('],', end='\n')
+        self.emit_js_hex('showactive: true,')
+        self.emit_js_hex("type: 'buttons',")
+        self.emit_js_hex('}},')
+        self.emit_js_hex(']', end='\n')
 
-        self.emit_js("""
+        self.emit_js_hex("""
 
 var layout = {{
     title: 'Median Auto Amplitude',
@@ -375,16 +401,16 @@ var layout = {{
     hovermode: 'closest'
 }};
 
-Plotly.plot("plotly-div", data, layout, {{responsive: true}});
-window.onresize = function() {{
+Plotly.plot("plotly-hex", data, layout, {{responsive: true}});
+// window.onresize = function() {{
 // Plotly.relayout("plotly-div", {{
 //                    width: 0.7 * window.innerWidth,
 //                    height: 0.8 * window.innerHeight
 //                          }})
- }}
+//}}
         """)
 
-        self.emit_js("var data2 = [")
+        self.emit_js_node("var data = [")
         amp_mask = []
         pam_mask = []
         adc_mask = []
@@ -407,102 +433,102 @@ window.onresize = function() {{
                         pam_mask.extend(['false'] * 2)
                         adc_mask.extend(['false'] * 2)
                         visible = 'true'
-                        self.emit_js("// AMPLITUDE DATA ")
+                        self.emit_js_node("// AMPLITUDE DATA ")
 
                     elif pow_ind == 1:
                         amp_mask.extend(['false'] * 2)
                         pam_mask.extend(['true'] * 2)
                         adc_mask.extend(['false'] * 2)
                         visible = 'false'
-                        self.emit_js("// PAM DATA ")
+                        self.emit_js_node("// PAM DATA ")
                     else:
                         amp_mask.extend(['false'] * 2)
                         pam_mask.extend(['false'] * 2)
                         adc_mask.extend(['true'] * 2)
                         visible = 'false'
-                        self.emit_js("// ADC DATA ")
+                        self.emit_js_node("// ADC DATA ")
 
-                    self.emit_js('{{x: ', end='')
-                    self.emit_data_array(xs[pol_ind].data[~power[pol_ind].mask], '{x:.3f}')
-                    self.emit_js(',\ny: ', end='')
-                    self.emit_data_array(ys[pol_ind].data[~power[pol_ind].mask], '{x:.3f}')
-                    self.emit_js(",\nmode: 'markers'", end='')
-                    self.emit_js(",\nvisible: {visible}", visible=visible, end='')
-                    self.emit_js(",\ntext: ", end='')
-                    self.emit_text_array(_text[pol_ind].data[~power[pol_ind].mask], '{x}')
-                    self.emit_js(',\n marker: {{  color:', end='')
-                    self.emit_data_array(power[pol_ind].data[~power[pol_ind].mask], '{x:.3f}')
-                    self.emit_js(", cmin: {vmin}, cmax: {vmax}, ", vmin=vmin, vmax=vmax, end='')
-                    self.emit_js("colorscale: '{colorscale}', size: 14,", colorscale=colorscale, end='')
-                    self.emit_js("\ncolorbar: {{thickness: 20, title: 'dB'}}", end='')
-                    self.emit_js("}},\nhovertemplate: '%{{text}}<br>", end='')
-                    self.emit_js("Amp [dB]: %{{marker.color:.3f}}<extra></extra>'", end='')
-                    self.emit_js('}},', end='\n')
+                    self.emit_js_node('{{x: ', end='')
+                    self.emit_data_array(xs[pol_ind].data[~power[pol_ind].mask], '{x:.3f}', self.emit_js_node)
+                    self.emit_js_node(',\ny: ', end='')
+                    self.emit_data_array(ys[pol_ind].data[~power[pol_ind].mask], '{x:.3f}', self.emit_js_node)
+                    self.emit_js_node(",\nmode: 'markers'", end='')
+                    self.emit_js_node(",\nvisible: {visible}", visible=visible, end='')
+                    self.emit_js_node(",\ntext: ", end='')
+                    self.emit_text_array(_text[pol_ind].data[~power[pol_ind].mask], '{x}', self.emit_js_node)
+                    self.emit_js_node(',\n marker: {{  color:', end='')
+                    self.emit_data_array(power[pol_ind].data[~power[pol_ind].mask], '{x:.3f}', self.emit_js_node)
+                    self.emit_js_node(", cmin: {vmin}, cmax: {vmax}, ", vmin=vmin, vmax=vmax, end='')
+                    self.emit_js_node("colorscale: '{colorscale}', size: 14,", colorscale=colorscale, end='')
+                    self.emit_js_node("\ncolorbar: {{thickness: 20, title: 'dB'}}", end='')
+                    self.emit_js_node("}},\nhovertemplate: '%{{text}}<br>", end='')
+                    self.emit_js_node("Amp [dB]: %{{marker.color:.3f}}<extra></extra>'", end='')
+                    self.emit_js_node('}},', end='\n')
 
-                    self.emit_js('{{x: ', end='')
-                    self.emit_data_array(xs[pol_ind].data[power[pol_ind].mask], '{x:.3f}')
-                    self.emit_js(',\ny: ', end='')
-                    self.emit_data_array(ys[pol_ind].data[power[pol_ind].mask], '{x:.3f}')
-                    self.emit_js(",\nmode: 'markers'", end='')
-                    self.emit_js(",\nvisible: {visible}", visible=visible, end='')
-                    self.emit_js(",\ntext: ", end='')
-                    self.emit_text_array(_text[pol_ind].data[power[pol_ind].mask], '{x}')
-                    self.emit_js(",\n marker: {{  color: 'orange'", end='')
-                    self.emit_js(", size: 14", end='')
-                    self.emit_js("}},\nhovertemplate: '%{{text}}<br>", end='')
-                    self.emit_js("Amp [dB]: NO DATA AVAILABLE<extra></extra>'", end='')
-                    self.emit_js('}},\n', end='\n')
+                    self.emit_js_node('{{x: ', end='')
+                    self.emit_data_array(xs[pol_ind].data[power[pol_ind].mask], '{x:.3f}', self.emit_js_node)
+                    self.emit_js_node(',\ny: ', end='')
+                    self.emit_data_array(ys[pol_ind].data[power[pol_ind].mask], '{x:.3f}', self.emit_js_node)
+                    self.emit_js_node(",\nmode: 'markers'", end='')
+                    self.emit_js_node(",\nvisible: {visible}", visible=visible, end='')
+                    self.emit_js_node(",\ntext: ", end='')
+                    self.emit_text_array(_text[pol_ind].data[power[pol_ind].mask], '{x}', self.emit_js_node)
+                    self.emit_js_node(",\n marker: {{  color: 'orange'", end='')
+                    self.emit_js_node(", size: 14", end='')
+                    self.emit_js_node("}},\nhovertemplate: '%{{text}}<br>", end='')
+                    self.emit_js_node("Amp [dB]: NO DATA AVAILABLE<extra></extra>'", end='', self.emit_js_node)
+                    self.emit_js_node('}},\n', end='\n')
 
-        self.emit_js(']', end='\n')
+        self.emit_js_node(']', end='\n')
 
-        self.emit_js(' var updatemenus=[')
-        self.emit_js('{{buttons : [')
+        self.emit_js_node(' var updatemenus=[')
+        self.emit_js_node('{{buttons : [')
 
         # Amplitude Button
-        self.emit_js('{{')
-        self.emit_js('args: [')
-        self.emit_js("{{'visible': ", end='')
-        self.emit_data_array(amp_mask, '{x}')
-        self.emit_js("}},\n{{'title': 'Median Auto Power vs Node',")
-        self.emit_js("'annotations': {{}} }}")
-        self.emit_js('],')
-        self.emit_js("label: 'Auto Corr',")
-        self.emit_js("method: 'update'")
-        self.emit_js('}},')
+        self.emit_js_node('{{')
+        self.emit_js_node('args: [')
+        self.emit_js_node("{{'visible': ", end='')
+        self.emit_data_array(amp_mask, '{x}', self.emit_js_node)
+        self.emit_js_node("}},\n{{'title': 'Median Auto Power vs Node',")
+        self.emit_js_node("'annotations': {{}} }}")
+        self.emit_js_node('],')
+        self.emit_js_node("label: 'Auto Corr',")
+        self.emit_js_node("method: 'update'")
+        self.emit_js_node('}},')
 
         # PAMS buttons
-        self.emit_js('{{')
-        self.emit_js('args: [')
-        self.emit_js("{{'visible': ", end='')
-        self.emit_data_array(pam_mask, '{x}')
-        self.emit_js("}},\n{{'title': 'PAM Power vs Node',")
-        self.emit_js("'annotations': {{}} }}")
-        self.emit_js('],')
-        self.emit_js("label: 'Pam Power',")
-        self.emit_js("method: 'update'")
-        self.emit_js('}},')
+        self.emit_js_node('{{')
+        self.emit_js_node('args: [')
+        self.emit_js_node("{{'visible': ", end='')
+        self.emit_data_array(pam_mask, '{x}', self.emit_js_node)
+        self.emit_js_node("}},\n{{'title': 'PAM Power vs Node',")
+        self.emit_js_node("'annotations': {{}} }}")
+        self.emit_js_node('],')
+        self.emit_js_node("label: 'Pam Power',")
+        self.emit_js_node("method: 'update'")
+        self.emit_js_node('}},')
 
         # ADC buttons
-        self.emit_js('{{')
-        self.emit_js('args: [')
-        self.emit_js("{{'visible': ", end='')
-        self.emit_data_array(adc_mask, '{x}')
-        self.emit_js("}},\n{{'title': 'ADC Power vs Node',")
-        self.emit_js("'annotations': {{}} }}")
-        self.emit_js('],')
-        self.emit_js("label: 'ADC Power',")
-        self.emit_js("method: 'update'")
-        self.emit_js('}},')
+        self.emit_js_node('{{')
+        self.emit_js_node('args: [')
+        self.emit_js_node("{{'visible': ", end='')
+        self.emit_data_array(adc_mask, '{x}', self.emit_js_node)
+        self.emit_js_node("}},\n{{'title': 'ADC Power vs Node',")
+        self.emit_js_node("'annotations': {{}} }}")
+        self.emit_js_node('],')
+        self.emit_js_node("label: 'ADC Power',")
+        self.emit_js_node("method: 'update'")
+        self.emit_js_node('}},')
 
-        self.emit_js('],', end='\n')
-        self.emit_js('showactive: true,')
-        self.emit_js("type: 'buttons',")
-        self.emit_js('}},')
-        self.emit_js(']', end='\n')
+        self.emit_js_node('],', end='\n')
+        self.emit_js_node('showactive: true,')
+        self.emit_js_node("type: 'buttons',")
+        self.emit_js_node('}},')
+        self.emit_js_node(']', end='\n')
 
-        self.emit_js("""
+        self.emit_js_node("""
 
-var layout2 = {{
+var layout = {{
     title: 'Power vs Node',
     xaxis: {{title: 'Node Number',
              dtick:1,
@@ -518,18 +544,18 @@ var layout2 = {{
     hovermode: 'closest'
 }};
 
-Plotly.plot("plotly-div2", data2, layout2, {{responsive: true}});
-window.onresize = function() {{
+Plotly.plot("plotly-node", data, layout, {{responsive: true}});
+//window.onresize = function() {{
 // Plotly.relayout("plotly-div", {{
 //                    width: 0.7 * window.innerWidth,
 //                    height: 0.8 * window.innerHeight
 //                          }})
- }}""")
+// }}""")
 
     def emit(self):
-        self.emit_html(HTML_HEADER)
+        self.emit_html_hex(HTML_HEADER)
 
-        self.emit_html("""\
+        self.emit_html_hex("""\
 <body>
 <div class="container">
   <div class="row">
@@ -541,32 +567,42 @@ window.onresize = function() {{
     </div>
   </div>
   <div class="row">
-    <div id="plotly-div" class="col-md-12", style="height: 1000px"></div>
-  </div>
-   <div class="row">
-     <div id="plotly-div2" class="col-md-12", style="height: 500px"></div>
+    <div id="plotly-hex" class="col-md-12", style="height: 1000px"></div>
    </div>
 """, gen_date=self.now.iso,
      iso_date=self.latest.iso,
      jd_date=self.latest.jd)
 
-        self.emit_js(JS_HEADER,
-                     gen_time_unix_ms=self.now.unix * 1000,
-                     )
+        self.emit_js_hex(JS_HEADER,
+                         gen_time_unix_ms=self.now.unix * 1000,
+                         )
+
+        self.emit_html_node(HTML_HEADER)
+        self.emit_html_node("""\
+ <body>
+ <div class="container">
+   <div class="row">
+     <div class="col-md-12">
+         <p class="text-center"><big>Report generated <span id="age">???</span> ago (at {gen_date} UTC)<big></p>
+     </div>
+     <div class="col-md-12">
+         <p class="text-center"><big><big>Data observerd on {iso_date} (JD: {jd_date})</big></big></p>
+     </div>
+   </div>
+   <div class="row">
+     <div id="plotly-node" class="col-md-12", style="height: 500px"></div>
+   </div>
+ """, gen_date=self.now.iso,
+      iso_date=self.latest.iso,
+      jd_date=self.latest.jd)
+
+        self.emit_js_node(JS_HEADER,
+                          gen_time_unix_ms=self.now.unix * 1000,
+                          )
         self.prep_data()
 
-        self.emit_html("""\
-  <div class="row">
-    <div class="col-md-12">
-        <p class="text-center"><a href="https://github.com/HERA-Team/simple-dashboard">Source code</a></p>
-    </div>
-  </div>
-</div>
-<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-<script src="hex_amp.js"></script>
-</body>
-</html>
-""")
+        self.emit_html_hex(HTML_FOOTER, js_name='hex_amp')
+        self.emit_html_node(HTML_FOOTER, js_name='node_amp')
 
 
 if __name__ == '__main__':
