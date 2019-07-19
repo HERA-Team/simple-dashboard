@@ -476,7 +476,7 @@ Plotly.plot("plotly-hex", data, layout, {{responsive: true}});
                     self.emit_js_node(",\n marker: {{  color: 'orange'", end='')
                     self.emit_js_node(", size: 14", end='')
                     self.emit_js_node("}},\nhovertemplate: '%{{text}}<br>", end='')
-                    self.emit_js_node("Amp [dB]: NO DATA AVAILABLE<extra></extra>'", end='', self.emit_js_node)
+                    self.emit_js_node("Amp [dB]: NO DATA AVAILABLE<extra></extra>'", end='')
                     self.emit_js_node('}},\n', end='\n')
 
         self.emit_js_node(']', end='\n')
