@@ -116,7 +116,7 @@ class Emitter(object):
         self.emit_html_hex = emit_html_hex
         self.emit_js_hex = emit_js_hex
         self.emit_html_node = emit_html_node
-        self.emit_js_node = emit_html_node
+        self.emit_js_node = emit_js_node
         self.latest = Time(np.frombuffer(self.redis_db.get('auto:timestamp'),
                            dtype=np.float64).item(), format='jd')
 
