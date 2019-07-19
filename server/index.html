@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- The above 3 meta tags *must* come first -->
+
+    <title>  HERA Dashboard</title>
+
+    <!-- Latest compiled and minified CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+
+    <!-- Optional theme -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap-theme.min.css">
+
+    <style>
+       .navbar { margin-bottom: 1px; }
+       .footer { margin-top: 20px; }
+       .librarian-time-bar {
+         padding-right: 15px;
+         font-size: 0.7em;
+         text-align: right;
+       }
+       .cropsky {
+         position: absolute;
+         clip: rect(100px,0,100px,0);
+       }
+     </style>
+<script src="sidereal.js"></script><script>
+const clocks = document.getElementsByClassName("clock_sidereal");
+const dates = document.getElementsByClassName("date");
+
+function updateClocks() {
+  <!-- Longitudes of observatories -->
+  var points = [-28.0473]
+  var i = 0;
+  for (let clock of clocks) {
+    clock.textContent = getLST(points[i]);
+    i++;
+  }
+}
+
+function updateDates() {
+  for (let date of dates) {
+    let datezone = date.dataset.timezone;
+    let datestr = new Date().toLocaleTimeString("en-GB", {
+      day:'numeric',
+      month:'long',
+      timeZone: datezone
+    });
+    date.textContent = datestr
+  }
+}
+
+// Update every second:
+setInterval(updateClocks, 1000);
+updateClocks();
+setInterval(updateDates, 1000);
+updateDates();
+</script>
+
+<script>
+!function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src='https://weatherwidget.io/js/widget.min.js';fjs.parentNode.insertBefore(js,fjs);}}(document,'script','weatherwidget-io-js');
+</script>
+   </head>
+   <body>
+       <nav class="navbar navbar-default">
+         <div class="container-fluid">
+   	<div class="navbar-header">
+   	  <a class="navbar-brand" href="/">HERA Dashboard</a>
+   	</div>
+    <ul class="nav navbar-nav">
+      <li class="dropdown">
+  	      <a href="#" class="dropdown-toggle" data-toggle="dropdown">Time History Dashboards
+  		        <b class="caret"></b></a>
+          <ul class="dropdown-menu">
+  		          <li><a href="http://enterprise.sese.asu.edu:3000/d/fXTf7MWWk/nodes">Nodes</a></li>
+  		          <li><a href="http://enterprise.sese.asu.edu:3000/d/WpruWhnZk/antennas?orgId=1&from=now-1d&to=now&var-antenna_number=All">Antennas</a></li>
+                <li><a href="http://enterprise.sese.asu.edu:3000/d/Eg-zPcnZk/hera-weather?orgId=1&var-weather_var=All&from=now-7d&to=now">Weather</a></li>
+                <li><a href="http://enterprise.sese.asu.edu:3000/d/Vk00efMZz/rtp_status?orgId=1">Compute and Processing</a></li>
+                <li><a href="http://enterprise.sese.asu.edu:3000/d/B04wvfSZk/mandc-internals?orgId=1">Monitoring Daemons</a></li>
+  	      </ul>
+        </li>
+        <li class="dropdown">
+            <a href="#" class="dropdown-toggle" data-toggle="dropdown">File a Report
+		          <b class="caret"></b></a>
+             <ul class="dropdown-menu">
+                <li><a href="#">New Site Report</a></li>
+                <li><a href="https://forms.gle/cpRoY7WdQok44jqB7">New Observer Report</a></li>
+              </ul>
+      </li>
+    </ul>
+    <div class="librarian-time-bar">
+      Local Time: <span class="date" data-timezone="Africa/Johannesburg">Jan 1</span><br>
+      Sidereal time: <span class="clock_sidereal" data-timezone="Africa/Johannesburg">00:00:00</span><br>
+     </div></div>
+
+
+    </nav>
+
+ <a class="weatherwidget-io" href="https://forecast7.com/en/n30d9622d15/carnarvon/" data-label_1="HERA" data-label_2="WEATHER" data-theme="original" >HERA WEATHER</a>
+
+
+  <iframe src="http://heranow.reionization.org/powers.html" width=500 height=400></iframe>
+<iframe src="http://localhost/hex_amp.html" width=500 height=400></iframe>
+  <iframe src="http://192.157.245.236/iframe_embed_carta.php?&lang=en&lat=-30.959965&long=22.154944200000045&elev=1284.32568359375&qtdest=4.0&est=S&lincon=S&nomcon=S&plansolu=S&cor=C&tam=300&lang=en&fh=2&nomest=N&ecl=S&eq=S&cid=Carnarvon,%208925,%20South%20Africa&dt_fx_atlzl=dt_atualizavel&bot_impr=N" width="350" height="400"style="margin: 0;padding: 0;border:none;">
+  </iframe>
+
+<iframe src="https://docs.google.com/spreadsheets/d/e/2PACX-1vTKxEegFZXTO-bMPmpmvBXfnSQ2ulbw0EvqkduPUKdGg4ZFFANQCHdJuVZqlqZjBlRhNMyIAoB1vw8J/pubhtml?gid=1055039091&amp;single=true&amp;widget=true&amp;headers=false" width=1200></iframe>
+
+
+  <footer class="footer navbar-default">
+    <p class="text-muted text-center"><small><small>(c) HERA Collaboration 2019</small></small></p>
+  </footer>
+
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+  <!-- Include all compiled plugins (below), or include individual files as needed -->
+  <!-- Latest compiled and minified JavaScript -->
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
+</body>
+</html>
