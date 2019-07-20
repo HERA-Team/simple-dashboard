@@ -18,6 +18,19 @@ write_files:
     ExecStart=/usr/bin/docker run --rm --name=hera-nginx -v /home/hera/html:/usr/share/nginx/html:ro -p 80:80 nginx:latest
     ExecStop=/usr/bin/docker stop hera-nginx
     ExecStopPost=/usr/bin/docker rm hera-nginx
+- path: /etc/systemd/system/hera-redis.service
+  permissions: 0644
+  owner: root
+  content: |
+    [Unit]
+    Description=Serve a mirror of the HERA correlator Redis db.
+       - Assumes redis ssh tunnel from qmaster to this host VM at 33330
+       - TODO: automaticallly set "GatewayPorts yes" in /etc/ssh/sshd_config
+
+    [Service]
+    ExecStart=/usr/bin/docker docker run  -d  --net=host --name hera-redis redis redis-server --slaveof 127.0.0.1 33330
+    ExecStop=/usr/bin/docker stop hera-redis
+    ExecStopPost=/usr/bin/docker rm hera-redis
 - path: /home/hera/html/index.html
   permissions: 0644
   owner: hera:hera
@@ -30,3 +43,4 @@ runcmd:
 - [ systemctl, daemon-reload ]
 - [ systemctl, start, hera-nginx.service ]
 - [ systemctl, start, sshd.service ]
+- [ systemctl, start, hera-redis.service]
