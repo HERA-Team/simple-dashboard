@@ -1,0 +1,5 @@
+numpy
+astropy
+hera_mc
+sqlalchemy
+redispy
