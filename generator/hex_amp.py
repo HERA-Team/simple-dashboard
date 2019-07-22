@@ -479,7 +479,7 @@ Plotly.plot("plotly-hex", data, layout, {{responsive: true}});
                     self.emit_js_node(", cmin: {vmin}, cmax: {vmax}, ", vmin=vmin, vmax=vmax, end='')
                     self.emit_js_node("colorscale: '{colorscale}', size: 14,", colorscale=colorscale, end='')
                     self.emit_js_node("\ncolorbar: {{thickness: 20, title: '{title}'}}", title=title, end='')
-                    self.emit_js_node("}},\nhovertemplate: '%{{text}}<extra></extra>", end='')
+                    self.emit_js_node("}},\nhovertemplate: '%{{text}}<extra></extra>'", end='')
                     self.emit_js_node('}},', end='\n')
 
                     self.emit_js_node('{{x: ', end='')
@@ -492,7 +492,7 @@ Plotly.plot("plotly-hex", data, layout, {{responsive: true}});
                     self.emit_text_array(_text[pol_ind].data[power[pol_ind].mask], '{x}', self.emit_js_node)
                     self.emit_js_node(",\n marker: {{  color: 'orange'", end='')
                     self.emit_js_node(", size: 14", end='')
-                    self.emit_js_node("}},\nhovertemplate: '%{{text}}<extra></extra>", end='')
+                    self.emit_js_node("}},\nhovertemplate: '%{{text}}<extra></extra>'", end='')
                     self.emit_js_node('}},\n', end='\n')
 
         self.emit_js_node(']', end='\n')
