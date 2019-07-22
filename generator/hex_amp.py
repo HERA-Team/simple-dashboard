@@ -211,8 +211,10 @@ class Emitter(object):
                                                               stoptime=latest,
                                                               antenna_number=int(ant))
             for status in station_status:
-                pam_power[(status.antenna_number, status.antenna_feed_pol)] = status.pam_power
-                adc_power[(status.antenna_number, status.antenna_feed_pol)] = status.adc_power
+                if status.pam_power is not None:
+                    pam_power[(status.antenna_number, status.antenna_feed_pol)] = status.pam_power
+                if status.adc_power is not None:
+                    adc_power[(status.antenna_number, status.antenna_feed_pol)] = status.adc_power
 
             pam_info = hsession.get_part_at_station_from_type('HH{:d}'.format(ant), latest, 'post-amp')
             if pam_info[list(pam_info.keys())[0]]['e'] is not None:
@@ -243,19 +245,23 @@ class Emitter(object):
         ant_index = np.array([np.argwhere('HH{:d}'.format(ant) == antnames)
                               for ant in ants]).squeeze()
 
-        _amps = np.ma.masked_invalid([[amps[ant, pol] if ant is not None else np.Inf
-                                       for ant_cnt, ant in enumerate(ants)] for pol in pols])
-        _adc_power = np.ma.masked_invalid([[adc_power[ant, pol] if adc_power[ant, pol] is not None else np.Inf
-                                            for ant_cnt, ant in enumerate(ants)] for pol in pols])
-        _pam_power = np.ma.masked_invalid([[pam_power[ant, pol] if pam_power[ant, pol] is not None else np.Inf
-                                            for ant_cnt, ant in enumerate(ants)] for pol in pols])
+        _amps = np.ma.masked_invalid([[amps[ant, pol] for ant in ants]
+                                      for pol in pols])
+        _adc_power = np.ma.masked_invalid([[adc_power[ant, pol] for ant in ants]
+                                           for pol in pols])
+        _pam_power = np.ma.masked_invalid([[pam_power[ant, pol] for ant in ants]
+                                           for pol in pols])
         xs = np.ma.masked_array(antpos[0, ant_index], mask=_amps[0].mask)
         ys = np.ma.masked_array([antpos[1, ant_index] + 3 * (pol_cnt - .5)
                                  for pol_cnt, pol in enumerate(pols)],
                                 mask=_amps.mask)
         _text = np.ma.masked_array([[antnames[ant_index[ant_cnt]] + pol
-                                     + '<br>' + 'PAM: ' + str(pam_ind[ant_cnt])
-                                     + '<br>' + 'Node:' + str(node_ind[ant_cnt])
+                                     + '<br>' + 'PAM #: ' + str(pam_ind[ant_cnt])
+                                     + '    Power: ' + str(pam_power[ant_cnt])
+                                     + '<br>' + 'Node #:' + str(node_ind[ant_cnt])
+                                     + '<br>Amp [dB]: ' + str(_amps[ant_cnt])
+                                     + '<br>PAM Power: ' + str(pam_power)
+                                     + '<br>ADC Power: ' + str(adc_power)
                                      for ant_cnt, ant in enumerate(ants)]
                                    for pol in pols], mask=_amps.mask)
 
@@ -281,7 +287,7 @@ class Emitter(object):
 
         #  for each type of power, loop over pols and print out the data
         #  save up a mask array used for the buttons later
-        #  also plot the bad ones!
+        #  also plot the bad ones!3
         colorscale = "Viridis"
         for pow_ind, power in enumerate([_amps, _pam_power, _adc_power]):
             if pow_ind == 0:
@@ -291,8 +297,13 @@ class Emitter(object):
             else:
                 self.emit_js_hex("// ADC DATA ")
 
-            vmax = np.max(power.compressed())
-            vmin = np.min(power.compressed())
+            if power.compressed().size > 0:
+                vmax = np.max(power.compressed())
+                vmin = np.min(power.compressed())
+            else:
+                vmax = 1
+                vmin = 0
+
             for pol_ind, pol in enumerate(pols):
                 if pow_ind == 0:
                     amp_mask.extend(['true'] * 2)
@@ -324,8 +335,8 @@ class Emitter(object):
                 self.emit_js_hex(", cmin: {vmin}, cmax: {vmax}, ", vmin=vmin, vmax=vmax, end='')
                 self.emit_js_hex("colorscale: '{colorscale}', size: 14,", colorscale=colorscale, end='')
                 self.emit_js_hex("\ncolorbar: {{thickness: 20, title: 'dB'}}", end='')
-                self.emit_js_hex("}},\nhovertemplate: '%{{text}}<br>", end='')
-                self.emit_js_hex("Amp [dB]: %{{marker.color:.3f}}<extra></extra>'", end='')
+                self.emit_js_hex("}},\nhovertemplate: '%{{text}}<extra></extra>'", end='')
+                # self.emit_js_hex("Amp [dB]: %{{marker.color:.3f}}", end='')
                 self.emit_js_hex('}},', end='\n')
 
                 self.emit_js_hex('{{x: ', end='')
@@ -338,8 +349,7 @@ class Emitter(object):
                 self.emit_text_array(_text[pol_ind].data[power[pol_ind].mask], '{x}', self.emit_js_hex)
                 self.emit_js_hex(",\n marker: {{  color: 'orange'", end='')
                 self.emit_js_hex(", size: 14", end='')
-                self.emit_js_hex("}},\nhovertemplate: '%{{text}}<br>", end='')
-                self.emit_js_hex("Amp [dB]: NO DATA AVAILABLE<extra></extra>'", end='')
+                self.emit_js_hex("}},\nhovertemplate: '%{{text}}<extra></extra>'", end='')
                 self.emit_js_hex('}},\n', end='\n')
 
         self.emit_js_hex(']', end='\n')
