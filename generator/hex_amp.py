@@ -439,8 +439,13 @@ Plotly.plot("plotly-hex", data, layout, {{responsive: true}});
             __adc = _adc_power[:, node_index]
             __pam = _pam_power[:, node_index]
             for pow_ind, power in enumerate([__amps, __adc, __pam]):
-                vmax = np.max(power.compressed())
-                vmin = np.min(power.compressed())
+                if power.compressed().size > 0:
+                    vmax = np.max(power.compressed())
+                    vmin = np.min(power.compressed())
+                else:
+                    vmax = 1
+                    vmin = 0
+
                 for pol_ind, pol in enumerate(pols):
                     if pow_ind == 0:
                         amp_mask.extend(['true'] * 2)
@@ -449,7 +454,6 @@ Plotly.plot("plotly-hex", data, layout, {{responsive: true}});
                         visible = 'true'
                         title = 'dB'
                         self.emit_js_node("// AMPLITUDE DATA ")
-
 
                     elif pow_ind == 1:
                         amp_mask.extend(['false'] * 2)
