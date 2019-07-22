@@ -260,11 +260,11 @@ class Emitter(object):
         _text = np.ma.masked_array([[antnames[ant_index[ant_cnt]] + pol
                                      + '<br>' + 'PAM #: ' + str(pam_ind[ant_cnt])
                                      + '<br>' + 'Node #:' + str(node_ind[ant_cnt])
-                                     + '<br>Amp [dB]: ' + str(_amps[ant_cnt])
-                                     + '<br>PAM Power: ' + str(_pam_power[ant_cnt])
-                                     + '<br>ADC Power: ' + str(_adc_power[ant_cnt])
+                                     + '<br>Amp [dB]: ' + str(_amps[pol_cnt, ant_cnt])
+                                     + '<br>PAM Power: ' + str(_pam_power[pol_cnt, ant_cnt])
+                                     + '<br>ADC Power: ' + str(_adc_power[pol_cnt, ant_cnt])
                                      for ant_cnt, ant in enumerate(ants)]
-                                    for pol in pols], mask=_amps.mask)
+                                    for pol_cnt, pol in enumerate(pols)], mask=_amps.mask)
 
         sep = ''
         self.emit_js_hex('var data = [')
