@@ -77,7 +77,7 @@ def main():
     try:
         redis_db = redis.Redis('localhost', port=9932)
         redis_db.keys()
-    except ConnectionError as err:
+    except Exception as err:
         raise SystemExit(str(err))
 
     with db.sessionmaker() as session, \
