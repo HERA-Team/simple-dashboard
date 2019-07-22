@@ -259,7 +259,6 @@ class Emitter(object):
                                 mask=_amps.mask)
         _text = np.ma.masked_array([[antnames[ant_index[ant_cnt]] + pol
                                      + '<br>' + 'PAM #: ' + str(pam_ind[ant_cnt])
-                                     + '    Power: ' + str(pam_power[ant_cnt])
                                      + '<br>' + 'Node #:' + str(node_ind[ant_cnt])
                                      + '<br>Amp [dB]: ' + str(_amps[ant_cnt])
                                      + '<br>PAM Power: ' + str(_pam_power[ant_cnt])
