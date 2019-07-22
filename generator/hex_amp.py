@@ -212,9 +212,11 @@ class Emitter(object):
                                                               antenna_number=int(ant))
             for status in station_status:
                 if status.pam_power is not None:
-                    pam_power[(status.antenna_number, status.antenna_feed_pol)] = status.pam_power
+                    pam_power[(status.antenna_number,
+                               status.antenna_feed_pol)] = status.pam_power
                 if status.adc_power is not None:
-                    adc_power[(status.antenna_number, status.antenna_feed_pol)] = status.adc_power
+                    adc_power[(status.antenna_number,
+                               status.antenna_feed_pol)] = status.adc_power
 
             pam_info = hsession.get_part_at_station_from_type('HH{:d}'.format(ant), latest, 'post-amp')
             if pam_info[list(pam_info.keys())[0]]['e'] is not None:
@@ -260,10 +262,10 @@ class Emitter(object):
                                      + '    Power: ' + str(pam_power[ant_cnt])
                                      + '<br>' + 'Node #:' + str(node_ind[ant_cnt])
                                      + '<br>Amp [dB]: ' + str(_amps[ant_cnt])
-                                     + '<br>PAM Power: ' + str(pam_power)
-                                     + '<br>ADC Power: ' + str(adc_power)
+                                     + '<br>PAM Power: ' + str(_pam_power[ant_cnt])
+                                     + '<br>ADC Power: ' + str(_adc_power[ant_cnt])
                                      for ant_cnt, ant in enumerate(ants)]
-                                   for pol in pols], mask=_amps.mask)
+                                    for pol in pols], mask=_amps.mask)
 
         sep = ''
         self.emit_js_hex('var data = [')
