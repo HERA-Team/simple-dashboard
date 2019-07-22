@@ -311,17 +311,20 @@ class Emitter(object):
                     pam_mask.extend(['false'] * 2)
                     adc_mask.extend(['false'] * 2)
                     visible = 'true'
+                    title='dB'
 
                 elif pow_ind == 1:
                     amp_mask.extend(['false'] * 2)
                     pam_mask.extend(['true'] * 2)
                     adc_mask.extend(['false'] * 2)
                     visible = 'false'
+                    title = 'Power'
                 else:
                     amp_mask.extend(['false'] * 2)
                     pam_mask.extend(['false'] * 2)
                     adc_mask.extend(['true'] * 2)
                     visible = 'false'
+                    title = 'Power'
 
                 self.emit_js_hex('{{x: ', end='')
                 self.emit_data_array(xs.data[~power[pol_ind].mask], '{x:.3f}', self.emit_js_hex)
@@ -335,7 +338,7 @@ class Emitter(object):
                 self.emit_data_array(power[pol_ind].data[~power[pol_ind].mask], '{x:.3f}', self.emit_js_hex)
                 self.emit_js_hex(", cmin: {vmin}, cmax: {vmax}, ", vmin=vmin, vmax=vmax, end='')
                 self.emit_js_hex("colorscale: '{colorscale}', size: 14,", colorscale=colorscale, end='')
-                self.emit_js_hex("\ncolorbar: {{thickness: 20, title: 'dB'}}", end='')
+                self.emit_js_hex("\ncolorbar: {{thickness: 20, title: '{title}' }}", title=title end='')
                 self.emit_js_hex("}},\nhovertemplate: '%{{text}}<extra></extra>'", end='')
                 # self.emit_js_hex("Amp [dB]: %{{marker.color:.3f}}", end='')
                 self.emit_js_hex('}},', end='\n')
@@ -444,19 +447,23 @@ Plotly.plot("plotly-hex", data, layout, {{responsive: true}});
                         pam_mask.extend(['false'] * 2)
                         adc_mask.extend(['false'] * 2)
                         visible = 'true'
+                        title = 'dB'
                         self.emit_js_node("// AMPLITUDE DATA ")
+
 
                     elif pow_ind == 1:
                         amp_mask.extend(['false'] * 2)
                         pam_mask.extend(['true'] * 2)
                         adc_mask.extend(['false'] * 2)
                         visible = 'false'
+                        title = 'Power'
                         self.emit_js_node("// PAM DATA ")
                     else:
                         amp_mask.extend(['false'] * 2)
                         pam_mask.extend(['false'] * 2)
                         adc_mask.extend(['true'] * 2)
                         visible = 'false'
+                        title = 'Power'
                         self.emit_js_node("// ADC DATA ")
 
                     self.emit_js_node('{{x: ', end='')
@@ -471,9 +478,8 @@ Plotly.plot("plotly-hex", data, layout, {{responsive: true}});
                     self.emit_data_array(power[pol_ind].data[~power[pol_ind].mask], '{x:.3f}', self.emit_js_node)
                     self.emit_js_node(", cmin: {vmin}, cmax: {vmax}, ", vmin=vmin, vmax=vmax, end='')
                     self.emit_js_node("colorscale: '{colorscale}', size: 14,", colorscale=colorscale, end='')
-                    self.emit_js_node("\ncolorbar: {{thickness: 20, title: 'dB'}}", end='')
-                    self.emit_js_node("}},\nhovertemplate: '%{{text}}<br>", end='')
-                    self.emit_js_node("Amp [dB]: %{{marker.color:.3f}}<extra></extra>'", end='')
+                    self.emit_js_node("\ncolorbar: {{thickness: 20, title: '{title}'}}", title=title, end='')
+                    self.emit_js_node("}},\nhovertemplate: '%{{text}}<extra></extra>", end='')
                     self.emit_js_node('}},', end='\n')
 
                     self.emit_js_node('{{x: ', end='')
@@ -486,8 +492,7 @@ Plotly.plot("plotly-hex", data, layout, {{responsive: true}});
                     self.emit_text_array(_text[pol_ind].data[power[pol_ind].mask], '{x}', self.emit_js_node)
                     self.emit_js_node(",\n marker: {{  color: 'orange'", end='')
                     self.emit_js_node(", size: 14", end='')
-                    self.emit_js_node("}},\nhovertemplate: '%{{text}}<br>", end='')
-                    self.emit_js_node("Amp [dB]: NO DATA AVAILABLE<extra></extra>'", end='')
+                    self.emit_js_node("}},\nhovertemplate: '%{{text}}<extra></extra>", end='')
                     self.emit_js_node('}},\n', end='\n')
 
         self.emit_js_node(']', end='\n')
