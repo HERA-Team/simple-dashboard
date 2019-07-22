@@ -338,7 +338,7 @@ class Emitter(object):
                 self.emit_data_array(power[pol_ind].data[~power[pol_ind].mask], '{x:.3f}', self.emit_js_hex)
                 self.emit_js_hex(", cmin: {vmin}, cmax: {vmax}, ", vmin=vmin, vmax=vmax, end='')
                 self.emit_js_hex("colorscale: '{colorscale}', size: 14,", colorscale=colorscale, end='')
-                self.emit_js_hex("\ncolorbar: {{thickness: 20, title: '{title}' }}", title=title end='')
+                self.emit_js_hex("\ncolorbar: {{thickness: 20, title: '{title}'}}", title=title, end='')
                 self.emit_js_hex("}},\nhovertemplate: '%{{text}}<extra></extra>'", end='')
                 # self.emit_js_hex("Amp [dB]: %{{marker.color:.3f}}", end='')
                 self.emit_js_hex('}},', end='\n')
