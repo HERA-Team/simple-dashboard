@@ -559,16 +559,16 @@ Plotly.plot("plotly-node", data, layout, {{responsive: true}});
 <body>
 <div class="container">
   <div class="row">
-    <div class="col-md-12">
-        <p class="text-center"><big>Report generated <span id="age">???</span> ago (at {gen_date} UTC)<big></p>
-    </div>
-    <div class="col-md-12">
-        <p class="text-center"><big><big>Data observerd on {iso_date} (JD: {jd_date})</big></big></p>
-    </div>
+    <div id="plotly-hex" class="col-md-12", style="height: 1000px"></div>
   </div>
   <div class="row">
-    <div id="plotly-hex" class="col-md-12", style="height: 1000px"></div>
-   </div>
+    <div class="col-md-12">
+        <p class="text-center">Report generated <span id="age">???</span> ago (at {gen_date} UTC)</p>
+    </div>
+    <div class="col-md-12">
+        <p class="text-center">Data observerd on {iso_date} (JD: {jd_date})</p>
+    </div>
+  </div>
 """, gen_date=self.now.iso,
      iso_date=self.latest.iso,
      jd_date=self.latest.jd)
@@ -582,15 +582,15 @@ Plotly.plot("plotly-node", data, layout, {{responsive: true}});
  <body>
  <div class="container">
    <div class="row">
-     <div class="col-md-12">
-         <p class="text-center"><big>Report generated <span id="age">???</span> ago (at {gen_date} UTC)<big></p>
-     </div>
-     <div class="col-md-12">
-         <p class="text-center"><big><big>Data observerd on {iso_date} (JD: {jd_date})</big></big></p>
-     </div>
+     <div id="plotly-node" class="col-md-12", style="height: 500px"></div>
    </div>
    <div class="row">
-     <div id="plotly-node" class="col-md-12", style="height: 500px"></div>
+     <div class="col-md-12">
+         <p class="text-center">Report generated <span id="age">???</span> ago (at {gen_date} UTC)</p>
+     </div>
+     <div class="col-md-12">
+         <p class="text-center">Data observerd on {iso_date} (JD: {jd_date})</p>
+     </div>
    </div>
  """, gen_date=self.now.iso,
       iso_date=self.latest.iso,
