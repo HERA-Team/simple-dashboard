@@ -104,7 +104,7 @@ BODY += """
 result = session.query(NodeSensor.node,func.count(NodeSensor.time)).filter(NodeSensor.time>(Time.now()-TimeDelta(Quantity(1,'day'))).gps).group_by(NodeSensor.node)
 BODY += """
             <tr>
-                <th scope="row">Pings from Nodes (last 24 hours)</th>
+                <th scope="row">Node Sensor Readings (last 24 hours)</th>
             """
 for l in result:
     BODY += "<td>Node{node}:{pings}</td>\n".format(node=l[0],pings=l[1])
