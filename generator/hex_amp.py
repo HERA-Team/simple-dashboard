@@ -266,9 +266,9 @@ class Emitter(object):
         _text = np.ma.masked_array([[antnames[ant_index[ant_cnt]] + pol
                                      + '<br>' + 'PAM #: ' + str(pam_ind[ant_cnt])
                                      + '<br>' + 'Node #:' + str(node_ind[ant_cnt])
-                                     + '<br>Amp [dB]: ' + str(_amps[pol_cnt, ant_cnt])
-                                     + '<br>PAM Power: ' + str(_pam_power[pol_cnt, ant_cnt])
-                                     + '<br>ADC Power: ' + str(_adc_power[pol_cnt, ant_cnt])
+                                     + '<br>Amp [dB]: {0:.2f}'.format(_amps[pol_cnt, ant_cnt])
+                                     + '<br>PAM Power: {0:.2f}'.format(_pam_power[pol_cnt, ant_cnt])
+                                     + '<br>ADC Power: {0:.2f}'.format(_adc_power[pol_cnt, ant_cnt])
                                      for ant_cnt, ant in enumerate(ants)]
                                     for pol_cnt, pol in enumerate(pols)], mask=_amps.mask)
 
