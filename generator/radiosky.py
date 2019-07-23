@@ -21,11 +21,12 @@ def get_map():
     T = datetime.utcnow() + timedelta(hours = 0)
     T  = Time(T, format = 'datetime')
     loc = astropy.coordinates.EarthLocation(lon =  22.13303, lat = -31.58)
-    print(T)
     
     ra = (T.sidereal_time('mean', longitude =  22.13303))/u.hourangle
     lon = (ra*15-360)
     rot = [(lon), -31.58]
+    sid_time = T.sidereal_time('mean', longitude =  22.13303)
+    print(sid_time)
     
     moon = astropy.coordinates.get_moon(T, location = loc, ephemeris=None)
     sun = astropy.coordinates.get_sun(T)
@@ -47,7 +48,7 @@ def get_map():
     source_list = [[moon, 'moon', 'slategrey'], [sun, 'sun', 'y'], [pic, 'pictor', 'w'], [forn, 'fornax', 'w'], [cass, 'Cass A', 'w'], [crab, 'Crab', 'w'], 
                    [lmc, 'LMC', 'w'], [cenA, 'Cen A', 'w'], [smc, 'SMC', 'w'], [callibrator1, 'J071717.6-250454', 'r'], [callibrator2, 'J020012.1-305327', 'r'], [callibrator3, ' J002549.1-260210', 'r']]
     
-    healpy.orthview(np.log10(mappy), coord = ['G', 'C'], rot = rot, return_projected_map = True, min = 0, max = 2, half_sky = 1)
+    healpy.orthview(np.log10(mappy), title = sid_time, coord = ['G', 'C'], rot = rot, return_projected_map = True, min = 0, max = 2, half_sky = 1)
     
     
     for item in source_list:
