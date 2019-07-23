@@ -178,7 +178,6 @@ class Emitter(object):
                 amps[(ant, pol)] = 10.0 * np.log10(tmp_amp)
 
         hsession = cm_sysutils.Handling(self.session)
-        # stations_conn = hsession.get_all_fully_connected_at_date(at_date=latest)
         ants = np.unique([ant for (ant, pol) in autos.keys()])
         pols = np.unique([pol for (ant, pol) in autos.keys()])
 
@@ -194,7 +193,7 @@ class Emitter(object):
         array_center = np.mean(antpos, axis=1, keepdims=True)
         antpos -= array_center
 
-        stations = hsession.get_all_fully_connected_at_date(at_date=latest)
+        stations = hsession.get_all_fully_connected_at_date(at_date='now')
 
         for station in stations:
             if station.antenna_number not in ants:
