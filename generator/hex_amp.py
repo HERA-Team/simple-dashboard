@@ -63,25 +63,32 @@ HTML_FOOTER = """\
 </html>
 """
 
+
 def main():
+    # The standard M&C argument parser
     parser = mc.get_mc_argument_parser()
+    # we'll have to add some extra options too
+    parser.add_argument('--db2', dest='mc_db_name2', type=str,
+                        help=('Name of the second database to connect to. '
+                              'Defaults to same as --db'))
+    parser.add_argument('--redishost', dest='redis_host', type=str,
+                        help=('The host name for redis to connect to, defualts to "localhost"'))
+    parser.add_argument('--port', dest='port', type=int, default=6379,
+                        help='Redis port to connect.')
     args = parser.parse_args()
 
     try:
         db = mc.connect_to_mc_db(args)
-        args.mc_db_name = 'hera_mc'
-        db2 = mc.connect_to_mc_db(args)
     except RuntimeError as e:
         raise SystemExit(str(e))
 
     try:
-        redis_db = redis.Redis('localhost', port=9932)
+        redis_db = redis.Redis(args.redishost, port=args.port)
         redis_db.keys()
     except Exception as err:
         raise SystemExit(str(err))
 
     with db.sessionmaker() as session, \
-         db2.sessionmaker() as session2, \
          open('hex_amp.html', 'wt') as html_hex, \
          open('hex_amp.js', 'wt') as js_hex, \
          open('node_amp.html', 'wt') as html_node, \
@@ -99,18 +106,17 @@ def main():
         def emit_js_node(f, end='\n', **kwargs):
             print(f.format(**kwargs), file=js_node, end=end)
 
-        Emitter(session, session2, redis_db,
+        Emitter(session, redis_db,
                 emit_html_hex, emit_js_hex,
                 emit_html_node, emit_js_node).emit()
 
 
 class Emitter(object):
 
-    def __init__(self, session, session2, redis_db,
+    def __init__(self, session, redis_db,
                  emit_html_hex, emit_js_hex,
                  emit_html_node, emit_js_node):
         self.session = session
-        self.session2 = session2
         self.redis_db = redis_db
 
         self.emit_html_hex = emit_html_hex
@@ -207,9 +213,8 @@ class Emitter(object):
                 adc_power.setdefault((ant, pol), np.Inf)
 
         for ant_cnt, ant in enumerate(ants):
-            station_status = self.session2.get_antenna_status(starttime=latest,
-                                                              stoptime=latest,
-                                                              antenna_number=int(ant))
+            station_status = self.session.get_antenna_status(most_recent=True,
+                                                             antenna_number=int(ant))
             for status in station_status:
                 if status.pam_power is not None:
                     pam_power[(status.antenna_number,
