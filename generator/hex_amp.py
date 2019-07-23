@@ -72,7 +72,8 @@ def main():
                         help=('Name of the second database to connect to. '
                               'Defaults to same as --db'))
     parser.add_argument('--redishost', dest='redis_host', type=str,
-                        help=('The host name for redis to connect to, defualts to "localhost"'))
+                        default='redishost',
+                        help=('The host name for redis to connect to, defualts to "redishost"'))
     parser.add_argument('--port', dest='port', type=int, default=6379,
                         help='Redis port to connect.')
     args = parser.parse_args()
