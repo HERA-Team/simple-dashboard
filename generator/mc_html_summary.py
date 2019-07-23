@@ -8,7 +8,7 @@ from hera_mc.librarian import LibFiles
 from astropy.units import Quantity
 from sqlalchemy import func
 import os
-
+from math import floor
 
 PREAMBLE="""
 <!DOCTYPE html>
@@ -29,7 +29,11 @@ PREAMBLE="""
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap-theme.min.css">
     </head>
 """
-
+import platform
+if platform.python_version().startswith('3'):
+    hostname = os.uname().nodename
+else:
+    hostname = os.uname()[1]
 POSTAMBLE="""
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
   <!-- Include all compiled plugins (below), or include individual files as needed -->
@@ -45,7 +49,7 @@ POSTAMBLE="""
 
 </body>
 </html>
-""".format(now=Time.now().iso,scriptname=__file__,hostname=os.uname().nodename)
+""".format(now=Time.now().iso,scriptname=__file__,hostname=hostname)
 
 
   # <thead>
@@ -77,15 +81,16 @@ BODY += TABLEHEAD
 #get the most recent observation logged by the correlator
 most_recent_obs = session.get_obs_by_time()[0]
 
-dt = Time.now() - Time(most_recent_obs.starttime,format='gps',scale='utc')
-dt = dt.to_datetime()
+dt = Time.now().gps - Time(most_recent_obs.starttime,format='gps',scale='utc').gps
+dt_days = int(floor((dt/3600.)/24))
+dt_hours= (dt - dt_days*3600*24)/3600.
 BODY += """
             <tr>
                <th scope="row">Time Since Last Obs</th>
                   <td>{dt} days {h} hours </td>
                </th>
             </tr>
-            """.format(dt=dt.days,h=int(dt.seconds/3600.))
+            """.format(dt=dt_days,h=int(dt_hours))
 #get the number of raw files in the last 24 hours
 numfiles = session.query(LibFiles).filter(LibFiles.time>(Time.now()+TimeDelta(Quantity(1,'day'))).gps).filter(LibFiles.filename.like('%uvh5')).count()
 BODY += """
