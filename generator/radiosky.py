@@ -54,22 +54,22 @@ def get_map():
         if item[1] == 'sun':
             name = item[1] 
             healpy.projscatter(item[0].ra, item[0].dec, lonlat = True, s = 1000, c = item[2], label = name)
-            healpy.projtext(item[0].ra, item[0].dec,  lonlat = True, c = 'k', s =  name)  
+            healpy.projtext(item[0].ra, item[0].dec,  lonlat = True, color = 'k', s =  name)  
         if item[1] == 'moon':
             name = item[1] 
             healpy.projscatter(item[0].ra, item[0].dec, lonlat = True, s = 200, c = item[2], label = name)
-            healpy.projtext(item[0].ra, item[0].dec,  lonlat = True, c = 'k', s =  name)  
+            healpy.projtext(item[0].ra, item[0].dec,  lonlat = True, color = 'k', s =  name)  
         else:
             name = item[1] 
-            healpy.projscatter(item[0].ra, item[0].dec, lonlat = True, s = 50, c = item[2], label = name)
-            healpy.projtext(item[0].ra, item[0].dec,  lonlat = True, c = 'k', s =  name)  
+            healpy.projscatter(item[0].ra, item[0].dec, lonlat = True, s = 50, color = item[2], label = name)
+            healpy.projtext(item[0].ra, item[0].dec,  lonlat = True, color = 'k', s =  name)  
         
     count = 0
     for body in ssbodies:
         name = body
         body = astropy.coordinates.get_body(body, T) 
-        healpy.projscatter(body.ra, body.dec, lonlat = True, s = 50, c = colors[count], label = name)
-        healpy.projtext(body.ra, body.dec,  lonlat = True, c = 'k', s = name) 
+        healpy.projscatter(body.ra, body.dec, lonlat = True, s = 50, color = colors[count], label = name)
+        healpy.projtext(body.ra, body.dec,  lonlat = True, color = 'k', s = name) 
         count += 1
        
     
