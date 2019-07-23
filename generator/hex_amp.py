@@ -433,6 +433,16 @@ Plotly.plot("plotly-hex", data, layout, {{responsive: true}});
         amp_mask = []
         pam_mask = []
         adc_mask = []
+        if power.compressed().size > 0:
+            vmax = np.max(power.compressed())
+            vmin = np.min(power.compressed())
+        else:
+            vmax = 1
+            vmin = 0
+        vmax = [np.max(power.compressed()) if power.compressed.size > 1 else 1
+                for power in [_amps, _pam_power, _adc_power]]
+        vmax = [np.min(power.compressed()) if power.compressed.size > 1 else 0
+                for power in [_amps, _pam_power, _adc_power]]
         for node in nodes:
             node_index = np.where(node_ind == node)[0]
 
@@ -444,13 +454,14 @@ Plotly.plot("plotly-hex", data, layout, {{responsive: true}});
             __adc = _adc_power[:, node_index]
             __pam = _pam_power[:, node_index]
             __text = _text[:, node_index]
-            for pow_ind, power in enumerate([__amps, __adc, __pam]):
-                if power.compressed().size > 0:
-                    vmax = np.max(power.compressed())
-                    vmin = np.min(power.compressed())
+
+            for pow_ind, power in enumerate([__amps, __pam, __adc]):
+                if pow_ind == 0:
+                    self.emit_js_node("// AMPLITUDE DATA ")
+                elif pow_ind == 1:
+                    self.emit_js_node("// PAM DATA ")
                 else:
-                    vmax = 1
-                    vmin = 0
+                    self.emit_js_node("// ADC DATA ")
 
                 for pol_ind, pol in enumerate(pols):
                     if pow_ind == 0:
@@ -459,7 +470,6 @@ Plotly.plot("plotly-hex", data, layout, {{responsive: true}});
                         adc_mask.extend(['false'] * 2)
                         visible = 'true'
                         title = 'dB'
-                        self.emit_js_node("// AMPLITUDE DATA ")
 
                     elif pow_ind == 1:
                         amp_mask.extend(['false'] * 2)
@@ -467,14 +477,12 @@ Plotly.plot("plotly-hex", data, layout, {{responsive: true}});
                         adc_mask.extend(['false'] * 2)
                         visible = 'false'
                         title = 'Power'
-                        self.emit_js_node("// PAM DATA ")
                     else:
                         amp_mask.extend(['false'] * 2)
                         pam_mask.extend(['false'] * 2)
                         adc_mask.extend(['true'] * 2)
                         visible = 'false'
                         title = 'Power'
-                        self.emit_js_node("// ADC DATA ")
 
                     self.emit_js_node('{{x: ', end='')
                     self.emit_data_array(xs[pol_ind].data[~power[pol_ind].mask], '{x:.3f}', self.emit_js_node)
@@ -486,7 +494,7 @@ Plotly.plot("plotly-hex", data, layout, {{responsive: true}});
                     self.emit_text_array(__text[pol_ind].data[~power[pol_ind].mask], '{x}', self.emit_js_node)
                     self.emit_js_node(',\n marker: {{  color:', end='')
                     self.emit_data_array(power[pol_ind].data[~power[pol_ind].mask], '{x:.3f}', self.emit_js_node)
-                    self.emit_js_node(", cmin: {vmin}, cmax: {vmax}, ", vmin=vmin, vmax=vmax, end='')
+                    self.emit_js_node(", cmin: {vmin}, cmax: {vmax}, ", vmin=vmin[pow_ind], vmax=vmax[pow_ind], end='')
                     self.emit_js_node("colorscale: '{colorscale}', size: 14,", colorscale=colorscale, end='')
                     self.emit_js_node("\ncolorbar: {{thickness: 20, title: '{title}'}}", title=title, end='')
                     self.emit_js_node("}},\nhovertemplate: '%{{text}}<extra></extra>'", end='')
