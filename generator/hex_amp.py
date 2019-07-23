@@ -256,6 +256,8 @@ class Emitter(object):
                                       for pol in pols])
         _adc_power = np.ma.masked_invalid([[adc_power[ant, pol] for ant in ants]
                                            for pol in pols])
+        # conver adc power to dB
+        _adc_power = 10 * np.log10(_adc_power)
         _pam_power = np.ma.masked_invalid([[pam_power[ant, pol] for ant in ants]
                                            for pol in pols])
         xs = np.ma.masked_array(antpos[0, ant_index], mask=_amps[0].mask)
@@ -266,8 +268,8 @@ class Emitter(object):
                                      + '<br>' + 'PAM #: ' + str(pam_ind[ant_cnt])
                                      + '<br>' + 'Node #:' + str(node_ind[ant_cnt])
                                      + '<br>Amp [dB]: {0:.2f}'.format(_amps[pol_cnt, ant_cnt])
-                                     + '<br>PAM Power: {0:.2f}'.format(_pam_power[pol_cnt, ant_cnt])
-                                     + '<br>ADC Power: {0:.2f}'.format(_adc_power[pol_cnt, ant_cnt])
+                                     + '<br>PAM [dB]: {0:.2f}'.format(_pam_power[pol_cnt, ant_cnt])
+                                     + '<br>ADC [dB]: {0:.2f}'.format(_adc_power[pol_cnt, ant_cnt])
                                      for ant_cnt, ant in enumerate(ants)]
                                     for pol_cnt, pol in enumerate(pols)], mask=_amps.mask)
 
@@ -316,20 +318,20 @@ class Emitter(object):
                     pam_mask.extend(['false'] * 2)
                     adc_mask.extend(['false'] * 2)
                     visible = 'true'
-                    title='dB'
+                    title = 'dB'
 
                 elif pow_ind == 1:
                     amp_mask.extend(['false'] * 2)
                     pam_mask.extend(['true'] * 2)
                     adc_mask.extend(['false'] * 2)
                     visible = 'false'
-                    title = 'Power'
+                    title = 'dB'
                 else:
                     amp_mask.extend(['false'] * 2)
                     pam_mask.extend(['false'] * 2)
                     adc_mask.extend(['true'] * 2)
                     visible = 'false'
-                    title = 'Power'
+                    title = 'dB'
 
                 self.emit_js_hex('{{x: ', end='')
                 self.emit_data_array(xs.data[~power[pol_ind].mask], '{x:.3f}', self.emit_js_hex)
@@ -439,9 +441,9 @@ Plotly.plot("plotly-hex", data, layout, {{responsive: true}});
         else:
             vmax = 1
             vmin = 0
-        vmax = [np.max(power.compressed()) if power.compressed.size > 1 else 1
+        vmax = [np.max(power.compressed()) if power.compressed().size > 1 else 1
                 for power in [_amps, _pam_power, _adc_power]]
-        vmax = [np.min(power.compressed()) if power.compressed.size > 1 else 0
+        vmin = [np.min(power.compressed()) if power.compressed().size > 1 else 0
                 for power in [_amps, _pam_power, _adc_power]]
         for node in nodes:
             node_index = np.where(node_ind == node)[0]
@@ -476,13 +478,13 @@ Plotly.plot("plotly-hex", data, layout, {{responsive: true}});
                         pam_mask.extend(['true'] * 2)
                         adc_mask.extend(['false'] * 2)
                         visible = 'false'
-                        title = 'Power'
+                        title = 'dB'
                     else:
                         amp_mask.extend(['false'] * 2)
                         pam_mask.extend(['false'] * 2)
                         adc_mask.extend(['true'] * 2)
                         visible = 'false'
-                        title = 'Power'
+                        title = 'dB'
 
                     self.emit_js_node('{{x: ', end='')
                     self.emit_data_array(xs[pol_ind].data[~power[pol_ind].mask], '{x:.3f}', self.emit_js_node)
