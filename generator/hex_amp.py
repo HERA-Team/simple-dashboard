@@ -443,6 +443,7 @@ Plotly.plot("plotly-hex", data, layout, {{responsive: true}});
             __amps = _amps[:, node_index]
             __adc = _adc_power[:, node_index]
             __pam = _pam_power[:, node_index]
+            __text = _text[:, node_index]
             for pow_ind, power in enumerate([__amps, __adc, __pam]):
                 if power.compressed().size > 0:
                     vmax = np.max(power.compressed())
@@ -482,7 +483,7 @@ Plotly.plot("plotly-hex", data, layout, {{responsive: true}});
                     self.emit_js_node(",\nmode: 'markers'", end='')
                     self.emit_js_node(",\nvisible: {visible}", visible=visible, end='')
                     self.emit_js_node(",\ntext: ", end='')
-                    self.emit_text_array(_text[pol_ind].data[~power[pol_ind].mask], '{x}', self.emit_js_node)
+                    self.emit_text_array(__text[pol_ind].data[~power[pol_ind].mask], '{x}', self.emit_js_node)
                     self.emit_js_node(',\n marker: {{  color:', end='')
                     self.emit_data_array(power[pol_ind].data[~power[pol_ind].mask], '{x:.3f}', self.emit_js_node)
                     self.emit_js_node(", cmin: {vmin}, cmax: {vmax}, ", vmin=vmin, vmax=vmax, end='')
@@ -498,7 +499,7 @@ Plotly.plot("plotly-hex", data, layout, {{responsive: true}});
                     self.emit_js_node(",\nmode: 'markers'", end='')
                     self.emit_js_node(",\nvisible: {visible}", visible=visible, end='')
                     self.emit_js_node(",\ntext: ", end='')
-                    self.emit_text_array(_text[pol_ind].data[power[pol_ind].mask], '{x}', self.emit_js_node)
+                    self.emit_text_array(__text[pol_ind].data[power[pol_ind].mask], '{x}', self.emit_js_node)
                     self.emit_js_node(",\n marker: {{  color: 'orange'", end='')
                     self.emit_js_node(", size: 14", end='')
                     self.emit_js_node("}},\nhovertemplate: '%{{text}}<extra></extra>'", end='')
