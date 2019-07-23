@@ -592,7 +592,7 @@ Plotly.plot("plotly-node", data, layout, {{responsive: true}});
         <p class="text-center">Report generated <span id="age">???</span> ago (at {gen_date} UTC)</p>
     </div>
     <div class="col-md-12">
-        <p class="text-center">Data observerd on {iso_date} (JD: {jd_date})</p>
+        <p class="text-center">Data observed on {iso_date} (JD: {jd_date:.6f})</p>
     </div>
   </div>
 """, gen_date=self.now.iso,
@@ -615,7 +615,7 @@ Plotly.plot("plotly-node", data, layout, {{responsive: true}});
          <p class="text-center">Report generated <span id="age">???</span> ago (at {gen_date} UTC)</p>
      </div>
      <div class="col-md-12">
-         <p class="text-center">Data observerd on {iso_date} (JD: {jd_date})</p>
+         <p class="text-center">Data observed on {iso_date} (JD: {jd_date:.6f})</p>
      </div>
    </div>
  """, gen_date=self.now.iso,
