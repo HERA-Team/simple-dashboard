@@ -63,25 +63,33 @@ HTML_FOOTER = """\
 </html>
 """
 
+
 def main():
+    # The standard M&C argument parser
     parser = mc.get_mc_argument_parser()
+    # we'll have to add some extra options too
+    parser.add_argument('--db2', dest='mc_db_name2', type=str,
+                        help=('Name of the second database to connect to. '
+                              'Defaults to same as --db'))
+    parser.add_argument('--redishost', dest='redishost', type=str,
+                        default='redishost',
+                        help=('The host name for redis to connect to, defualts to "redishost"'))
+    parser.add_argument('--port', dest='port', type=int, default=6379,
+                        help='Redis port to connect.')
     args = parser.parse_args()
 
     try:
         db = mc.connect_to_mc_db(args)
-        args.mc_db_name = 'hera_mc'
-        db2 = mc.connect_to_mc_db(args)
     except RuntimeError as e:
         raise SystemExit(str(e))
 
     try:
-        redis_db = redis.Redis('localhost', port=9932)
+        redis_db = redis.Redis(args.redishost, port=args.port)
         redis_db.keys()
-    except ConnectionError as err:
+    except Exception as err:
         raise SystemExit(str(err))
 
     with db.sessionmaker() as session, \
-         db2.sessionmaker() as session2, \
          open('hex_amp.html', 'wt') as html_hex, \
          open('hex_amp.js', 'wt') as js_hex, \
          open('node_amp.html', 'wt') as html_node, \
@@ -99,18 +107,17 @@ def main():
         def emit_js_node(f, end='\n', **kwargs):
             print(f.format(**kwargs), file=js_node, end=end)
 
-        Emitter(session, session2, redis_db,
+        Emitter(session, redis_db,
                 emit_html_hex, emit_js_hex,
                 emit_html_node, emit_js_node).emit()
 
 
 class Emitter(object):
 
-    def __init__(self, session, session2, redis_db,
+    def __init__(self, session, redis_db,
                  emit_html_hex, emit_js_hex,
                  emit_html_node, emit_js_node):
         self.session = session
-        self.session2 = session2
         self.redis_db = redis_db
 
         self.emit_html_hex = emit_html_hex
@@ -171,7 +178,6 @@ class Emitter(object):
                 amps[(ant, pol)] = 10.0 * np.log10(tmp_amp)
 
         hsession = cm_sysutils.Handling(self.session)
-        # stations_conn = hsession.get_all_fully_connected_at_date(at_date=latest)
         ants = np.unique([ant for (ant, pol) in autos.keys()])
         pols = np.unique([pol for (ant, pol) in autos.keys()])
 
@@ -187,11 +193,11 @@ class Emitter(object):
         array_center = np.mean(antpos, axis=1, keepdims=True)
         antpos -= array_center
 
-        stations = hsession.get_all_fully_connected_at_date(at_date=latest)
+        stations = hsession.get_all_fully_connected_at_date(at_date='now')
 
         for station in stations:
             if station.antenna_number not in ants:
-                np.append(ants, station.antenna_number)
+                ants = np.append(ants, station.antenna_number)
         ants = np.unique(ants)
 
         # Get node and PAM info
@@ -207,12 +213,15 @@ class Emitter(object):
                 adc_power.setdefault((ant, pol), np.Inf)
 
         for ant_cnt, ant in enumerate(ants):
-            station_status = self.session2.get_antenna_status(starttime=latest,
-                                                              stoptime=latest,
-                                                              antenna_number=int(ant))
+            station_status = self.session.get_antenna_status(most_recent=True,
+                                                             antenna_number=int(ant))
             for status in station_status:
-                pam_power[(status.antenna_number, status.antenna_feed_pol)] = status.pam_power
-                adc_power[(status.antenna_number, status.antenna_feed_pol)] = status.adc_power
+                if status.pam_power is not None:
+                    pam_power[(status.antenna_number,
+                               status.antenna_feed_pol)] = status.pam_power
+                if status.adc_power is not None:
+                    adc_power[(status.antenna_number,
+                               status.antenna_feed_pol)] = status.adc_power
 
             pam_info = hsession.get_part_at_station_from_type('HH{:d}'.format(ant), latest, 'post-amp')
             if pam_info[list(pam_info.keys())[0]]['e'] is not None:
@@ -243,21 +252,24 @@ class Emitter(object):
         ant_index = np.array([np.argwhere('HH{:d}'.format(ant) == antnames)
                               for ant in ants]).squeeze()
 
-        _amps = np.ma.masked_invalid([[amps[ant, pol] if ant is not None else np.Inf
-                                       for ant_cnt, ant in enumerate(ants)] for pol in pols])
-        _adc_power = np.ma.masked_invalid([[adc_power[ant, pol] if adc_power[ant, pol] is not None else np.Inf
-                                            for ant_cnt, ant in enumerate(ants)] for pol in pols])
-        _pam_power = np.ma.masked_invalid([[pam_power[ant, pol] if pam_power[ant, pol] is not None else np.Inf
-                                            for ant_cnt, ant in enumerate(ants)] for pol in pols])
+        _amps = np.ma.masked_invalid([[amps[ant, pol] for ant in ants]
+                                      for pol in pols])
+        _adc_power = np.ma.masked_invalid([[adc_power[ant, pol] for ant in ants]
+                                           for pol in pols])
+        _pam_power = np.ma.masked_invalid([[pam_power[ant, pol] for ant in ants]
+                                           for pol in pols])
         xs = np.ma.masked_array(antpos[0, ant_index], mask=_amps[0].mask)
         ys = np.ma.masked_array([antpos[1, ant_index] + 3 * (pol_cnt - .5)
                                  for pol_cnt, pol in enumerate(pols)],
                                 mask=_amps.mask)
         _text = np.ma.masked_array([[antnames[ant_index[ant_cnt]] + pol
-                                     + '<br>' + 'PAM: ' + str(pam_ind[ant_cnt])
-                                     + '<br>' + 'Node:' + str(node_ind[ant_cnt])
+                                     + '<br>' + 'PAM #: ' + str(pam_ind[ant_cnt])
+                                     + '<br>' + 'Node #:' + str(node_ind[ant_cnt])
+                                     + '<br>Amp [dB]: {0:.2f}'.format(_amps[pol_cnt, ant_cnt])
+                                     + '<br>PAM Power: {0:.2f}'.format(_pam_power[pol_cnt, ant_cnt])
+                                     + '<br>ADC Power: {0:.2f}'.format(_adc_power[pol_cnt, ant_cnt])
                                      for ant_cnt, ant in enumerate(ants)]
-                                   for pol in pols], mask=_amps.mask)
+                                    for pol_cnt, pol in enumerate(pols)], mask=_amps.mask)
 
         sep = ''
         self.emit_js_hex('var data = [')
@@ -281,7 +293,7 @@ class Emitter(object):
 
         #  for each type of power, loop over pols and print out the data
         #  save up a mask array used for the buttons later
-        #  also plot the bad ones!
+        #  also plot the bad ones!3
         colorscale = "Viridis"
         for pow_ind, power in enumerate([_amps, _pam_power, _adc_power]):
             if pow_ind == 0:
@@ -291,25 +303,33 @@ class Emitter(object):
             else:
                 self.emit_js_hex("// ADC DATA ")
 
-            vmax = np.max(power.compressed())
-            vmin = np.min(power.compressed())
+            if power.compressed().size > 0:
+                vmax = np.max(power.compressed())
+                vmin = np.min(power.compressed())
+            else:
+                vmax = 1
+                vmin = 0
+
             for pol_ind, pol in enumerate(pols):
                 if pow_ind == 0:
                     amp_mask.extend(['true'] * 2)
                     pam_mask.extend(['false'] * 2)
                     adc_mask.extend(['false'] * 2)
                     visible = 'true'
+                    title='dB'
 
                 elif pow_ind == 1:
                     amp_mask.extend(['false'] * 2)
                     pam_mask.extend(['true'] * 2)
                     adc_mask.extend(['false'] * 2)
                     visible = 'false'
+                    title = 'Power'
                 else:
                     amp_mask.extend(['false'] * 2)
                     pam_mask.extend(['false'] * 2)
                     adc_mask.extend(['true'] * 2)
                     visible = 'false'
+                    title = 'Power'
 
                 self.emit_js_hex('{{x: ', end='')
                 self.emit_data_array(xs.data[~power[pol_ind].mask], '{x:.3f}', self.emit_js_hex)
@@ -323,9 +343,9 @@ class Emitter(object):
                 self.emit_data_array(power[pol_ind].data[~power[pol_ind].mask], '{x:.3f}', self.emit_js_hex)
                 self.emit_js_hex(", cmin: {vmin}, cmax: {vmax}, ", vmin=vmin, vmax=vmax, end='')
                 self.emit_js_hex("colorscale: '{colorscale}', size: 14,", colorscale=colorscale, end='')
-                self.emit_js_hex("\ncolorbar: {{thickness: 20, title: 'dB'}}", end='')
-                self.emit_js_hex("}},\nhovertemplate: '%{{text}}<br>", end='')
-                self.emit_js_hex("Amp [dB]: %{{marker.color:.3f}}<extra></extra>'", end='')
+                self.emit_js_hex("\ncolorbar: {{thickness: 20, title: '{title}'}}", title=title, end='')
+                self.emit_js_hex("}},\nhovertemplate: '%{{text}}<extra></extra>'", end='')
+                # self.emit_js_hex("Amp [dB]: %{{marker.color:.3f}}", end='')
                 self.emit_js_hex('}},', end='\n')
 
                 self.emit_js_hex('{{x: ', end='')
@@ -338,8 +358,7 @@ class Emitter(object):
                 self.emit_text_array(_text[pol_ind].data[power[pol_ind].mask], '{x}', self.emit_js_hex)
                 self.emit_js_hex(",\n marker: {{  color: 'orange'", end='')
                 self.emit_js_hex(", size: 14", end='')
-                self.emit_js_hex("}},\nhovertemplate: '%{{text}}<br>", end='')
-                self.emit_js_hex("Amp [dB]: NO DATA AVAILABLE<extra></extra>'", end='')
+                self.emit_js_hex("}},\nhovertemplate: '%{{text}}<extra></extra>'", end='')
                 self.emit_js_hex('}},\n', end='\n')
 
         self.emit_js_hex(']', end='\n')
@@ -424,15 +443,22 @@ Plotly.plot("plotly-hex", data, layout, {{responsive: true}});
             __amps = _amps[:, node_index]
             __adc = _adc_power[:, node_index]
             __pam = _pam_power[:, node_index]
+            __text = _text[:, node_index]
             for pow_ind, power in enumerate([__amps, __adc, __pam]):
-                vmax = np.max(power.compressed())
-                vmin = np.min(power.compressed())
+                if power.compressed().size > 0:
+                    vmax = np.max(power.compressed())
+                    vmin = np.min(power.compressed())
+                else:
+                    vmax = 1
+                    vmin = 0
+
                 for pol_ind, pol in enumerate(pols):
                     if pow_ind == 0:
                         amp_mask.extend(['true'] * 2)
                         pam_mask.extend(['false'] * 2)
                         adc_mask.extend(['false'] * 2)
                         visible = 'true'
+                        title = 'dB'
                         self.emit_js_node("// AMPLITUDE DATA ")
 
                     elif pow_ind == 1:
@@ -440,12 +466,14 @@ Plotly.plot("plotly-hex", data, layout, {{responsive: true}});
                         pam_mask.extend(['true'] * 2)
                         adc_mask.extend(['false'] * 2)
                         visible = 'false'
+                        title = 'Power'
                         self.emit_js_node("// PAM DATA ")
                     else:
                         amp_mask.extend(['false'] * 2)
                         pam_mask.extend(['false'] * 2)
                         adc_mask.extend(['true'] * 2)
                         visible = 'false'
+                        title = 'Power'
                         self.emit_js_node("// ADC DATA ")
 
                     self.emit_js_node('{{x: ', end='')
@@ -455,14 +483,13 @@ Plotly.plot("plotly-hex", data, layout, {{responsive: true}});
                     self.emit_js_node(",\nmode: 'markers'", end='')
                     self.emit_js_node(",\nvisible: {visible}", visible=visible, end='')
                     self.emit_js_node(",\ntext: ", end='')
-                    self.emit_text_array(_text[pol_ind].data[~power[pol_ind].mask], '{x}', self.emit_js_node)
+                    self.emit_text_array(__text[pol_ind].data[~power[pol_ind].mask], '{x}', self.emit_js_node)
                     self.emit_js_node(',\n marker: {{  color:', end='')
                     self.emit_data_array(power[pol_ind].data[~power[pol_ind].mask], '{x:.3f}', self.emit_js_node)
                     self.emit_js_node(", cmin: {vmin}, cmax: {vmax}, ", vmin=vmin, vmax=vmax, end='')
                     self.emit_js_node("colorscale: '{colorscale}', size: 14,", colorscale=colorscale, end='')
-                    self.emit_js_node("\ncolorbar: {{thickness: 20, title: 'dB'}}", end='')
-                    self.emit_js_node("}},\nhovertemplate: '%{{text}}<br>", end='')
-                    self.emit_js_node("Amp [dB]: %{{marker.color:.3f}}<extra></extra>'", end='')
+                    self.emit_js_node("\ncolorbar: {{thickness: 20, title: '{title}'}}", title=title, end='')
+                    self.emit_js_node("}},\nhovertemplate: '%{{text}}<extra></extra>'", end='')
                     self.emit_js_node('}},', end='\n')
 
                     self.emit_js_node('{{x: ', end='')
@@ -472,11 +499,10 @@ Plotly.plot("plotly-hex", data, layout, {{responsive: true}});
                     self.emit_js_node(",\nmode: 'markers'", end='')
                     self.emit_js_node(",\nvisible: {visible}", visible=visible, end='')
                     self.emit_js_node(",\ntext: ", end='')
-                    self.emit_text_array(_text[pol_ind].data[power[pol_ind].mask], '{x}', self.emit_js_node)
+                    self.emit_text_array(__text[pol_ind].data[power[pol_ind].mask], '{x}', self.emit_js_node)
                     self.emit_js_node(",\n marker: {{  color: 'orange'", end='')
                     self.emit_js_node(", size: 14", end='')
-                    self.emit_js_node("}},\nhovertemplate: '%{{text}}<br>", end='')
-                    self.emit_js_node("Amp [dB]: NO DATA AVAILABLE<extra></extra>'", end='')
+                    self.emit_js_node("}},\nhovertemplate: '%{{text}}<extra></extra>'", end='')
                     self.emit_js_node('}},\n', end='\n')
 
         self.emit_js_node(']', end='\n')
@@ -559,16 +585,16 @@ Plotly.plot("plotly-node", data, layout, {{responsive: true}});
 <body>
 <div class="container">
   <div class="row">
-    <div class="col-md-12">
-        <p class="text-center"><big>Report generated <span id="age">???</span> ago (at {gen_date} UTC)<big></p>
-    </div>
-    <div class="col-md-12">
-        <p class="text-center"><big><big>Data observerd on {iso_date} (JD: {jd_date})</big></big></p>
-    </div>
+    <div id="plotly-hex" class="col-md-12", style="height: 85vh"></div>
   </div>
   <div class="row">
-    <div id="plotly-hex" class="col-md-12", style="height: 1000px"></div>
-   </div>
+    <div class="col-md-12">
+        <p class="text-center">Report generated <span id="age">???</span> ago (at {gen_date} UTC)</p>
+    </div>
+    <div class="col-md-12">
+        <p class="text-center">Data observed on {iso_date} (JD: {jd_date:.6f})</p>
+    </div>
+  </div>
 """, gen_date=self.now.iso,
      iso_date=self.latest.iso,
      jd_date=self.latest.jd)
@@ -582,15 +608,15 @@ Plotly.plot("plotly-node", data, layout, {{responsive: true}});
  <body>
  <div class="container">
    <div class="row">
-     <div class="col-md-12">
-         <p class="text-center"><big>Report generated <span id="age">???</span> ago (at {gen_date} UTC)<big></p>
-     </div>
-     <div class="col-md-12">
-         <p class="text-center"><big><big>Data observerd on {iso_date} (JD: {jd_date})</big></big></p>
-     </div>
+     <div id="plotly-node" class="col-md-12", style="height: 70vh"></div>
    </div>
    <div class="row">
-     <div id="plotly-node" class="col-md-12", style="height: 500px"></div>
+     <div class="col-md-12">
+         <p class="text-center">Report generated <span id="age">???</span> ago (at {gen_date} UTC)</p>
+     </div>
+     <div class="col-md-12">
+         <p class="text-center">Data observed on {iso_date} (JD: {jd_date:.6f})</p>
+     </div>
    </div>
  """, gen_date=self.now.iso,
       iso_date=self.latest.iso,
