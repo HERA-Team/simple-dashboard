@@ -197,7 +197,7 @@ class Emitter(object):
 
         for station in stations:
             if station.antenna_number not in ants:
-                np.append(ants, station.antenna_number)
+                ants = np.append(ants, station.antenna_number)
         ants = np.unique(ants)
 
         # Get node and PAM info
