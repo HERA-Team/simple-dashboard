@@ -69,13 +69,13 @@ def main():
 
     try:
         db = mc.connect_to_mc_db(args)
-        args.mc_db_name = 'hera_mc'
+        #args.mc_db_name = 'hera_mc'
         db2 = mc.connect_to_mc_db(args)
     except RuntimeError as e:
         raise SystemExit(str(e))
 
     try:
-        redis_db = redis.Redis('localhost', port=9932)
+        redis_db = redis.Redis('redishost')
         redis_db.keys()
     except Exception as err:
         raise SystemExit(str(err))
