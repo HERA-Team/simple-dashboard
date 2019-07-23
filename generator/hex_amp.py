@@ -584,7 +584,7 @@ Plotly.plot("plotly-node", data, layout, {{responsive: true}});
 <body>
 <div class="container">
   <div class="row">
-    <div id="plotly-hex" class="col-md-12", style="height: 1000px"></div>
+    <div id="plotly-hex" class="col-md-12", style="height: 85vh"></div>
   </div>
   <div class="row">
     <div class="col-md-12">
@@ -607,7 +607,7 @@ Plotly.plot("plotly-node", data, layout, {{responsive: true}});
  <body>
  <div class="container">
    <div class="row">
-     <div id="plotly-node" class="col-md-12", style="height: 500px"></div>
+     <div id="plotly-node" class="col-md-12", style="height: 70vh"></div>
    </div>
    <div class="row">
      <div class="col-md-12">
