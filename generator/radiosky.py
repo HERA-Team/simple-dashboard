@@ -74,4 +74,4 @@ def get_map():
        
     
 get_map()
-plt.savefig('out.png')
+plt.savefig('radiosky.png')
