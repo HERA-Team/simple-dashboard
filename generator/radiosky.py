@@ -37,7 +37,7 @@ def get_map():
     crab = astropy.coordinates.SkyCoord(ra = '05h 34m 31s', dec = '+22d 00m 52.2s')
     lmc =  astropy.coordinates.SkyCoord(ra = '05h 40m 05s', dec = '-69d 45m 51s')
     smc =  astropy.coordinates.SkyCoord(ra = '00h 52m 44.8s', dec = '-72d 49m 43s')
-    cenA = astropy.coordinates.SkyCoord(ra = '13h 25m 27.6s', dec = '−43d 01m 09s')
+    cenA = astropy.coordinates.SkyCoord(ra = '13h 25m 27.6s', dec = '-43d 01m 09s')
     callibrator1 =  astropy.coordinates.SkyCoord(ra = 109.32351*u.degree, dec = -25.0817*u.degree)
     callibrator2 = astropy.coordinates.SkyCoord(ra = 30.05044*u.degree, dec = -30.89106*u.degree)
     callibrator3 = astropy.coordinates.SkyCoord(ra = 6.45484*u.degree, dec = -26.0363*u.degree) 
