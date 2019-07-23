@@ -33,7 +33,7 @@ const dates = document.getElementsByClassName("date");
 
 function updateClocks() {
   <!-- Longitudes of observatories -->
-  var points = [-28.0473]
+  var points = [22.13]
   var i = 0;
   for (let clock of clocks) {
     clock.textContent = getLST(points[i]);
