@@ -131,7 +131,7 @@ with open('spectra.html', 'w') as fh:
                 linenames += [linename]
                 fh.write('%s = {\n' % (linename))
                 fh.write('  x: [%s],\n' % frange_str)
-                f = np.frombuffer(d, dtype=np.float32)[0:NCHANS]
+                f = np.frombuffer(d, dtype=np.float32)[0:NCHANS].copy()
                 f[f < 10 ** -2.5] = 10 ** -2.5
                 f = 10 * np.log10(f)
                 f_str = ', '.join('%f' % freq for freq in f)
