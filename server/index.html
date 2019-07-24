@@ -26,6 +26,14 @@
          position: absolute;
          clip: rect(100px,0,100px,0);
        }
+       .dashboard-inset-titlebar {
+         text-align: center;
+         margin: 0 auto;
+         background-color: rgb(27, 68, 104);
+         color: white;
+         border-left: 5px solid white;
+         border-right: 5px solid white;
+       }
      </style>
 <script src="sidereal.js"></script><script>
 const clocks = document.getElementsByClassName("clock_sidereal");
@@ -63,6 +71,16 @@ updateDates();
 <script>
 !function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src='https://weatherwidget.io/js/widget.min.js';fjs.parentNode.insertBefore(js,fjs);}}(document,'script','weatherwidget-io-js');
 </script>
+
+<script>
+window.setInterval("reloadIFrame();", 30000);
+
+function reloadIFrame() {
+ var frameHolder=document.getElementById('radiosky');
+frameHolder.src="http://heranow.reionization.org/radiosky.png"
+}
+</script>
+
    </head>
    <body>
        <nav class="navbar navbar-default">
@@ -103,14 +121,20 @@ updateDates();
 
 <table>
   <tr>
-  <td><iframe src="http://heranow.reionization.org/powers.html" width=500 height=400 frameborder="0"></iframe></td>
-<td><iframe src="http://heranow.reionization.org/hex_amp.html" width=500 height=400 frameborder="0"></iframe></td>
-<td><iframe src="http://heranow.reionization.org/mc_html_summary.html" width=500 height=400 frameborder="0"></iframe></td>
-</tr>
-<tr>
-<td><iframe src="http://heranow.reionization.org/node_amp.html" width=500 height=400 frameborder="0"></iframe></td>
-<td><iframe width="650" height="450" src="https://embed.windy.com/embed2.html?lat=-30.411&lon=21&zoom=5&level=surface&overlay=wind&menu=&message=&marker=true&calendar=&pressure=&type=map&location=coordinates&detail=&detailLat=-31.421&detailLon=21&metricWind=default&metricTemp=%C2%B0C&radarRange=-1" frameborder="0"></iframe></td>
-<td><img src="http://heranow.reionization.org/radiosky.png"</img></td>
+      <td><div class="dashboard-inset-titlebar">Autocorrelations -- <a target="_blank" href="http://heranow.reionization.org/spectra.html">(open in new tab)</a></div>
+        <iframe src="http://heranow.reionization.org/spectra.html" width=500 height=400 frameborder="0"></iframe></td>
+      <td><div class="dashboard-inset-titlebar">Power by Antenna -- <a target="_blank" href="http://heranow.reionization.org/hex_amp.html">(open in new tab)</a></div>
+        <iframe src="http://heranow.reionization.org/hex_amp.html" width=500 height=400 frameborder="0"></iframe></td>
+      <td><img id="radiosky" src="http://heranow.reionization.org/radiosky.png"</img></td>
+  </tr>
+
+  <tr>
+      <td><div class="dashboard-inset-titlebar">Power by Node -- <a target="_blank" href="http://heranow.reionization.org/node_amp.html">(open in new tab)</a></div>
+        <iframe src="http://heranow.reionization.org/node_amp.html" width=500 height=400 frameborder="0"></iframe></td>
+      <td><div class="dashboard-inset-titlebar">System Summary</div>
+        <iframe src="http://heranow.reionization.org/mc_html_summary.html" width=500 height=400 frameborder="0"></iframe></td>
+      <td>
+  <iframe width="400" height="450" src="https://embed.windy.com/embed2.html?lat=-30.411&lon=21&zoom=5&level=surface&overlay=wind&menu=&message=&marker=true&calendar=&pressure=&type=map&location=coordinates&detail=&detailLat=-31.421&detailLon=21&metricWind=default&metricTemp=%C2%B0C&radarRange=-1" frameborder="0"></iframe></td>
 </table>
 
 
