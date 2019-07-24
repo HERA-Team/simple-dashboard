@@ -378,7 +378,7 @@ class Emitter(object):
         self.emit_js_hex('args: [')
         self.emit_js_hex("{{'visible': ", end='')
         self.emit_data_array(amp_mask, '{x}', self.emit_js_hex)
-        self.emit_js_hex("}},\n{{'title': 'Median Auto Power',")
+        self.emit_js_hex("}},\n{{'title': '',")
         self.emit_js_hex("'annotations': {{}} }}")
         self.emit_js_hex('],')
         self.emit_js_hex("label: 'Auto Corr',")
@@ -390,7 +390,7 @@ class Emitter(object):
         self.emit_js_hex('args: [')
         self.emit_js_hex("{{'visible': ", end='')
         self.emit_data_array(pam_mask, '{x}', self.emit_js_hex)
-        self.emit_js_hex("}},\n{{'title': 'PAM Power',")
+        self.emit_js_hex("}},\n{{'title': '',")
         self.emit_js_hex("'annotations': {{}} }}")
         self.emit_js_hex('],')
         self.emit_js_hex("label: 'Pam Power',")
@@ -402,7 +402,7 @@ class Emitter(object):
         self.emit_js_hex('args: [')
         self.emit_js_hex("{{'visible': ", end='')
         self.emit_data_array(adc_mask, '{x}', self.emit_js_hex)
-        self.emit_js_hex("}},\n{{'title': 'ADC Power',")
+        self.emit_js_hex("}},\n{{'title': '',")
         self.emit_js_hex("'annotations': {{}} }}")
         self.emit_js_hex('],')
         self.emit_js_hex("label: 'ADC Power',")
@@ -418,7 +418,7 @@ class Emitter(object):
         self.emit_js_hex("""
 
 var layout = {{
-    title: 'Median Auto Amplitude',
+    // title: 'Median Auto Amplitude',
     xaxis: {{title: 'East-Westh Position [m]'}},
     yaxis: {{title: 'North-South Position [m]'}},
     autosize: true,
@@ -525,7 +525,7 @@ Plotly.plot("plotly-hex", data, layout, {{responsive: true}});
         self.emit_js_node('args: [')
         self.emit_js_node("{{'visible': ", end='')
         self.emit_data_array(amp_mask, '{x}', self.emit_js_node)
-        self.emit_js_node("}},\n{{'title': 'Median Auto Power vs Node',")
+        self.emit_js_node("}},\n{{'title': '',")
         self.emit_js_node("'annotations': {{}} }}")
         self.emit_js_node('],')
         self.emit_js_node("label: 'Auto Corr',")
@@ -537,7 +537,7 @@ Plotly.plot("plotly-hex", data, layout, {{responsive: true}});
         self.emit_js_node('args: [')
         self.emit_js_node("{{'visible': ", end='')
         self.emit_data_array(pam_mask, '{x}', self.emit_js_node)
-        self.emit_js_node("}},\n{{'title': 'PAM Power vs Node',")
+        self.emit_js_node("}},\n{{'title': '',")
         self.emit_js_node("'annotations': {{}} }}")
         self.emit_js_node('],')
         self.emit_js_node("label: 'Pam Power',")
@@ -549,7 +549,7 @@ Plotly.plot("plotly-hex", data, layout, {{responsive: true}});
         self.emit_js_node('args: [')
         self.emit_js_node("{{'visible': ", end='')
         self.emit_data_array(adc_mask, '{x}', self.emit_js_node)
-        self.emit_js_node("}},\n{{'title': 'ADC Power vs Node',")
+        self.emit_js_node("}},\n{{'title': '',")
         self.emit_js_node("'annotations': {{}} }}")
         self.emit_js_node('],')
         self.emit_js_node("label: 'ADC Power',")
@@ -565,7 +565,7 @@ Plotly.plot("plotly-hex", data, layout, {{responsive: true}});
         self.emit_js_node("""
 
 var layout = {{
-    title: 'Power vs Node',
+    // title: 'Power vs Node',
     xaxis: {{title: 'Node Number',
              dtick:1,
              tick0: 0,
