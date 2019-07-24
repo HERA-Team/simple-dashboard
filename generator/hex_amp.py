@@ -256,22 +256,29 @@ class Emitter(object):
                                       for pol in pols])
         _adc_power = np.ma.masked_invalid([[adc_power[ant, pol] for ant in ants]
                                            for pol in pols])
+        # conver adc power to dB
+        _adc_power = 10 * np.log10(_adc_power)
         _pam_power = np.ma.masked_invalid([[pam_power[ant, pol] for ant in ants]
                                            for pol in pols])
         xs = np.ma.masked_array(antpos[0, ant_index], mask=_amps[0].mask)
         ys = np.ma.masked_array([antpos[1, ant_index] + 3 * (pol_cnt - .5)
                                  for pol_cnt, pol in enumerate(pols)],
                                 mask=_amps.mask)
-        _text = np.ma.masked_array([[antnames[ant_index[ant_cnt]] + pol
-                                     + '<br>' + 'PAM #: ' + str(pam_ind[ant_cnt])
-                                     + '<br>' + 'Node #:' + str(node_ind[ant_cnt])
-                                     + '<br>Amp [dB]: {0:.2f}'.format(_amps[pol_cnt, ant_cnt])
-                                     + '<br>PAM Power: {0:.2f}'.format(_pam_power[pol_cnt, ant_cnt])
-                                     + '<br>ADC Power: {0:.2f}'.format(_adc_power[pol_cnt, ant_cnt])
-                                     for ant_cnt, ant in enumerate(ants)]
-                                    for pol_cnt, pol in enumerate(pols)], mask=_amps.mask)
+        _text = np.array([[antnames[ant_index[ant_cnt]] + pol
+                           + '<br>' + 'PAM #: ' + str(pam_ind[ant_cnt])
+                           + '<br>' + 'Node #:' + str(node_ind[ant_cnt])
+                           for ant_cnt, ant in enumerate(ants)]
+                          for pol_cnt, pol in enumerate(pols)], dtype='object')
 
-        sep = ''
+        #  want to format No Data where data was not retrieved for each type of power
+        for pol_cnt, pol in enumerate(pols):
+            for ant_cnt, ant in enumerate(ants):
+                for _name, _power in zip(['Amp', 'PAM', 'ADC'], [_amps, _pam_power, _adc_power]):
+                    if not _power.mask[pol_cnt, ant_cnt]:
+                        _text[pol_cnt, ant_cnt] += '<br>' + _name + ' [dB]: {0:.2f}'.format(_power[pol_cnt, ant_cnt])
+                    else:
+                        _text[pol_cnt, ant_cnt] += '<br>' + _name + ' [dB]: No Data'
+
         self.emit_js_hex('var data = [')
 
         amp_mask = ['true']
@@ -316,20 +323,20 @@ class Emitter(object):
                     pam_mask.extend(['false'] * 2)
                     adc_mask.extend(['false'] * 2)
                     visible = 'true'
-                    title='dB'
+                    title = 'dB'
 
                 elif pow_ind == 1:
                     amp_mask.extend(['false'] * 2)
                     pam_mask.extend(['true'] * 2)
                     adc_mask.extend(['false'] * 2)
                     visible = 'false'
-                    title = 'Power'
+                    title = 'dB'
                 else:
                     amp_mask.extend(['false'] * 2)
                     pam_mask.extend(['false'] * 2)
                     adc_mask.extend(['true'] * 2)
                     visible = 'false'
-                    title = 'Power'
+                    title = 'dB'
 
                 self.emit_js_hex('{{x: ', end='')
                 self.emit_data_array(xs.data[~power[pol_ind].mask], '{x:.3f}', self.emit_js_hex)
@@ -338,7 +345,7 @@ class Emitter(object):
                 self.emit_js_hex(",\nmode: 'markers'", end='')
                 self.emit_js_hex(",\nvisible: {visible}", visible=visible, end='')
                 self.emit_js_hex(",\ntext: ", end='')
-                self.emit_text_array(_text[pol_ind].data[~power[pol_ind].mask], '{x}', self.emit_js_hex)
+                self.emit_text_array(_text[pol_ind][~power[pol_ind].mask], '{x}', self.emit_js_hex)
                 self.emit_js_hex(',\n marker: {{  color:', end='')
                 self.emit_data_array(power[pol_ind].data[~power[pol_ind].mask], '{x:.3f}', self.emit_js_hex)
                 self.emit_js_hex(", cmin: {vmin}, cmax: {vmax}, ", vmin=vmin, vmax=vmax, end='')
@@ -355,7 +362,7 @@ class Emitter(object):
                 self.emit_js_hex(",\nmode: 'markers'", end='')
                 self.emit_js_hex(",\nvisible: {visible}", visible=visible, end='')
                 self.emit_js_hex(",\ntext: ", end='')
-                self.emit_text_array(_text[pol_ind].data[power[pol_ind].mask], '{x}', self.emit_js_hex)
+                self.emit_text_array(_text[pol_ind][power[pol_ind].mask], '{x}', self.emit_js_hex)
                 self.emit_js_hex(",\n marker: {{  color: 'orange'", end='')
                 self.emit_js_hex(", size: 14", end='')
                 self.emit_js_hex("}},\nhovertemplate: '%{{text}}<extra></extra>'", end='')
@@ -371,7 +378,7 @@ class Emitter(object):
         self.emit_js_hex('args: [')
         self.emit_js_hex("{{'visible': ", end='')
         self.emit_data_array(amp_mask, '{x}', self.emit_js_hex)
-        self.emit_js_hex("}},\n{{'title': 'Median Auto Power',")
+        self.emit_js_hex("}},\n{{'title': '',")
         self.emit_js_hex("'annotations': {{}} }}")
         self.emit_js_hex('],')
         self.emit_js_hex("label: 'Auto Corr',")
@@ -383,7 +390,7 @@ class Emitter(object):
         self.emit_js_hex('args: [')
         self.emit_js_hex("{{'visible': ", end='')
         self.emit_data_array(pam_mask, '{x}', self.emit_js_hex)
-        self.emit_js_hex("}},\n{{'title': 'PAM Power',")
+        self.emit_js_hex("}},\n{{'title': '',")
         self.emit_js_hex("'annotations': {{}} }}")
         self.emit_js_hex('],')
         self.emit_js_hex("label: 'Pam Power',")
@@ -395,7 +402,7 @@ class Emitter(object):
         self.emit_js_hex('args: [')
         self.emit_js_hex("{{'visible': ", end='')
         self.emit_data_array(adc_mask, '{x}', self.emit_js_hex)
-        self.emit_js_hex("}},\n{{'title': 'ADC Power',")
+        self.emit_js_hex("}},\n{{'title': '',")
         self.emit_js_hex("'annotations': {{}} }}")
         self.emit_js_hex('],')
         self.emit_js_hex("label: 'ADC Power',")
@@ -411,9 +418,12 @@ class Emitter(object):
         self.emit_js_hex("""
 
 var layout = {{
-    title: 'Median Auto Amplitude',
+    // title: 'Median Auto Amplitude',
     xaxis: {{title: 'East-Westh Position [m]'}},
     yaxis: {{title: 'North-South Position [m]'}},
+    margin: {{
+        t: 10,
+    }},
     autosize: true,
     showlegend: false,
     updatemenus: updatemenus,
@@ -433,6 +443,11 @@ Plotly.plot("plotly-hex", data, layout, {{responsive: true}});
         amp_mask = []
         pam_mask = []
         adc_mask = []
+
+        vmax = [np.max(power.compressed()) if power.compressed().size > 1 else 1
+                for power in [_amps, _pam_power, _adc_power]]
+        vmin = [np.min(power.compressed()) if power.compressed().size > 1 else 0
+                for power in [_amps, _pam_power, _adc_power]]
         for node in nodes:
             node_index = np.where(node_ind == node)[0]
 
@@ -444,13 +459,14 @@ Plotly.plot("plotly-hex", data, layout, {{responsive: true}});
             __adc = _adc_power[:, node_index]
             __pam = _pam_power[:, node_index]
             __text = _text[:, node_index]
-            for pow_ind, power in enumerate([__amps, __adc, __pam]):
-                if power.compressed().size > 0:
-                    vmax = np.max(power.compressed())
-                    vmin = np.min(power.compressed())
+
+            for pow_ind, power in enumerate([__amps, __pam, __adc]):
+                if pow_ind == 0:
+                    self.emit_js_node("// AMPLITUDE DATA ")
+                elif pow_ind == 1:
+                    self.emit_js_node("// PAM DATA ")
                 else:
-                    vmax = 1
-                    vmin = 0
+                    self.emit_js_node("// ADC DATA ")
 
                 for pol_ind, pol in enumerate(pols):
                     if pow_ind == 0:
@@ -459,22 +475,19 @@ Plotly.plot("plotly-hex", data, layout, {{responsive: true}});
                         adc_mask.extend(['false'] * 2)
                         visible = 'true'
                         title = 'dB'
-                        self.emit_js_node("// AMPLITUDE DATA ")
 
                     elif pow_ind == 1:
                         amp_mask.extend(['false'] * 2)
                         pam_mask.extend(['true'] * 2)
                         adc_mask.extend(['false'] * 2)
                         visible = 'false'
-                        title = 'Power'
-                        self.emit_js_node("// PAM DATA ")
+                        title = 'dB'
                     else:
                         amp_mask.extend(['false'] * 2)
                         pam_mask.extend(['false'] * 2)
                         adc_mask.extend(['true'] * 2)
                         visible = 'false'
-                        title = 'Power'
-                        self.emit_js_node("// ADC DATA ")
+                        title = 'dB'
 
                     self.emit_js_node('{{x: ', end='')
                     self.emit_data_array(xs[pol_ind].data[~power[pol_ind].mask], '{x:.3f}', self.emit_js_node)
@@ -483,10 +496,10 @@ Plotly.plot("plotly-hex", data, layout, {{responsive: true}});
                     self.emit_js_node(",\nmode: 'markers'", end='')
                     self.emit_js_node(",\nvisible: {visible}", visible=visible, end='')
                     self.emit_js_node(",\ntext: ", end='')
-                    self.emit_text_array(__text[pol_ind].data[~power[pol_ind].mask], '{x}', self.emit_js_node)
+                    self.emit_text_array(__text[pol_ind][~power[pol_ind].mask], '{x}', self.emit_js_node)
                     self.emit_js_node(',\n marker: {{  color:', end='')
                     self.emit_data_array(power[pol_ind].data[~power[pol_ind].mask], '{x:.3f}', self.emit_js_node)
-                    self.emit_js_node(", cmin: {vmin}, cmax: {vmax}, ", vmin=vmin, vmax=vmax, end='')
+                    self.emit_js_node(", cmin: {vmin}, cmax: {vmax}, ", vmin=vmin[pow_ind], vmax=vmax[pow_ind], end='')
                     self.emit_js_node("colorscale: '{colorscale}', size: 14,", colorscale=colorscale, end='')
                     self.emit_js_node("\ncolorbar: {{thickness: 20, title: '{title}'}}", title=title, end='')
                     self.emit_js_node("}},\nhovertemplate: '%{{text}}<extra></extra>'", end='')
@@ -499,7 +512,7 @@ Plotly.plot("plotly-hex", data, layout, {{responsive: true}});
                     self.emit_js_node(",\nmode: 'markers'", end='')
                     self.emit_js_node(",\nvisible: {visible}", visible=visible, end='')
                     self.emit_js_node(",\ntext: ", end='')
-                    self.emit_text_array(__text[pol_ind].data[power[pol_ind].mask], '{x}', self.emit_js_node)
+                    self.emit_text_array(__text[pol_ind][power[pol_ind].mask], '{x}', self.emit_js_node)
                     self.emit_js_node(",\n marker: {{  color: 'orange'", end='')
                     self.emit_js_node(", size: 14", end='')
                     self.emit_js_node("}},\nhovertemplate: '%{{text}}<extra></extra>'", end='')
@@ -515,7 +528,7 @@ Plotly.plot("plotly-hex", data, layout, {{responsive: true}});
         self.emit_js_node('args: [')
         self.emit_js_node("{{'visible': ", end='')
         self.emit_data_array(amp_mask, '{x}', self.emit_js_node)
-        self.emit_js_node("}},\n{{'title': 'Median Auto Power vs Node',")
+        self.emit_js_node("}},\n{{'title': '',")
         self.emit_js_node("'annotations': {{}} }}")
         self.emit_js_node('],')
         self.emit_js_node("label: 'Auto Corr',")
@@ -527,7 +540,7 @@ Plotly.plot("plotly-hex", data, layout, {{responsive: true}});
         self.emit_js_node('args: [')
         self.emit_js_node("{{'visible': ", end='')
         self.emit_data_array(pam_mask, '{x}', self.emit_js_node)
-        self.emit_js_node("}},\n{{'title': 'PAM Power vs Node',")
+        self.emit_js_node("}},\n{{'title': '',")
         self.emit_js_node("'annotations': {{}} }}")
         self.emit_js_node('],')
         self.emit_js_node("label: 'Pam Power',")
@@ -539,7 +552,7 @@ Plotly.plot("plotly-hex", data, layout, {{responsive: true}});
         self.emit_js_node('args: [')
         self.emit_js_node("{{'visible': ", end='')
         self.emit_data_array(adc_mask, '{x}', self.emit_js_node)
-        self.emit_js_node("}},\n{{'title': 'ADC Power vs Node',")
+        self.emit_js_node("}},\n{{'title': '',")
         self.emit_js_node("'annotations': {{}} }}")
         self.emit_js_node('],')
         self.emit_js_node("label: 'ADC Power',")
@@ -555,7 +568,7 @@ Plotly.plot("plotly-hex", data, layout, {{responsive: true}});
         self.emit_js_node("""
 
 var layout = {{
-    title: 'Power vs Node',
+    // title: 'Power vs Node',
     xaxis: {{title: 'Node Number',
              dtick:1,
              tick0: 0,
@@ -564,6 +577,9 @@ var layout = {{
     yaxis: {{showticklabels: false,
              showgrid: false,
              zeroline: false}},
+    margin: {{
+           t: 10,
+    }},
     autosize: true,
     showlegend: false,
     updatemenus: updatemenus,
