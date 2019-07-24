@@ -435,12 +435,7 @@ Plotly.plot("plotly-hex", data, layout, {{responsive: true}});
         amp_mask = []
         pam_mask = []
         adc_mask = []
-        if power.compressed().size > 0:
-            vmax = np.max(power.compressed())
-            vmin = np.min(power.compressed())
-        else:
-            vmax = 1
-            vmin = 0
+
         vmax = [np.max(power.compressed()) if power.compressed().size > 1 else 1
                 for power in [_amps, _pam_power, _adc_power]]
         vmin = [np.min(power.compressed()) if power.compressed().size > 1 else 0
