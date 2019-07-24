@@ -91,7 +91,7 @@ plotly_postamble = '''
       xaxis: {title: 'Frequency [MHz]'},
       yaxis: {title: 'Power [dB]'},
       autosize: true,
-      title: 'Autocorrelation Powers',
+      // title: 'Autocorrelation Powers',
       margin: {l: 40, b: 0, r: 40, t: 30},
       hovermode: 'closest'
     };
