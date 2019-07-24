@@ -421,9 +421,9 @@ var layout = {{
     // title: 'Median Auto Amplitude',
     xaxis: {{title: 'East-Westh Position [m]'}},
     yaxis: {{title: 'North-South Position [m]'}},
-    margin: {
+    margin: {{
         t: 10,
-    },
+    }},
     autosize: true,
     showlegend: false,
     updatemenus: updatemenus,
@@ -577,9 +577,9 @@ var layout = {{
     yaxis: {{showticklabels: false,
              showgrid: false,
              zeroline: false}},
-    margin: {
+    margin: {{
            t: 10,
-    },
+    }},
     autosize: true,
     showlegend: false,
     updatemenus: updatemenus,
