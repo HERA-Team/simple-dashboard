@@ -91,11 +91,16 @@ plotly_postamble = '''
       xaxis: {title: 'Frequency [MHz]'},
       yaxis: {title: 'Power [dB]'},
       autosize: true,
+      showlegend: true,
+      legend: {
+        x: 1,
+        y: 1,
+      },
       // title: 'Autocorrelation Powers',
       margin: {l: 40, b: 0, r: 40, t: 30},
       hovermode: 'closest'
     };
-    Plotly.plot('plotly-div', {data:data, layout:layout});
+    Plotly.plot('plotly-div', {data:data, layout:layout}, {{responsive: true}});
 
     </script>
 '''
