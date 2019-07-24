@@ -274,7 +274,7 @@ class Emitter(object):
         for pol_cnt, pol in enumerate(pols):
             for ant_cnt, ant in enumerate(ants):
                 for _name, _power in zip(['Amp', 'PAM', 'ADC'], [_amps, _pam_power, _adc_power]):
-                    if not _power[pol_cnt, ant_cnt].mask:
+                    if not _power.mask[pol_cnt, ant_cnt]:
                         _text[pol_cnt, ant_cnt] += '<br>' + _name + ' [dB]: {0:.2f}'.format(_power[pol_cnt, ant_cnt])
                     else:
                         _text[pol_cnt, ant_cnt] += '<br>' + _name + ' [dB]: No Data'
