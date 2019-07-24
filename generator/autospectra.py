@@ -111,7 +111,7 @@ with open('spectra.html', 'w') as fh:
     fh.write(html_preamble)
     fh.write(plotly_preamble)
     # Get time of plot
-    t_plot_jd = np.fromstring(r['auto:timestamp'], dtype=np.float64)[0]
+    t_plot_jd = np.frombuffer(r['auto:timestamp'], dtype=np.float64)[0]
     t_plot_unix = Time(t_plot_jd, format='jd').unix
     print(t_plot_jd, t_plot_unix)
     got_time = True
@@ -131,7 +131,7 @@ with open('spectra.html', 'w') as fh:
                 linenames += [linename]
                 fh.write('%s = {\n' % (linename))
                 fh.write('  x: [%s],\n' % frange_str)
-                f = np.fromstring(d, dtype=np.float32)[0:NCHANS]
+                f = np.frombuffer(d, dtype=np.float32)[0:NCHANS]
                 f[f < 10 ** -2.5] = 10 ** -2.5
                 f = 10 * np.log10(f)
                 f_str = ', '.join('%f' % freq for freq in f)
