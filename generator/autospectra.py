@@ -80,9 +80,12 @@ html_preamble = """\
 """
 
 plotly_preamble = '''
+<div class="container">
+  <div class="row">
    <!-- Plotly chart will be drawn inside this div -->
-   <div id="plotly-div" style="height: 80vh"></div>
+   <div id="plotly-div" class="col-md-12" style="height: 80vh"></div>
    <script>
+
 
 '''
 
@@ -100,12 +103,14 @@ plotly_postamble = '''
       margin: {l: 40, b: 0, r: 40, t: 30},
       hovermode: 'closest'
     };
-    Plotly.plot('plotly-div', {data:data, layout:layout}, {{responsive: true}});
+    Plotly.plot('plotly-div', {data:data, layout:layout}, {responsive: true});
 
     </script>
 '''
 
 html_postamble = '''
+    </div>
+  </div>
   </body>
 </html>
 '''
