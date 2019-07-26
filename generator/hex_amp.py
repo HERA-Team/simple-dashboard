@@ -68,9 +68,6 @@ def main():
     # The standard M&C argument parser
     parser = mc.get_mc_argument_parser()
     # we'll have to add some extra options too
-    parser.add_argument('--db2', dest='mc_db_name2', type=str,
-                        help=('Name of the second database to connect to. '
-                              'Defaults to same as --db'))
     parser.add_argument('--redishost', dest='redishost', type=str,
                         default='redishost',
                         help=('The host name for redis to connect to, defualts to "redishost"'))
