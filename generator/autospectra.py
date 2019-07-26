@@ -100,7 +100,7 @@ plotly_postamble = '''
         y: 1,
       },
       // title: 'Autocorrelation Powers',
-      margin: {l: 0, b: 0, r: 0, t: 30},
+      margin: {l: 40, b: 0, r: 40, t: 30},
       hovermode: 'closest'
     };
     Plotly.plot('plotly-div', {data:data, layout:layout}, {responsive: true});
