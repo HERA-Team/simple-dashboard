@@ -222,7 +222,7 @@ class Emitter(object):
                                status.antenna_feed_pol)] = status.adc_power
                 if status.time is not None:
                     time_array[(status.antenna_number,
-                                status.anenna_feed_pol)] = Time(status.time, format='gps')
+                                status.antenna_feed_pol)] = Time(status.time, format='gps')
 
             pam_info = hsession.get_part_at_station_from_type('HH{:d}'.format(ant), latest, 'post-amp')
             if pam_info[list(pam_info.keys())[0]]['e'] is not None:
