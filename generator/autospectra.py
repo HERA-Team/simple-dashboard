@@ -44,7 +44,7 @@ for key in keys:
         ants.append(ant)
 
 ants = np.unique(ants)
-
+print(ants)
 n_ants = ants.size
 # Generate frequency axis
 NCHANS = int(2048 // 4 * 3)
@@ -127,7 +127,7 @@ with open('spectra.html', 'w') as fh:
     print(t_plot_jd, t_plot_unix)
     got_time = True
     # grab data from redis and format it according to plotly's javascript api
-    for i in range(n_ants):
+    for i in ants:
         for pol in ['e', 'n']:
             # get the timestamp from redis for the first ant-pol
             if not got_time:
