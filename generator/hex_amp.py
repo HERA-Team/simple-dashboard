@@ -208,7 +208,7 @@ class Emitter(object):
                 amps.setdefault((ant, pol), np.Inf)
                 pam_power.setdefault((ant, pol), np.Inf)
                 adc_power.setdefault((ant, pol), np.Inf)
-                time_array.setdefault((ant, pol), Time(0, format='gps'))
+                time_array.setdefault((ant, pol), self.now - Time(0, format='gps'))
 
         for ant_cnt, ant in enumerate(ants):
             station_status = self.session.get_antenna_status(most_recent=True,
@@ -222,7 +222,7 @@ class Emitter(object):
                                status.antenna_feed_pol)] = status.adc_power
                 if status.time is not None:
                     time_array[(status.antenna_number,
-                                status.antenna_feed_pol)] = Time(status.time, format='gps')
+                                status.antenna_feed_pol)] = self.now - Time(status.time, format='gps')
 
             pam_info = hsession.get_part_at_station_from_type('HH{:d}'.format(ant), latest, 'post-amp')
             if pam_info[list(pam_info.keys())[0]]['e'] is not None:
@@ -261,7 +261,7 @@ class Emitter(object):
         _adc_power = 10 * np.log10(_adc_power)
         _pam_power = np.ma.masked_invalid([[pam_power[ant, pol] for ant in ants]
                                            for pol in pols])
-        time_array = Time([[time_array[ant, pol].gps
+        time_array = Time([[time_array[ant, pol].to('hour')
                             for ant in ants] for pol in pols], format='gps')
         xs = np.ma.masked_array(antpos[0, ant_index], mask=_amps[0].mask)
         ys = np.ma.masked_array([antpos[1, ant_index] + 3 * (pol_cnt - .5)
@@ -281,10 +281,13 @@ class Emitter(object):
                         _text[pol_cnt, ant_cnt] += '<br>' + _name + ' [dB]: {0:.2f}'.format(_power[pol_cnt, ant_cnt])
                     else:
                         _text[pol_cnt, ant_cnt] += '<br>' + _name + ' [dB]: No Data'
-                if time_array[pol_cnt, ant_cnt].gps == 0:
+                if time_array[pol_cnt, ant_cnt].value > 2 * 24 * 365:
+                    # if the value is older than 2 years it is bad
+                    # value are stored in hours.
+                    # 2 was chosen arbitraritly.
                     _text[pol_cnt, ant_cnt] += '<br>' + 'SNAP timestamp: No Data'
                 else:
-                    _text[pol_cnt, ant_cnt] += '<br>' + 'SNAP timestamp: {0} ({1:.6f})'.format(time_array[pol_cnt, ant_cnt].iso, time_array[pol_cnt, ant_cnt].jd)
+                    _text[pol_cnt, ant_cnt] += '<br>' + 'SNAP timestamp: {0:.3f} hours ago'.format(time_array[pol_cnt, ant_cnt].value)
 
         self.emit_js_hex('var data = [')
 
