@@ -261,8 +261,8 @@ class Emitter(object):
         _adc_power = 10 * np.log10(_adc_power)
         _pam_power = np.ma.masked_invalid([[pam_power[ant, pol] for ant in ants]
                                            for pol in pols])
-        time_array = Time([[time_array[ant, pol].to('hour')
-                            for ant in ants] for pol in pols], format='gps')
+        time_array = np.array([[time_array[ant, pol].to('hour').value
+                               for ant in ants] for pol in pols])
         xs = np.ma.masked_array(antpos[0, ant_index], mask=_amps[0].mask)
         ys = np.ma.masked_array([antpos[1, ant_index] + 3 * (pol_cnt - .5)
                                  for pol_cnt, pol in enumerate(pols)],
@@ -281,13 +281,13 @@ class Emitter(object):
                         _text[pol_cnt, ant_cnt] += '<br>' + _name + ' [dB]: {0:.2f}'.format(_power[pol_cnt, ant_cnt])
                     else:
                         _text[pol_cnt, ant_cnt] += '<br>' + _name + ' [dB]: No Data'
-                if time_array[pol_cnt, ant_cnt].value > 2 * 24 * 365:
+                if time_array[pol_cnt, ant_cnt] > 2 * 24 * 365:
                     # if the value is older than 2 years it is bad
                     # value are stored in hours.
                     # 2 was chosen arbitraritly.
                     _text[pol_cnt, ant_cnt] += '<br>' + 'SNAP timestamp: No Data'
                 else:
-                    _text[pol_cnt, ant_cnt] += '<br>' + 'SNAP timestamp: {0:.3f} hours ago'.format(time_array[pol_cnt, ant_cnt].value)
+                    _text[pol_cnt, ant_cnt] += '<br>' + 'SNAP timestamp: {0:.3f} hours ago'.format(time_array[pol_cnt, ant_cnt])
 
         self.emit_js_hex('var data = [')
 
