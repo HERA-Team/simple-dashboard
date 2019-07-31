@@ -202,12 +202,13 @@ class Emitter(object):
         pam_ind = np.zeros_like(ants, dtype=np.int)
         pam_power = {}
         adc_power = {}
-
+        time_array = {}
         for ant in ants:
             for pol in pols:
                 amps.setdefault((ant, pol), np.Inf)
                 pam_power.setdefault((ant, pol), np.Inf)
                 adc_power.setdefault((ant, pol), np.Inf)
+                time_array.setdefault((ant, pol), self.now - Time(0, format='gps'))
 
         for ant_cnt, ant in enumerate(ants):
             station_status = self.session.get_antenna_status(most_recent=True,
@@ -219,6 +220,9 @@ class Emitter(object):
                 if status.adc_power is not None:
                     adc_power[(status.antenna_number,
                                status.antenna_feed_pol)] = status.adc_power
+                if status.time is not None:
+                    time_array[(status.antenna_number,
+                                status.antenna_feed_pol)] = self.now - Time(status.time, format='gps')
 
             pam_info = hsession.get_part_at_station_from_type('HH{:d}'.format(ant), latest, 'post-amp')
             if pam_info[list(pam_info.keys())[0]]['e'] is not None:
@@ -257,6 +261,8 @@ class Emitter(object):
         _adc_power = 10 * np.log10(_adc_power)
         _pam_power = np.ma.masked_invalid([[pam_power[ant, pol] for ant in ants]
                                            for pol in pols])
+        time_array = np.array([[time_array[ant, pol].to('hour').value
+                               for ant in ants] for pol in pols])
         xs = np.ma.masked_array(antpos[0, ant_index], mask=_amps[0].mask)
         ys = np.ma.masked_array([antpos[1, ant_index] + 3 * (pol_cnt - .5)
                                  for pol_cnt, pol in enumerate(pols)],
@@ -270,11 +276,18 @@ class Emitter(object):
         #  want to format No Data where data was not retrieved for each type of power
         for pol_cnt, pol in enumerate(pols):
             for ant_cnt, ant in enumerate(ants):
-                for _name, _power in zip(['Amp', 'PAM', 'ADC'], [_amps, _pam_power, _adc_power]):
+                for _name, _power in zip(['Auto', 'PAM', 'ADC'], [_amps, _pam_power, _adc_power]):
                     if not _power.mask[pol_cnt, ant_cnt]:
                         _text[pol_cnt, ant_cnt] += '<br>' + _name + ' [dB]: {0:.2f}'.format(_power[pol_cnt, ant_cnt])
                     else:
                         _text[pol_cnt, ant_cnt] += '<br>' + _name + ' [dB]: No Data'
+                if time_array[pol_cnt, ant_cnt] > 2 * 24 * 365:
+                    # if the value is older than 2 years it is bad
+                    # value are stored in hours.
+                    # 2 was chosen arbitraritly.
+                    _text[pol_cnt, ant_cnt] += '<br>' + 'PAM/SNAP - No Data'
+                else:
+                    _text[pol_cnt, ant_cnt] += '<br>' + 'MAP/SNAP: {0:.2f} hrs old'.format(time_array[pol_cnt, ant_cnt])
 
         self.emit_js_hex('var data = [')
 
@@ -301,7 +314,7 @@ class Emitter(object):
         colorscale = "Viridis"
         for pow_ind, power in enumerate([_amps, _pam_power, _adc_power]):
             if pow_ind == 0:
-                self.emit_js_hex("// AMPLITUDE DATA ")
+                self.emit_js_hex("// Auto DATA ")
             elif pow_ind == 1:
                 self.emit_js_hex("// PAM DATA ")
             else:
@@ -459,7 +472,7 @@ Plotly.plot("plotly-hex", data, layout, {{responsive: true}});
 
             for pow_ind, power in enumerate([__amps, __pam, __adc]):
                 if pow_ind == 0:
-                    self.emit_js_node("// AMPLITUDE DATA ")
+                    self.emit_js_node("// Auto DATA ")
                 elif pow_ind == 1:
                     self.emit_js_node("// PAM DATA ")
                 else:
@@ -605,7 +618,7 @@ Plotly.plot("plotly-node", data, layout, {{responsive: true}});
         <p class="text-center">Report generated <span id="age">???</span> ago (at {gen_date} UTC)</p>
     </div>
     <div class="col-md-12">
-        <p class="text-center">Data observed on {iso_date} (JD: {jd_date:.6f})</p>
+        <p class="text-center">Auto correlations observed on {iso_date} (JD: {jd_date:.6f})</p>
     </div>
   </div>
 """, gen_date=self.now.iso,
@@ -628,7 +641,7 @@ Plotly.plot("plotly-node", data, layout, {{responsive: true}});
          <p class="text-center">Report generated <span id="age">???</span> ago (at {gen_date} UTC)</p>
      </div>
      <div class="col-md-12">
-         <p class="text-center">Data observed on {iso_date} (JD: {jd_date:.6f})</p>
+         <p class="text-center">Auto correlations observed on {iso_date} (JD: {jd_date:.6f})</p>
      </div>
    </div>
  """, gen_date=self.now.iso,
