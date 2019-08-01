@@ -201,8 +201,8 @@ class Emitter(object):
         node_ind = np.zeros_like(ants, dtype=np.int)
         pam_ind = np.zeros_like(ants, dtype=np.int)
         # defaul the snap name to "No Data"
-        hostname = np.full(ants, 'No Data', dtype=object)
-        snap_serial = np.full(ants, 'No Data', dtype=object)
+        hostname = np.full_like(ants, 'No Data', dtype=object)
+        snap_serial = np.full_like(ants, 'No Data', dtype=object)
 
         pam_power = {}
         adc_power = {}
