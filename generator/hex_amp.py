@@ -228,24 +228,30 @@ class Emitter(object):
 
             # Try to get the snap info. Output is a dictionary with 'e' and 'n' keys
             snap_info = hsession.get_part_at_station_from_type('HH{:d}'.format(ant), latest, 'snap')
-            if snap_info[list(snap_info.keys())[0]]['e'] is not None:
-                _snap_num = re.findall(r'SNPC(\d+)', snap_info[list(snap_info.keys())[0]]['e'])[0]
+            # get the first key in the dict to index easier
+            _key = list(snap_info.keys())[0]
+            if snap_info[_key]['e'] is not None:
+                _snap_num = re.findall(r'SNP[A-Z](\d+)', snap_info[_key]['e'])[0]
                 snap_ind[ant_cnt] = np.int(_snap_num)
             else:
                 snap_ind[ant_cnt] = -1
 
             # Try to get the pam info. Output is a dictionary with 'e' and 'n' keys
             pam_info = hsession.get_part_at_station_from_type('HH{:d}'.format(ant), latest, 'post-amp')
-            if pam_info[list(pam_info.keys())[0]]['e'] is not None:
-                _pam_num = re.findall(r'PAM(\d+)', pam_info[list(pam_info.keys())[0]]['e'])[0]
+            # get the first key in the dict to index easier
+            _key = list(pam_info.keys())[0]
+            if pam_info[_key]['e'] is not None:
+                _pam_num = re.findall(r'PAM(\d+)', pam_info[_key]['e'])[0]
                 pam_ind[ant_cnt] = np.int(_pam_num)
             else:
                 pam_ind[ant_cnt] = -1
 
             # Try to get the ADC info. Output is a dictionary with 'e' and 'n' keys
             node_info = hsession.get_part_at_station_from_type('HH{:d}'.format(ant), latest, 'node')
-            if node_info[list(node_info.keys())[0]]['e'] is not None:
-                _node_num = re.findall(r'N(\d+)', node_info[list(node_info.keys())[0]]['e'])[0]
+            # get the first key in the dict to index easier
+            _key = list(node_info.keys())[0]
+            if node_info[_key]['e'] is not None:
+                _node_num = re.findall(r'N(\d+)', node_info[_key]['e'])[0]
                 node_ind[ant_cnt] = np.int(_node_num)
             else:
                 node_ind[ant_cnt] = -1
