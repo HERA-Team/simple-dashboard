@@ -285,9 +285,9 @@ class Emitter(object):
                     # if the value is older than 2 years it is bad
                     # value are stored in hours.
                     # 2 was chosen arbitraritly.
-                    _text[pol_cnt, ant_cnt] += '<br>' + 'PAM/SNAP - No Data'
+                    _text[pol_cnt, ant_cnt] += '<br>' + 'PAM/ADC - No Data'
                 else:
-                    _text[pol_cnt, ant_cnt] += '<br>' + 'MAP/SNAP: {0:.2f} hrs old'.format(time_array[pol_cnt, ant_cnt])
+                    _text[pol_cnt, ant_cnt] += '<br>' + 'PAM/ADC: {0:.2f} hrs old'.format(time_array[pol_cnt, ant_cnt])
 
         self.emit_js_hex('var data = [')
 
