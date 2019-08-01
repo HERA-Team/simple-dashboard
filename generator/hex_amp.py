@@ -200,6 +200,8 @@ class Emitter(object):
         # Get node and PAM info
         node_ind = np.zeros_like(ants, dtype=np.int)
         pam_ind = np.zeros_like(ants, dtype=np.int)
+        snap_ind = np.zeros_like(ants, dtype=np.int)
+
         pam_power = {}
         adc_power = {}
         time_array = {}
@@ -224,6 +226,15 @@ class Emitter(object):
                     time_array[(status.antenna_number,
                                 status.antenna_feed_pol)] = self.now - Time(status.time, format='gps')
 
+            # Try to get the snap info. Output is a dictionary with 'e' and 'n' keys
+            snap_info = hsession.get_part_at_station_from_type('HH{:d}'.format(ant), latest, 'snap')
+            if snap_info[list(snap_info.keys())[0]]['e'] is not None:
+                _snap_num = re.findall(r'SNPC(\d+)', snap_info[list(snap_info.keys())[0]]['e'])[0]
+                snap_ind[ant_cnt] = np.int(_snap_num)
+            else:
+                snap_ind[ant_cnt] = -1
+
+            # Try to get the pam info. Output is a dictionary with 'e' and 'n' keys
             pam_info = hsession.get_part_at_station_from_type('HH{:d}'.format(ant), latest, 'post-amp')
             if pam_info[list(pam_info.keys())[0]]['e'] is not None:
                 _pam_num = re.findall(r'PAM(\d+)', pam_info[list(pam_info.keys())[0]]['e'])[0]
@@ -231,6 +242,7 @@ class Emitter(object):
             else:
                 pam_ind[ant_cnt] = -1
 
+            # Try to get the ADC info. Output is a dictionary with 'e' and 'n' keys
             node_info = hsession.get_part_at_station_from_type('HH{:d}'.format(ant), latest, 'node')
             if node_info[list(node_info.keys())[0]]['e'] is not None:
                 _node_num = re.findall(r'N(\d+)', node_info[list(node_info.keys())[0]]['e'])[0]
@@ -268,6 +280,7 @@ class Emitter(object):
                                  for pol_cnt, pol in enumerate(pols)],
                                 mask=_amps.mask)
         _text = np.array([[antnames[ant_index[ant_cnt]] + pol
+                           + '<br>' + 'SNAP #: ' + str(snap_ind[ant_cnt])
                            + '<br>' + 'PAM #: ' + str(pam_ind[ant_cnt])
                            + '<br>' + 'Node #:' + str(node_ind[ant_cnt])
                            for ant_cnt, ant in enumerate(ants)]
@@ -431,6 +444,7 @@ var layout = {{
     // title: 'Median Auto Amplitude',
     xaxis: {{title: 'East-Westh Position [m]'}},
     yaxis: {{title: 'North-South Position [m]'}},
+    "hoverlabel": {{"align": "left"}},
     margin: {{
         t: 10,
     }},
@@ -587,6 +601,7 @@ var layout = {{
     yaxis: {{showticklabels: false,
              showgrid: false,
              zeroline: false}},
+    "hoverlabel": {{"align": "left"}},
     margin: {{
            t: 10,
     }},
