@@ -200,7 +200,9 @@ class Emitter(object):
         # Get node and PAM info
         node_ind = np.zeros_like(ants, dtype=np.int)
         pam_ind = np.zeros_like(ants, dtype=np.int)
-        snap_ind = np.zeros_like(ants, dtype=np.int)
+        # defaul the snap name to "No Data"
+        hostname = np.full(ants, 'No Data', dtype=object)
+        snap_serial = np.full(ants, 'No Data', dtype=object)
 
         pam_power = {}
         adc_power = {}
@@ -231,10 +233,7 @@ class Emitter(object):
             # get the first key in the dict to index easier
             _key = list(snap_info.keys())[0]
             if snap_info[_key]['e'] is not None:
-                _snap_num = re.findall(r'SNP[A-Z](\d+)', snap_info[_key]['e'])[0]
-                snap_ind[ant_cnt] = np.int(_snap_num)
-            else:
-                snap_ind[ant_cnt] = -1
+                snap_serial[ant_cnt] = snap_info[_key]['e']
 
             # Try to get the pam info. Output is a dictionary with 'e' and 'n' keys
             pam_info = hsession.get_part_at_station_from_type('HH{:d}'.format(ant), latest, 'post-amp')
@@ -253,6 +252,12 @@ class Emitter(object):
             if node_info[_key]['e'] is not None:
                 _node_num = re.findall(r'N(\d+)', node_info[_key]['e'])[0]
                 node_ind[ant_cnt] = np.int(_node_num)
+
+                snap_status = self.session.get_snap_status(most_recent=True,
+                                                           nodeID=np.int(_node_num))
+                for _status in snap_status:
+                    if _status.serial_number == snap_serial[ant_cnt]:
+                        hostname[ant_cnt] = _status.hostname
             else:
                 node_ind[ant_cnt] = -1
 
@@ -286,9 +291,8 @@ class Emitter(object):
                                  for pol_cnt, pol in enumerate(pols)],
                                 mask=_amps.mask)
         _text = np.array([[antnames[ant_index[ant_cnt]] + pol
-                           + '<br>' + 'SNAP #: ' + str(snap_ind[ant_cnt])
+                           + '<br>' + str(hostname[ant_cnt])
                            + '<br>' + 'PAM #: ' + str(pam_ind[ant_cnt])
-                           + '<br>' + 'Node #:' + str(node_ind[ant_cnt])
                            for ant_cnt, ant in enumerate(ants)]
                           for pol_cnt, pol in enumerate(pols)], dtype='object')
 
