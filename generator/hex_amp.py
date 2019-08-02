@@ -200,6 +200,10 @@ class Emitter(object):
         # Get node and PAM info
         node_ind = np.zeros_like(ants, dtype=np.int)
         pam_ind = np.zeros_like(ants, dtype=np.int)
+        # defaul the snap name to "No Data"
+        hostname = np.full_like(ants, 'No Data', dtype=object)
+        snap_serial = np.full_like(ants, 'No Data', dtype=object)
+
         pam_power = {}
         adc_power = {}
         time_array = {}
@@ -224,17 +228,36 @@ class Emitter(object):
                     time_array[(status.antenna_number,
                                 status.antenna_feed_pol)] = self.now - Time(status.time, format='gps')
 
+            # Try to get the snap info. Output is a dictionary with 'e' and 'n' keys
+            snap_info = hsession.get_part_at_station_from_type('HH{:d}'.format(ant), latest, 'snap')
+            # get the first key in the dict to index easier
+            _key = list(snap_info.keys())[0]
+            if snap_info[_key]['e'] is not None:
+                snap_serial[ant_cnt] = snap_info[_key]['e']
+
+            # Try to get the pam info. Output is a dictionary with 'e' and 'n' keys
             pam_info = hsession.get_part_at_station_from_type('HH{:d}'.format(ant), latest, 'post-amp')
-            if pam_info[list(pam_info.keys())[0]]['e'] is not None:
-                _pam_num = re.findall(r'PAM(\d+)', pam_info[list(pam_info.keys())[0]]['e'])[0]
+            # get the first key in the dict to index easier
+            _key = list(pam_info.keys())[0]
+            if pam_info[_key]['e'] is not None:
+                _pam_num = re.findall(r'PAM(\d+)', pam_info[_key]['e'])[0]
                 pam_ind[ant_cnt] = np.int(_pam_num)
             else:
                 pam_ind[ant_cnt] = -1
 
+            # Try to get the ADC info. Output is a dictionary with 'e' and 'n' keys
             node_info = hsession.get_part_at_station_from_type('HH{:d}'.format(ant), latest, 'node')
-            if node_info[list(node_info.keys())[0]]['e'] is not None:
-                _node_num = re.findall(r'N(\d+)', node_info[list(node_info.keys())[0]]['e'])[0]
+            # get the first key in the dict to index easier
+            _key = list(node_info.keys())[0]
+            if node_info[_key]['e'] is not None:
+                _node_num = re.findall(r'N(\d+)', node_info[_key]['e'])[0]
                 node_ind[ant_cnt] = np.int(_node_num)
+
+                snap_status = self.session.get_snap_status(most_recent=True,
+                                                           nodeID=np.int(_node_num))
+                for _status in snap_status:
+                    if _status.serial_number == snap_serial[ant_cnt]:
+                        hostname[ant_cnt] = _status.hostname
             else:
                 node_ind[ant_cnt] = -1
 
@@ -268,8 +291,8 @@ class Emitter(object):
                                  for pol_cnt, pol in enumerate(pols)],
                                 mask=_amps.mask)
         _text = np.array([[antnames[ant_index[ant_cnt]] + pol
+                           + '<br>' + str(hostname[ant_cnt])
                            + '<br>' + 'PAM #: ' + str(pam_ind[ant_cnt])
-                           + '<br>' + 'Node #:' + str(node_ind[ant_cnt])
                            for ant_cnt, ant in enumerate(ants)]
                           for pol_cnt, pol in enumerate(pols)], dtype='object')
 
@@ -431,6 +454,7 @@ var layout = {{
     // title: 'Median Auto Amplitude',
     xaxis: {{title: 'East-Westh Position [m]'}},
     yaxis: {{title: 'North-South Position [m]'}},
+    "hoverlabel": {{"align": "left"}},
     margin: {{
         t: 10,
     }},
@@ -587,6 +611,7 @@ var layout = {{
     yaxis: {{showticklabels: false,
              showgrid: false,
              zeroline: false}},
+    "hoverlabel": {{"align": "left"}},
     margin: {{
            t: 10,
     }},
