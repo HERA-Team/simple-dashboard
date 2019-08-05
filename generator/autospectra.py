@@ -44,7 +44,7 @@ for key in keys:
         ants.append(ant)
 
 ants = np.unique(ants)
-print(ants)
+
 n_ants = ants.size
 # Generate frequency axis
 NCHANS = int(2048 // 4 * 3)
