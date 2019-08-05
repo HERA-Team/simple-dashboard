@@ -44,7 +44,7 @@ for key in keys:
         ants.append(ant)
 
 ants = np.unique(ants)
-print(ants)
+
 n_ants = ants.size
 # Generate frequency axis
 NCHANS = int(2048 // 4 * 3)
@@ -68,7 +68,7 @@ html_preamble = """\
   <meta charset="utf-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta http-equiv="refresh" content="60" >
+  <!--- <meta http-equiv="refresh" content="60" > -->
   <title>HERA Auto Spectra Dashboard</title>
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap-theme.min.css">
@@ -77,7 +77,11 @@ html_preamble = """\
     <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
   <![endif]-->
   <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+<script type="text/javascript">
+setInterval(function () { if (document.getElementById('autoRefreshCheckbox').checked) { location.reload(); } }, 60000);
+</script>
 </head>
+<span>Auto Refresh</span>&nbsp;<input type="checkbox" id="autoRefreshCheckbox" value="true" checked="checked" />
 """
 
 plotly_preamble = '''
