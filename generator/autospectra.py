@@ -77,7 +77,11 @@ html_preamble = """\
     <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
   <![endif]-->
   <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+<script type="text/javascript">
+setInterval(function () { if (document.getElementById('autoRefreshCheckbox').checked) { location.reload(); } }, 60000);
+</script>
 </head>
+<span>Auto Refresh</span>&nbsp;<input type="checkbox" id="autoRefreshCheckbox" value="true" checked="checked" />
 """
 
 plotly_preamble = '''
