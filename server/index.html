@@ -121,6 +121,7 @@ frameHolder.src="http://heranow.reionization.org/radiosky.png"
     <div class="librarian-time-bar">
       Local Time: <span class="date" data-timezone="Africa/Johannesburg">Jan 1</span><br>
       Sidereal time: <span class="clock_sidereal" data-timezone="Africa/Johannesburg">00:00:00</span><br>
+      Brexit: <span id="days">0</span> days  <span id="hours">0</span> hrs <span id="minutes">0</span>mins <span id="seconds">0</span>
      </div></div>
 
 
@@ -162,4 +163,47 @@ frameHolder.src="http://heranow.reionization.org/radiosky.png"
   <!-- Latest compiled and minified JavaScript -->
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
 </body>
+
+<script>
+  (function (d, DEADLINE, serverTime) {
+    var timeDelta = serverTime - (Date.now() + 3600000) / 1000,
+      interval;
+
+    var UI = {
+      days: d.getElementById('days'),
+      hours: d.getElementById('hours'),
+      minutes: d.getElementById('minutes'),
+      seconds: d.getElementById('seconds')
+    };
+
+    function getTimeRemaining() {
+      var dt = DEADLINE - (Date.now() + 3600000) / 1000 - timeDelta;
+      return {
+        total: dt,
+        days: Math.floor(dt / (60 * 60 * 24)),
+        hours: Math.floor((dt / (60 * 60)) % 24),
+        minutes: Math.floor((dt / 60) % 60),
+        seconds: Math.floor(dt % 60)
+      };
+    }
+
+    function updateClock() {
+      var t = getTimeRemaining();
+      if (t.total < 0) {
+        clearInterval(interval);
+        return;
+      }
+      UI.days.innerHTML = t.days;
+      UI.hours.innerHTML = ('0' + t.hours).slice(-2);
+      UI.minutes.innerHTML = ('0' + t.minutes).slice(-2);
+      UI.seconds.innerHTML = ('0' + t.seconds).slice(-2);
+    }
+
+    d.documentElement.className = 'js';
+    interval = setInterval(updateClock, 1000);
+    updateClock();
+
+  })(document, 1572562800, (Date.now()) / 1000);
+</script>
+
 </html>
