@@ -454,7 +454,7 @@ class Emitter(object):
 
 var layout = {{
     // title: 'Median Auto Amplitude',
-    xaxis: {{title: 'East-Westh Position [m]'}},
+    xaxis: {{title: 'East-West Position [m]'}},
     yaxis: {{title: 'North-South Position [m]'}},
     "hoverlabel": {{"align": "left"}},
     margin: {{
