@@ -229,16 +229,18 @@ class Emitter(object):
                                 status.antenna_feed_pol)] = self.now - Time(status.time, format='gps')
 
             # Try to get the snap info. Output is a dictionary with 'e' and 'n' keys
-            snap_info = hsession.get_part_at_station_from_type('HH{:d}'.format(ant), latest, 'snap')
+            snap_info = hsession.get_part_at_station_from_type('HH{:d}'.format(ant), 'now', 'snap')
             # get the first key in the dict to index easier
             _key = list(snap_info.keys())[0]
             if snap_info[_key]['e'] is not None:
                 snap_serial[ant_cnt] = snap_info[_key]['e']
 
             # Try to get the pam info. Output is a dictionary with 'e' and 'n' keys
-            pam_info = hsession.get_part_at_station_from_type('HH{:d}'.format(ant), latest, 'post-amp')
+            pam_info = hsession.get_part_at_station_from_type('HH{:d}'.format(ant), 'now', 'post-amp')
             # get the first key in the dict to index easier
             _key = list(pam_info.keys())[0]
+            print(pam_info)
+            print(_key,pam_info[_key]['e'])
             if pam_info[_key]['e'] is not None:
                 _pam_num = re.findall(r'PAM(\d+)', pam_info[_key]['e'])[0]
                 pam_ind[ant_cnt] = np.int(_pam_num)
@@ -246,7 +248,7 @@ class Emitter(object):
                 pam_ind[ant_cnt] = -1
 
             # Try to get the ADC info. Output is a dictionary with 'e' and 'n' keys
-            node_info = hsession.get_part_at_station_from_type('HH{:d}'.format(ant), latest, 'node')
+            node_info = hsession.get_part_at_station_from_type('HH{:d}'.format(ant), 'now', 'node')
             # get the first key in the dict to index easier
             _key = list(node_info.keys())[0]
             if node_info[_key]['e'] is not None:
@@ -452,7 +454,7 @@ class Emitter(object):
 
 var layout = {{
     // title: 'Median Auto Amplitude',
-    xaxis: {{title: 'East-Westh Position [m]'}},
+    xaxis: {{title: 'East-West Position [m]'}},
     yaxis: {{title: 'North-South Position [m]'}},
     "hoverlabel": {{"align": "left"}},
     margin: {{
