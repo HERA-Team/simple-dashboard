@@ -3,6 +3,7 @@ from hera_mc import mc
 from hera_mc.observations import Observation
 from hera_mc.librarian import LibFiles
 from hera_mc.node import NodeSensor
+from hera_mc.correlator import CorrelatorControlState
 from astropy.time import TimeDelta,Time
 from hera_mc.librarian import LibFiles
 from astropy.units import Quantity
@@ -105,10 +106,26 @@ result = session.query(NodeSensor.node,func.count(NodeSensor.time)).filter(NodeS
 BODY += """
             <tr>
                 <th scope="row">Node Sensor Readings (last 24 hours)</th>
+                <td>
             """
 for l in result:
-    BODY += "<td>Node{node}:{pings}</td>\n".format(node=l[0],pings=l[1])
+    BODY += "Node{node}:{pings}   ".format(node=l[0],pings=l[1])
+BODY += "</td></tr>\n"
+
+
+# get the current state of is_recording()
+result = session.query(CorrelatorControlState.state,CorrelatorControlState.time).filter(CorrelatorControlState.state_type.like('taking_data')).order_by(CorrelatorControlState.time).limit(1).one()
+is_recording = result[0]
+last_update = Time(result[1],scale='utc',format='gps')
+BODY += "<tr>\n"
+if is_recording:
+    BODY += """
+            <th scope="row"> Correlator is </th><td bgcolor="green"> ON    (last change: {d})</td>\n""".format(d=last_update.iso)
+else:
+    BODY += """
+            <th scope="row"> Correlator is </th><td bgcolor="red"> OFF    (last change: {d})</td>\n""".format(d=last_update.iso)
 BODY += "</tr>\n"
+
 BODY += TABLEEND
 BODY += POSTAMBLE
 
