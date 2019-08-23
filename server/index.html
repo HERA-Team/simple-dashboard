@@ -73,12 +73,15 @@ updateDates();
 </script>
 
 <script>
-window.setInterval("reloadIFrame();", 30000);
 
-function reloadIFrame() {
+
+function reloadradiosky() {
  var frameHolder=document.getElementById('radiosky');
-frameHolder.src="http://heranow.reionization.org/radiosky.png"
+frameHolder.src = frameHolder.src;
 }
+setInterval(reloadradiosky, 30000);
+
+
 </script>
 
 
@@ -135,7 +138,7 @@ frameHolder.src="http://heranow.reionization.org/radiosky.png"
         <iframe src="http://heranow.reionization.org/spectra.html" width=500 height=400 frameborder="0"></iframe></td>
       <td><div class="dashboard-inset-titlebar">Power by Antenna -- <a target="_blank" href="http://heranow.reionization.org/hex_amp.html">(open in new tab)</a></div>
         <iframe src="http://heranow.reionization.org/hex_amp.html" width=500 height=400 frameborder="0"></iframe></td>
-      <td><img id="radiosky" src="http://heranow.reionization.org/radiosky.png"</img></td>
+      <td><iframe  id="radiosky" src="http://heranow.reionization.org/radiosky.png" width=500 height=400></iframe></td>
   </tr>
 
   <tr>
