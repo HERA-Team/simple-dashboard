@@ -92,7 +92,7 @@ BODY += """
             </tr>
             """.format(dt=dt_days,h=int(dt_hours))
 #get the number of raw files in the last 24 hours
-numfiles = session.query(LibFiles).filter(LibFiles.time>(Time.now()+TimeDelta(Quantity(1,'day'))).gps).filter(LibFiles.filename.like('%uvh5')).count()
+numfiles = session.query(LibFiles).filter(LibFiles.time>(Time.now()-TimeDelta(Quantity(1,'day'))).gps).filter(LibFiles.filename.like('%uvh5')).count()
 BODY += """
             <tr>
                 <th scope="row">Raw Files Recorded (last 24 hours)</th>
