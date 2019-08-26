@@ -7,13 +7,11 @@
 
 from __future__ import absolute_import, division, print_function
 
-import os
 import numpy as np
 import redis
 from hera_mc import mc, cm_sysutils
 from astropy.time import Time
-import warnings
-from hera_corr_f import snap_fengine
+import hera_corr_cm
 
 
 HTML_HEADER = """\
@@ -97,17 +95,17 @@ def main():
         def emit_js(f, end='\n', **kwargs):
             print(f.format(**kwargs), file=js_file, end=end)
 
-        Emitter(session, redis_db,
+        Emitter(session, args.redishost,
                 emit_html, emit_js).emit()
 
 
 class Emitter(object):
 
-    def __init__(self, session, redis_db,
+    def __init__(self, session, redishost,
                  emit_html_hex, emit_js_hex,
                  emit_html_node, emit_js_node):
         self.session = session
-        self.redis_db = redis_db
+        self.corr_cm = hera_corr_cm.HeraCorrCM(redishost=redishost)
 
         self.emit_html_hex = emit_html_hex
         self.emit_js_hex = emit_js_hex
@@ -164,23 +162,42 @@ class Emitter(object):
         hostnames = [stat.hostname for stat in all_snap_statuses
                      if stat.hostname not in hostnames]
 
+        autos = {}
+
+        ant_status_from_snaps = self.corr_cm.get_ant_status()
+
         for ant_cnt, ant in enumerate(ants):
+            mc_ant_status = self.session.get_ant_status(antenna_number=ant,
+                                                        most_recent=True)
+            for stat in mc_ant_status:
+                name = "{ant:d}:{pol}".format(ant=stat.antenna_number,
+                                              pol=stat.antenna_feed_pol)
+
+                tmp_auto = ant_status_from_snaps[name]["autocorrelation"]
+
+                autos[name] = 10 * np.log10(np.real(tmp_auto))
+
             # Try to get the snap info. Output is a dictionary with 'e' and 'n' keys
             # connect to M&C to find all the hooked up Snap hostnames and corresponding ant-pols
-            snap_info = hsession.get_part_at_station_from_type('HH{:d}'.format(ant), 'now', 'snap')
+            mc_name = 'HH{:d}'.format(ant)
+            snap_info = hsession.get_part_at_station_from_type(mc_name,
+                                                               'now', 'snap')
 
             for _key in snap_info.keys():
                 # initialize a dict if they key does not exist already
-                snap_serial.setdefault(int(_key), {})
-                ant_loc_num.setdefault(int(_key), {})
+                snap_serial.setdefault(int(ant), {})
+                ant_loc_num.setdefault(int(ant), {})
 
                 for pol_key in snap_info[_key].keys():
                     if snap_info[_key][pol_key] is not None:
-                        snap_serial[int(_key)][pol_key] = snap_info[_key][pol_key]
+                        snap_serial[ant][pol_key] = snap_info[_key][pol_key]
+
+                        name = "{ant:d}:{pol}".format(ant=ant,
+                                                      pol=pol_key)
 
                         for _stat in all_snap_statuses:
-                            if _stat.serial_number == snap_serial[int(_key)][pol_key]:
-                                ant_loc_num[int(_key)][pol_key] = _stat.snap_loc_num
+                            if _stat.serial_number == snap_serial[ant][pol_key]:
+                                ant_loc_num[ant][pol_key] = _stat.snap_loc_num
 
                                 # if this hostname is not in the lookup table yet
                                 # initialize an empty dict
@@ -188,11 +205,7 @@ class Emitter(object):
                                 # if this loc num is not in lookup table initialize
                                 # empty list
                                 grp2 = grp1.setdefault(_stat.snap_loc_num, [])
-                                grp2.append('{ant:d}:{pol}'.format(ant=ant, pol=pol_key))
-
-        # this is copy-pasta from the notebook, need to plotly-ize it
-        # length of the snap correlation output fixed to 1024
-        n_freqs = 1024
+                                grp2.append(name)
 
         self.emit_js_node("var data = [")
         # create a mask to make things visibile for only that hostname
@@ -201,47 +214,39 @@ class Emitter(object):
         host_masks = np.full((len(hostnames), len(hostnames) * 8), 'false',
                              dtype=np.str_)
         host_title = np.zeros((len(hostnames)), dtype='object')
+
+        # Generate frequency axis
+        # this is taken directly from autospectra.py
+        # NCHANS = int(2048 // 4 * 3)
+        # NCHANS_F = 8192
+        # NCHAN_SUM = 4
+        # frange = np.linspace(0, 250e6, NCHANS_F + 1)[1536:1536 + (8192 // 4 * 3)]
+        # average over channels
+        # freqs = frange.reshape(NCHANS, NCHAN_SUM).sum(axis=1) / NCHAN_SUM
+
         for host_cnt, host in enumerate(hostname_lookup.keys()):
-            print(host)
-            try:
-                s = snap_fengine.SnapFengine(host)
-                clk = s.fpga.estimate_fpga_clock()
-            except Exception:
-                warnings.warn("Cannot talk to {}".format(host))
-                continue
-            if clk == 0.0:
-                warnings.warn("{} clock rate 0".format(host))
-                continue
-            freq = clk * 4 / 2 / 2
-            fs = freq * 2
-            length = s.corr.get_acc_len()
-            length *= n_freqs / 1.0e6 / fs
-            freqs = np.linspace(0, freq, num=n_freqs)
             if host_cnt == 0:
                 visible = 'true'
             else:
                 visible = 'false'
 
-            host_title[host_cnt] = '{} Integration over {} seconds'.format(host, length)
+            # host_title[host_cnt] = '{} Integration over {} seconds'.format(host, length)
 
             for loc_num in hostname_lookup[host].keys():
                 for ant_cnt, ant_name in enumerate(hostname_lookup[host][loc_num]):
 
                     host_masks[host_cnt, host_cnt * 8 + loc_num * 2 + ant_cnt] = 'true'
 
-                    name = 'ant {}'.format(ant_name)
-                    auto = s.corr.get_new_corr(ant_name, ant_name,
-                                               flush_vacc=False)
-                    data = 10 * np.log10(auto.real)
+                    name = 'ant{}'.format(ant_name.replace(":", ""))
 
-                    self.emit_js('{{x: ', end='')
-                    self.emit_data_array(freqs, '{x:.3f}')
+                    self.emit_js('{{x: []', end='')
+                    # self.emit_data_array(freqs, '{x:.3f}')
                     self.emit_js(',\ny: ', end='')
-                    self.emit_data_array(data, '{x:.3f}')
+                    self.emit_data_array(autos[ant_name], '{x:.3f}')
                     self.emit_js(",\nvisibile: {visible}", visible=visible, end='')
                     self.emit_js(",\nhovertemplate: '%{x:.3f}<extra>{name}</extra>'", name=name, end='')
                     self.emit_js("}} ", end='\n')
-
+        # end data var
         self.emit_js_node(']', end='\n')
 
         self.emit_js(' var updatemenus=[')
