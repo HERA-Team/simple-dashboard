@@ -234,7 +234,9 @@ class Emitter(object):
 
             for loc_num in hostname_lookup[host].keys():
                 for ant_cnt, ant_name in enumerate(hostname_lookup[host][loc_num]):
-
+                    # this 8 and 2 business is because the mask is raveled
+                    # and needs to account for the 8 different feed pols connected to each snap
+                    # the loc_num helps to track the antenna
                     host_masks[host_cnt, host_cnt * 8 + loc_num * 2 + ant_cnt] = 'true'
 
                     name = 'ant{}'.format(ant_name.replace(":", ""))
