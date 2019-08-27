@@ -102,15 +102,12 @@ def main():
 class Emitter(object):
 
     def __init__(self, session, redishost,
-                 emit_html_hex, emit_js_hex,
-                 emit_html_node, emit_js_node):
+                 emit_html, emit_js):
         self.session = session
         self.corr_cm = hera_corr_cm.HeraCorrCM(redishost=redishost)
 
-        self.emit_html_hex = emit_html_hex
-        self.emit_js_hex = emit_js_hex
-        self.emit_html_node = emit_html_node
-        self.emit_js_node = emit_js_node
+        self.emit_html = emit_html
+        self.emit_js = emit_js
         self.latest = Time(np.frombuffer(self.redis_db.get('auto:timestamp'),
                            dtype=np.float64).item(), format='jd')
 
@@ -207,7 +204,7 @@ class Emitter(object):
                                 grp2 = grp1.setdefault(_stat.snap_loc_num, [])
                                 grp2.append(name)
 
-        self.emit_js_node("var data = [")
+        self.emit_js("var data = [")
         # create a mask to make things visibile for only that hostname
         # the mask is different for each host, but each mask is the total
         # length of all data, 8 because loc_nums go 0-3 each with 'e' and 'n' pols
@@ -249,7 +246,7 @@ class Emitter(object):
                     self.emit_js(",\nhovertemplate: '%{x:.3f}<extra>{name}</extra>'", name=name, end='')
                     self.emit_js("}} ", end='\n')
         # end data var
-        self.emit_js_node(']', end='\n')
+        self.emit_js(']', end='\n')
 
         self.emit_js(' var updatemenus=[')
         self.emit_js('{{buttons: [')
@@ -264,10 +261,10 @@ class Emitter(object):
             self.emit_js("label: {host},", host=host)
             self.emit_js("method: 'restyle'")
             self.emit_js('}},')
-        self.emit_js_node(']', end='\n')
-        self.emit_js_node('showactive: true,')
-        self.emit_js_node('}},')
-        self.emit_js_node(']', end='\n')
+        self.emit_js(']', end='\n')
+        self.emit_js('showactive: true,')
+        self.emit_js('}},')
+        self.emit_js(']', end='\n')
 
         self.emit_js("""
 var layout = {{
