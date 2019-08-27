@@ -217,12 +217,12 @@ class Emitter(object):
 
         # Generate frequency axis
         # this is taken directly from autospectra.py
-        # NCHANS = int(2048 // 4 * 3)
-        # NCHANS_F = 8192
-        # NCHAN_SUM = 4
-        # frange = np.linspace(0, 250e6, NCHANS_F + 1)[1536:1536 + (8192 // 4 * 3)]
+        NCHANS = int(2048 // 4 * 2)
+        NCHANS_F = 8192
+        NCHAN_SUM = 6
+        frange = np.linspace(0, 250e6, NCHANS_F + 1)[1536:1536 + (8192 // 4 * 3)]
         # average over channels
-        # freqs = frange.reshape(NCHANS, NCHAN_SUM).sum(axis=1) / NCHAN_SUM
+        freqs = frange.reshape(NCHANS, NCHAN_SUM).sum(axis=1) / NCHAN_SUM
 
         for host_cnt, host in enumerate(hostname_lookup.keys()):
             if host_cnt == 0:
@@ -241,8 +241,8 @@ class Emitter(object):
 
                     name = 'ant{}'.format(ant_name.replace(":", ""))
 
-                    self.emit_js('{{x: []', end='')
-                    # self.emit_data_array(freqs, '{x:.3f}')
+                    self.emit_js('{{x: ', end='')
+                    self.emit_data_array(freqs, '{x:.3f}')
                     self.emit_js(',\ny: ', end='')
                     self.emit_data_array(autos[ant_name], '{x:.3f}')
                     self.emit_js(",\nvisibile: {visible}", visible=visible, end='')
