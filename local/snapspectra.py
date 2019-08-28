@@ -95,16 +95,17 @@ def main():
         def emit_js(f, end='\n', **kwargs):
             print(f.format(**kwargs), file=js_file, end=end)
 
-        Emitter(session, args.redishost,
+        Emitter(session, redis_db, args.redishost,
                 emit_html, emit_js).emit()
 
 
 class Emitter(object):
 
-    def __init__(self, session, redishost,
+    def __init__(self, session, redis_db, redishost,
                  emit_html, emit_js):
         self.session = session
         self.corr_cm = hera_corr_cm.HeraCorrCM(redishost=redishost)
+        self.redis_db = redis_db
 
         self.emit_html = emit_html
         self.emit_js = emit_js
