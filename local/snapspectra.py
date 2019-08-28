@@ -165,8 +165,8 @@ class Emitter(object):
         ant_status_from_snaps = self.corr_cm.get_ant_status()
 
         for ant_cnt, ant in enumerate(ants):
-            mc_ant_status = self.session.get_ant_status(antenna_number=ant,
-                                                        most_recent=True)
+            mc_ant_status = self.session.get_antenna_status(antenna_number=int(ant),
+                                                            most_recent=True)
             for stat in mc_ant_status:
                 name = "{ant:d}:{pol}".format(ant=stat.antenna_number,
                                               pol=stat.antenna_feed_pol)
