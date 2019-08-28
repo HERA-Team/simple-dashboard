@@ -114,7 +114,7 @@ BODY += "</td></tr>\n"
 
 
 # get the current state of is_recording()
-result = session.query(CorrelatorControlState.state,CorrelatorControlState.time).filter(CorrelatorControlState.state_type.like('taking_data')).order_by(CorrelatorControlState.time).limit(1).one()
+result = session.query(CorrelatorControlState.state,CorrelatorControlState.time).filter(CorrelatorControlState.state_type.like('taking_data')).order_by(CorrelatorControlState.time.desc()).limit(1).one()
 is_recording = result[0]
 last_update = Time(result[1],scale='utc',format='gps')
 BODY += "<tr>\n"
