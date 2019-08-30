@@ -170,11 +170,13 @@ class Emitter(object):
             for stat in mc_ant_status:
                 name = "{ant:d}:{pol}".format(ant=stat.antenna_number,
                                               pol=stat.antenna_feed_pol)
+                try:
+                    tmp_auto = ant_status_from_snaps[name]["autocorrelation"]
 
-                tmp_auto = ant_status_from_snaps[name]["autocorrelation"]
-
-                autos[name] = 10 * np.log10(np.real(tmp_auto))
-
+                    autos[name] = 10 * np.log10(np.real(tmp_auto))
+                except KeyError:
+                    print("Ant-pol with no autocorrelation", name)
+                    raise
             # Try to get the snap info. Output is a dictionary with 'e' and 'n' keys
             # connect to M&C to find all the hooked up Snap hostnames and corresponding ant-pols
             mc_name = 'HH{:d}'.format(ant)
