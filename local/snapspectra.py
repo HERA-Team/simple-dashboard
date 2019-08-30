@@ -246,7 +246,7 @@ class Emitter(object):
                     self.emit_js(',\ny: ', end='')
                     self.emit_data_array(autos[ant_name], '{x:.3f}')
                     self.emit_js(",\nvisibile: {visible}", visible=visible, end='')
-                    self.emit_js(",\nhovertemplate: '%{x:.3f}<extra>{name}</extra>'", name=name, end='')
+                    self.emit_js(",\nhovertemplate: '%{{x:.3f}}<extra>{name}</extra>'", name=name, end='')
                     self.emit_js("}} ", end='\n')
         # end data var
         self.emit_js(']', end='\n')
@@ -257,7 +257,7 @@ class Emitter(object):
             self.emit_js('{{')
             self.emit_js('args: [')
             self.emit_js("{{'visibile': ", end='')
-            self.emit_data_array(host_masks[host_cnt], '{x}')
+            self.emit_data_array(host_masks[host_cnt], 'x')
             self.emit_js("}},\n{{'title': {title},", title=host_title[host_cnt])
             self.emit_js("'annotations': {{}} }}")
             self.emit_js('],')
