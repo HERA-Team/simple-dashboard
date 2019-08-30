@@ -274,7 +274,6 @@ var layout = {{
     xaxis: {{title: 'Frequency [MHz]'}},
     yaxis: {{title: 'Power [dBm]'}},
     "hoverlabel": {{"align": "left"}},
-    // grid: {{rows: {ncol}, columns: {nrow}, pattern: 'independent'}},
     margin: {{ l: 40, b: 0, r: 40, t: 30}},
     autosize: true,
     hovermode: 'closest'
