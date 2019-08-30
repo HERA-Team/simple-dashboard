@@ -247,7 +247,7 @@ class Emitter(object):
                     self.emit_data_array(autos[ant_name], '{x:.3f}')
                     self.emit_js(",\nvisibile: {visible}", visible=visible, end='')
                     self.emit_js(",\nhovertemplate: '%{{x:.3f}}<extra>{name}</extra>'", name=name, end='')
-                    self.emit_js("}} ", end='\n')
+                    self.emit_js("}}, ", end='\n')
         # end data var
         self.emit_js(']', end='\n')
 
