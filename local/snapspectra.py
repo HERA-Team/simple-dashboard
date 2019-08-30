@@ -148,7 +148,7 @@ class Emitter(object):
         for station in stations:
             if station.antenna_number not in ants:
                 ants = np.append(ants, station.antenna_number)
-        ants = np.unique(ants)
+        ants = np.unique(ants).astype(int)
 
         hostname_lookup = {}
         snap_serial = {}
