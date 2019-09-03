@@ -428,6 +428,12 @@ def main():
                                       "visible": visible,
                                       "marker": {"color": "orange",
                                                  "size": 14,
+                                                 "cmin": vmin[pow_ind],
+                                                 "cmax": vmax[pow_ind],
+                                                 "colorscale": colorscale,
+                                                 "colorbar": {"thickness": 20,
+                                                              "title": cbar_title
+                                                              }
                                                  },
                                       "hovertemplate": "%{text}<extra></extra>"}
 
