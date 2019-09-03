@@ -94,8 +94,8 @@ def main():
         node_ind = np.zeros_like(ants, dtype=np.int)
         pam_ind = np.zeros_like(ants, dtype=np.int)
         # defaul the snap name to "No Data"
-        hostname = np.full_like(ants, 'No Data', dtype=object)
-        snap_serial = np.full_like(ants, 'No Data', dtype=object)
+        hostname = np.full_like(ants, 'No\tData', dtype=object)
+        snap_serial = np.full_like(ants, 'No\tData', dtype=object)
 
         pam_power = {}
         adc_power = {}
@@ -189,7 +189,7 @@ def main():
                                 mask=_amps.mask)
         _text = np.array([[antnames[ant_index[ant_cnt]] + pol
                            + '<br>' + str(hostname[ant_cnt])
-                           + '<br>' + 'PAM #: ' + str(pam_ind[ant_cnt])
+                           + '<br>' + 'PAM\t#:\t' + str(pam_ind[ant_cnt])
                            for ant_cnt, ant in enumerate(ants)]
                           for pol_cnt, pol in enumerate(pols)], dtype='object')
 
@@ -198,16 +198,16 @@ def main():
             for ant_cnt, ant in enumerate(ants):
                 for _name, _power in zip(['Auto', 'PAM', 'ADC'], [_amps, _pam_power, _adc_power]):
                     if not _power.mask[pol_cnt, ant_cnt]:
-                        _text[pol_cnt, ant_cnt] += '<br>' + _name + ' [dB]: {0:.2f}'.format(_power[pol_cnt, ant_cnt])
+                        _text[pol_cnt, ant_cnt] += '<br>' + _name + '\t[dB]:\t{0:.2f}'.format(_power[pol_cnt, ant_cnt])
                     else:
-                        _text[pol_cnt, ant_cnt] += '<br>' + _name + ' [dB]: No Data'
+                        _text[pol_cnt, ant_cnt] += '<br>' + _name + '\t[dB]:\tNo\tData'
                 if time_array[pol_cnt, ant_cnt] > 2 * 24 * 365:
                     # if the value is older than 2 years it is bad
                     # value are stored in hours.
                     # 2 was chosen arbitraritly.
-                    _text[pol_cnt, ant_cnt] += '<br>' + 'PAM/ADC - No Data'
+                    _text[pol_cnt, ant_cnt] += '<br>' + 'PAM/ADC\t-\tNo\tData'
                 else:
-                    _text[pol_cnt, ant_cnt] += '<br>' + 'PAM/ADC: {0:.2f} hrs old'.format(time_array[pol_cnt, ant_cnt])
+                    _text[pol_cnt, ant_cnt] += '<br>' + 'PAM/ADC:\t{0:.2f}\thrs\told'.format(time_array[pol_cnt, ant_cnt])
         amp_mask = [True]
         pam_mask = [True]
         adc_mask = [True]

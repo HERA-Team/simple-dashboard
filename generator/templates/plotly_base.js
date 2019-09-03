@@ -14,9 +14,10 @@ if (report_age > 1800) {
     document.getElementById("age").style.color = 'red';
 }
 
-var data = {{ data|tojson }};
+var data = {{ data|tojson|wordwrap(break_long_words=False) }};
 
-var layout = {{ layout|tojson}};
+
+var layout = {{ layout|tojson }};
 
 {% block content %}{% endblock %}
 
