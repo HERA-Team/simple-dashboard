@@ -225,6 +225,7 @@ class Emitter(object):
         freqs = frange.reshape(NCHANS, NCHAN_SUM).sum(axis=1) / NCHAN_SUM
 
         for host_cnt, host in enumerate(hostname_lookup.keys()):
+            mask_cnt = host_cnt * 8
             if host_cnt == 0:
                 visible = 'true'
             else:
@@ -237,7 +238,8 @@ class Emitter(object):
                     # this 8 and 2 business is because the mask is raveled
                     # and needs to account for the 8 different feed pols connected to each snap
                     # the loc_num helps to track the antenna
-                    host_masks[host_cnt, host_cnt * 8 + loc_num * 2 + ant_cnt] = 'true'
+                    host_masks[host_cnt, mask_cnt] = 'true'
+                    mask_cnt += 1
 
                     name = 'ant{}'.format(ant_name.replace(":", ""))
 
