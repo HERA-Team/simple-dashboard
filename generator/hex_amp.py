@@ -13,58 +13,11 @@ import re
 import redis
 from hera_mc import mc, cm_sysutils
 from astropy.time import Time
-
-
-HTML_HEADER = """\
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>HERA Compute Dashboard</title>
-  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
-  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap-theme.min.css">
-  <!--[if lt IE 9]>
-    <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
-    <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
-  <![endif]-->
-</head>
-"""
-
-JS_HEADER = """\
-var report_age = 0.001 * (Date.now() - {gen_time_unix_ms});
-var age_text = "?";
-if (report_age < 300) {{
-  age_text = report_age.toFixed(0) + " seconds";
-}} else if (report_age < 10800) {{ // 3 hours
-  age_text = (report_age / 60).toFixed(0) + " minutes";
-}} else if (report_age < 172800) {{ // 48 hours
-  age_text = (report_age / 3600).toFixed(0) + " hours";
-}} else {{
-  age_text = (report_age / 86400).toFixed(1) + " days";
-}}
-document.getElementById("age").textContent = age_text;
-if (report_age > 1800) {{
-    document.getElementById("age").style.color = 'red';
-}}
-"""
-
-HTML_FOOTER = """\
-<div class="row">
-<div class="col-md-12">
-<p class="text-center"><a href="https://github.com/HERA-Team/simple-dashboard">Source code</a></p>
-</div>
-</div>
-</div>
-<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-<script src="{js_name}.js"></script>
-</body>
-</html>
-"""
+from jinja2 import Environment, FileSystemLoader
 
 
 def main():
+    env = Environment(loader=FileSystemLoader('templates'))
     # The standard M&C argument parser
     parser = mc.get_mc_argument_parser()
     # we'll have to add some extra options too
@@ -86,95 +39,31 @@ def main():
     except Exception as err:
         raise SystemExit(str(err))
 
-    with db.sessionmaker() as session, \
-         open('hex_amp.html', 'wt') as html_hex, \
-         open('hex_amp.js', 'wt') as js_hex, \
-         open('node_amp.html', 'wt') as html_node, \
-         open('node_amp.js', 'wt') as js_node:
+    with db.sessionmaker() as session:
+        # without item this will be an array which will break database queries
+        latest = Time(np.frombuffer(redis_db.get('auto:timestamp'),
+                      dtype=np.float64).item(), format='jd')
 
-        def emit_html_hex(f, end='\n', **kwargs):
-            print(f.format(**kwargs), file=html_hex, end=end)
-
-        def emit_js_hex(f, end='\n', **kwargs):
-            print(f.format(**kwargs), file=js_hex, end=end)
-
-        def emit_html_node(f, end='\n', **kwargs):
-            print(f.format(**kwargs), file=html_node, end=end)
-
-        def emit_js_node(f, end='\n', **kwargs):
-            print(f.format(**kwargs), file=js_node, end=end)
-
-        Emitter(session, redis_db,
-                emit_html_hex, emit_js_hex,
-                emit_html_node, emit_js_node).emit()
-
-
-class Emitter(object):
-
-    def __init__(self, session, redis_db,
-                 emit_html_hex, emit_js_hex,
-                 emit_html_node, emit_js_node):
-        self.session = session
-        self.redis_db = redis_db
-
-        self.emit_html_hex = emit_html_hex
-        self.emit_js_hex = emit_js_hex
-        self.emit_html_node = emit_html_node
-        self.emit_js_node = emit_js_node
-        self.latest = Time(np.frombuffer(self.redis_db.get('auto:timestamp'),
-                           dtype=np.float64).item(), format='jd')
-
-        self.now = Time.now()
-
-    def emit_data_array(self, data, fmt, emit_fn):
-        emit_fn('[', end='')
-        first = True
-
-        for x in data:
-            if first:
-                first = False
-            else:
-                emit_fn(',', end='')
-            emit_fn(fmt, x=x, end='')
-
-        emit_fn(']', end='')
-
-    def emit_text_array(self, data, fmt, emit_fn):
-        emit_fn('[', end='')
-        first = True
-
-        for x in data:
-            if first:
-                first = False
-            else:
-                emit_fn(',', end='')
-            emit_fn("'" + fmt + "'", x=x, end='')
-
-        emit_fn(']', end='')
-
-    def prep_data(self):
+        now = Time.now()
         autos = {}
         autos_raw = {}
         amps = {}
-        keys = [k.decode() for k in self.redis_db.keys()
+        keys = [k.decode() for k in redis_db.keys()
                 if k.startswith(b'auto') and not k.endswith(b'timestamp')]
-        # without item this will be an array which will break database queries
-        timestamp = np.frombuffer(self.redis_db.get('auto:timestamp'),
-                                  dtype=np.float64).item()
-        latest = Time(timestamp, format='jd')
+
         for key in keys:
             match = re.search(r'auto:(?P<ant>\d+)(?P<pol>e|n)', key)
             if match is not None:
                 ant, pol = int(match.group('ant')), match.group('pol')
 
-                autos_raw[(ant, pol)] = np.frombuffer(self.redis_db.get(key),
+                autos_raw[(ant, pol)] = np.frombuffer(redis_db.get(key),
                                                       dtype=np.float32)
                 autos[(ant, pol)] = 10.0 * np.log10(autos_raw[(ant, pol)])
 
                 tmp_amp = np.median(autos_raw[(ant, pol)])
                 amps[(ant, pol)] = 10.0 * np.log10(tmp_amp)
 
-        hsession = cm_sysutils.Handling(self.session)
+        hsession = cm_sysutils.Handling(session)
         ants = np.unique([ant for (ant, pol) in autos.keys()])
         pols = np.unique([pol for (ant, pol) in autos.keys()])
 
@@ -212,11 +101,11 @@ class Emitter(object):
                 amps.setdefault((ant, pol), np.Inf)
                 pam_power.setdefault((ant, pol), np.Inf)
                 adc_power.setdefault((ant, pol), np.Inf)
-                time_array.setdefault((ant, pol), self.now - Time(0, format='gps'))
+                time_array.setdefault((ant, pol), now - Time(0, format='gps'))
 
         for ant_cnt, ant in enumerate(ants):
-            station_status = self.session.get_antenna_status(most_recent=True,
-                                                             antenna_number=int(ant))
+            station_status = session.get_antenna_status(most_recent=True,
+                                                        antenna_number=int(ant))
             for status in station_status:
                 if status.pam_power is not None:
                     pam_power[(status.antenna_number,
@@ -226,21 +115,22 @@ class Emitter(object):
                                status.antenna_feed_pol)] = status.adc_power
                 if status.time is not None:
                     time_array[(status.antenna_number,
-                                status.antenna_feed_pol)] = self.now - Time(status.time, format='gps')
+                                status.antenna_feed_pol)] = now - Time(status.time, format='gps')
 
             # Try to get the snap info. Output is a dictionary with 'e' and 'n' keys
-            snap_info = hsession.get_part_at_station_from_type('HH{:d}'.format(ant), 'now', 'snap')
+            mc_name = 'HH{:d}'.format(ant)
+            snap_info = hsession.get_part_at_station_from_type(mc_name,
+                                                               'now', 'snap')
             # get the first key in the dict to index easier
             _key = list(snap_info.keys())[0]
             if snap_info[_key]['e'] is not None:
                 snap_serial[ant_cnt] = snap_info[_key]['e']
 
             # Try to get the pam info. Output is a dictionary with 'e' and 'n' keys
-            pam_info = hsession.get_part_at_station_from_type('HH{:d}'.format(ant), 'now', 'post-amp')
+            pam_info = hsession.get_part_at_station_from_type(mc_name,
+                                                              'now', 'post-amp')
             # get the first key in the dict to index easier
             _key = list(pam_info.keys())[0]
-            print(pam_info)
-            print(_key,pam_info[_key]['e'])
             if pam_info[_key]['e'] is not None:
                 _pam_num = re.findall(r'PAM(\d+)', pam_info[_key]['e'])[0]
                 pam_ind[ant_cnt] = np.int(_pam_num)
@@ -248,15 +138,16 @@ class Emitter(object):
                 pam_ind[ant_cnt] = -1
 
             # Try to get the ADC info. Output is a dictionary with 'e' and 'n' keys
-            node_info = hsession.get_part_at_station_from_type('HH{:d}'.format(ant), 'now', 'node')
+            node_info = hsession.get_part_at_station_from_type(mc_name,
+                                                               'now', 'node')
             # get the first key in the dict to index easier
             _key = list(node_info.keys())[0]
             if node_info[_key]['e'] is not None:
                 _node_num = re.findall(r'N(\d+)', node_info[_key]['e'])[0]
                 node_ind[ant_cnt] = np.int(_node_num)
 
-                snap_status = self.session.get_snap_status(most_recent=True,
-                                                           nodeID=np.int(_node_num))
+                snap_status = session.get_snap_status(most_recent=True,
+                                                      nodeID=np.int(_node_num))
                 for _status in snap_status:
                     if _status.serial_number == snap_serial[ant_cnt]:
                         hostname[ant_cnt] = _status.hostname
@@ -313,38 +204,28 @@ class Emitter(object):
                     _text[pol_cnt, ant_cnt] += '<br>' + 'PAM/ADC - No Data'
                 else:
                     _text[pol_cnt, ant_cnt] += '<br>' + 'PAM/ADC: {0:.2f} hrs old'.format(time_array[pol_cnt, ant_cnt])
-
-        self.emit_js_hex('var data = [')
-
         amp_mask = ['true']
         pam_mask = ['true']
         adc_mask = ['true']
         # Offline antennas
-        self.emit_js_hex('{{x: ', end='')
-        self.emit_data_array(xs_offline, '{x:.3f}', self.emit_js_hex)
-        self.emit_js_hex(',\ny :', end='')
-        self.emit_data_array(ys_offline, '{x:.3f}', self.emit_js_hex)
-        self.emit_js_hex(',\ntext:', end='')
-        self.emit_text_array(name_offline, '{x}', self.emit_js_hex)
-        self.emit_js_hex(",\nmode: 'markers'", end='')
-        self.emit_js_hex(",\nvisible: true", end='')
-        self.emit_js_hex(",\nmarker: {{color: 'black', size : 14,", end='')
-        self.emit_js_hex("opacity: .5, symbol: 'hexagon' }}", end='')
-        self.emit_js_hex(",\nhovertemplate: '%{{text}}<br>OFFLINE<extra></extra>' ", end='')
-        self.emit_js_hex('}},', end='\n')
+        data_hex = []
+        offline_ants = {"x": xs_offline,
+                        "y": ys_offline,
+                        "text": name_offline,
+                        "mode:": 'markers',
+                        "visible": "true",
+                        "marker": {"color": 'black',
+                                   "size": 14,
+                                   "opacity": .5,
+                                   "symbol": 'hexagon'},
+                        "hovertemplate": "%{text}<br>OFFLINE<extra></extra>"}
+        data_hex.append(offline_ants)
 
         #  for each type of power, loop over pols and print out the data
         #  save up a mask array used for the buttons later
         #  also plot the bad ones!3
         colorscale = "Viridis"
         for pow_ind, power in enumerate([_amps, _pam_power, _adc_power]):
-            if pow_ind == 0:
-                self.emit_js_hex("// Auto DATA ")
-            elif pow_ind == 1:
-                self.emit_js_hex("// PAM DATA ")
-            else:
-                self.emit_js_hex("// ADC DATA ")
-
             if power.compressed().size > 0:
                 vmax = np.max(power.compressed())
                 vmin = np.min(power.compressed())
@@ -353,129 +234,131 @@ class Emitter(object):
                 vmin = 0
 
             for pol_ind, pol in enumerate(pols):
+                cbar_title = 'dB'
                 if pow_ind == 0:
                     amp_mask.extend(['true'] * 2)
                     pam_mask.extend(['false'] * 2)
                     adc_mask.extend(['false'] * 2)
                     visible = 'true'
-                    title = 'dB'
 
                 elif pow_ind == 1:
                     amp_mask.extend(['false'] * 2)
                     pam_mask.extend(['true'] * 2)
                     adc_mask.extend(['false'] * 2)
                     visible = 'false'
-                    title = 'dB'
                 else:
                     amp_mask.extend(['false'] * 2)
                     pam_mask.extend(['false'] * 2)
                     adc_mask.extend(['true'] * 2)
                     visible = 'false'
-                    title = 'dB'
 
-                self.emit_js_hex('{{x: ', end='')
-                self.emit_data_array(xs.data[~power[pol_ind].mask], '{x:.3f}', self.emit_js_hex)
-                self.emit_js_hex(',\ny: ', end='')
-                self.emit_data_array(ys[pol_ind].data[~power[pol_ind].mask], '{x:.3f}', self.emit_js_hex)
-                self.emit_js_hex(",\nmode: 'markers'", end='')
-                self.emit_js_hex(",\nvisible: {visible}", visible=visible, end='')
-                self.emit_js_hex(",\ntext: ", end='')
-                self.emit_text_array(_text[pol_ind][~power[pol_ind].mask], '{x}', self.emit_js_hex)
-                self.emit_js_hex(',\n marker: {{  color:', end='')
-                self.emit_data_array(power[pol_ind].data[~power[pol_ind].mask], '{x:.3f}', self.emit_js_hex)
-                self.emit_js_hex(", cmin: {vmin}, cmax: {vmax}, ", vmin=vmin, vmax=vmax, end='')
-                self.emit_js_hex("colorscale: '{colorscale}', size: 14,", colorscale=colorscale, end='')
-                self.emit_js_hex("\ncolorbar: {{thickness: 20, title: '{title}'}}", title=title, end='')
-                self.emit_js_hex("}},\nhovertemplate: '%{{text}}<extra></extra>'", end='')
-                # self.emit_js_hex("Amp [dB]: %{{marker.color:.3f}}", end='')
-                self.emit_js_hex('}},', end='\n')
+                _power = {"x": xs.data[~power[pol_ind].mask],
+                          "y": ys[pol_ind].data[~power[pol_ind].mask],
+                          "text": _text[pol_ind][~power[pol_ind].mask],
+                          "mode:": 'markers',
+                          "visible": "{}".format(visible),
+                          "marker": {"color": power[pol_ind].data[~power[pol_ind].mask],
+                                     "size": 14,
+                                     "cmin": vmin,
+                                     "cmax": vmax,
+                                     "colorscale": colorscale,
+                                     "colorbar": {"thickness": 20,
+                                                  "title": cbar_title}
+                                     },
+                          "hovertemplate": "%{text}<extra></extra>"}
 
-                self.emit_js_hex('{{x: ', end='')
-                self.emit_data_array(xs.data[power[pol_ind].mask], '{x:.3f}', self.emit_js_hex)
-                self.emit_js_hex(',\ny: ', end='')
-                self.emit_data_array(ys[pol_ind].data[power[pol_ind].mask], '{x:.3f}', self.emit_js_hex)
-                self.emit_js_hex(",\nmode: 'markers'", end='')
-                self.emit_js_hex(",\nvisible: {visible}", visible=visible, end='')
-                self.emit_js_hex(",\ntext: ", end='')
-                self.emit_text_array(_text[pol_ind][power[pol_ind].mask], '{x}', self.emit_js_hex)
-                self.emit_js_hex(",\n marker: {{  color: 'orange'", end='')
-                self.emit_js_hex(", size: 14", end='')
-                self.emit_js_hex("}},\nhovertemplate: '%{{text}}<extra></extra>'", end='')
-                self.emit_js_hex('}},\n', end='\n')
+                data_hex.append(_power)
 
-        self.emit_js_hex(']', end='\n')
+                _power_offline = {"x": xs.data[power[pol_ind].mask],
+                                  "y": ys[pol_ind].data[power[pol_ind].mask],
+                                  "text": _text[pol_ind][power[pol_ind].mask],
+                                  "mode:": 'markers',
+                                  "visible": "{}".format(visible),
+                                  "marker": {"color": "orange",
+                                             "size": 14,
+                                             "cmin": vmin,
+                                             "cmax": vmax,
+                                             "colorscale": colorscale,
+                                             "colorbar": {"thickness": 20,
+                                                          "title": cbar_title}
+                                             },
+                                  "hovertemplate": "%{text}<extra></extra>"}
+                data_hex.append(_power_offline)
 
-        self.emit_js_hex(' var updatemenus=[')
-        self.emit_js_hex('{{buttons : [')
+        buttons = []
+        amp_button = {"args": [{"visible": amp_mask},
+                               {"title": '',
+                                "annotations": {}
+                                }
+                               ],
+                      "label": "Auto Corr",
+                      "method": "restyle"
+                      }
+        buttons.append(amp_button)
 
-        # Amplitude Button
-        self.emit_js_hex('{{')
-        self.emit_js_hex('args: [')
-        self.emit_js_hex("{{'visible': ", end='')
-        self.emit_data_array(amp_mask, '{x}', self.emit_js_hex)
-        self.emit_js_hex("}},\n{{'title': '',")
-        self.emit_js_hex("'annotations': {{}} }}")
-        self.emit_js_hex('],')
-        self.emit_js_hex("label: 'Auto Corr',")
-        self.emit_js_hex("method: 'update'")
-        self.emit_js_hex('}},')
+        pam_button = {"args": [{"visible": pam_mask},
+                               {"title": '',
+                                "annotations": {}
+                                }
+                               ],
+                      "label": "Pam Power",
+                      "method": "restyle"
+                      }
+        buttons.append(pam_button)
 
-        # PAMS buttons
-        self.emit_js_hex('{{')
-        self.emit_js_hex('args: [')
-        self.emit_js_hex("{{'visible': ", end='')
-        self.emit_data_array(pam_mask, '{x}', self.emit_js_hex)
-        self.emit_js_hex("}},\n{{'title': '',")
-        self.emit_js_hex("'annotations': {{}} }}")
-        self.emit_js_hex('],')
-        self.emit_js_hex("label: 'Pam Power',")
-        self.emit_js_hex("method: 'update'")
-        self.emit_js_hex('}},')
+        adc_button = {"args": [{"visible": adc_mask},
+                               {"title": '',
+                                "annotations": {}
+                                }
+                               ],
+                      "label": "ADC Power",
+                      "method": "restyle"
+                      }
+        buttons.append(adc_button)
 
-        # ADC buttons
-        self.emit_js_hex('{{')
-        self.emit_js_hex('args: [')
-        self.emit_js_hex("{{'visible': ", end='')
-        self.emit_data_array(adc_mask, '{x}', self.emit_js_hex)
-        self.emit_js_hex("}},\n{{'title': '',")
-        self.emit_js_hex("'annotations': {{}} }}")
-        self.emit_js_hex('],')
-        self.emit_js_hex("label: 'ADC Power',")
-        self.emit_js_hex("method: 'update'")
-        self.emit_js_hex('}},')
+        updatemenus_hex = [{"buttons": buttons,
+                            "show_active": "true",
+                            "type": "buttons"
+                            }
+                           ]
 
-        self.emit_js_hex('],', end='\n')
-        self.emit_js_hex('showactive: true,')
-        self.emit_js_hex("type: 'buttons',")
-        self.emit_js_hex('}},')
-        self.emit_js_hex(']', end='\n')
+        layout_hex = {"xaxis": {"title": "East-West Position [m]"},
+                      "yaxis": {"title": "North-South Position [m]"},
+                      "hoverlabel": {"align": "left"},
+                      "margin": {"t": 10},
+                      "autosize": "true",
+                      "showlegend": "false",
+                      "hovermode": "closest"
+                      }
 
-        self.emit_js_hex("""
+        # Render all the power vs position files
+        plotname = "plotly-hex"
+        html_template = env.get_template("plotly_base.html")
+        js_template = env.get_template("plotly_updatemenus.js")
 
-var layout = {{
-    // title: 'Median Auto Amplitude',
-    xaxis: {{title: 'East-West Position [m]'}},
-    yaxis: {{title: 'North-South Position [m]'}},
-    "hoverlabel": {{"align": "left"}},
-    margin: {{
-        t: 10,
-    }},
-    autosize: true,
-    showlegend: false,
-    updatemenus: updatemenus,
-    hovermode: 'closest'
-}};
+        rendered_hex_html = html_template.render(plotname=plotname,
+                                                 data_type="Auto correlations",
+                                                 plotstyle="height: 85vh",
+                                                 gen_date=now.iso,
+                                                 iso_date=latest.iso,
+                                                 jd_date=latest.jd,
+                                                 js_name="hex_amp")
 
-Plotly.plot("plotly-hex", data, layout, {{responsive: true}});
-// window.onresize = function() {{
-// Plotly.relayout("plotly-div", {{
-//                    width: 0.7 * window.innerWidth,
-//                    height: 0.8 * window.innerHeight
-//                          }})
-//}}
-        """)
+        rendered_hex_js = js_template.render(gen_time_unix_ms=now.unix * 1000,
+                                             data=data_hex,
+                                             layout=layout_hex,
+                                             updatemenus=updatemenus_hex,
+                                             plotname=plotname)
 
-        self.emit_js_node("var data = [")
+        with open('hex_amp.html', 'w') as h_file:
+            h_file.write(rendered_hex_html)
+
+        with open('hex_amp.js', 'w') as js_file:
+            js_file.wirte(rendered_hex_js)
+
+        # now prepare the data to be plotted vs node number
+        data_node = []
+
         amp_mask = []
         pam_mask = []
         adc_mask = []
@@ -488,7 +371,8 @@ Plotly.plot("plotly-hex", data, layout, {{responsive: true}});
             node_index = np.where(node_ind == node)[0]
 
             ys = np.ma.masked_array([np.arange(node_index.size) + .3 * pol_cnt
-                                     for pol_cnt, pol in enumerate(pols)], mask=_amps[:, node_index].mask)
+                                     for pol_cnt, pol in enumerate(pols)],
+                                    mask=_amps[:, node_index].mask)
             xs = np.zeros_like(ys)
             xs[:] = node
             __amps = _amps[:, node_index]
@@ -496,13 +380,8 @@ Plotly.plot("plotly-hex", data, layout, {{responsive: true}});
             __pam = _pam_power[:, node_index]
             __text = _text[:, node_index]
 
+            cbar_title = 'dB'
             for pow_ind, power in enumerate([__amps, __pam, __adc]):
-                if pow_ind == 0:
-                    self.emit_js_node("// Auto DATA ")
-                elif pow_ind == 1:
-                    self.emit_js_node("// PAM DATA ")
-                else:
-                    self.emit_js_node("// ADC DATA ")
 
                 for pol_ind, pol in enumerate(pols):
                     if pow_ind == 0:
@@ -510,178 +389,85 @@ Plotly.plot("plotly-hex", data, layout, {{responsive: true}});
                         pam_mask.extend(['false'] * 2)
                         adc_mask.extend(['false'] * 2)
                         visible = 'true'
-                        title = 'dB'
-
                     elif pow_ind == 1:
                         amp_mask.extend(['false'] * 2)
                         pam_mask.extend(['true'] * 2)
                         adc_mask.extend(['false'] * 2)
                         visible = 'false'
-                        title = 'dB'
                     else:
                         amp_mask.extend(['false'] * 2)
                         pam_mask.extend(['false'] * 2)
                         adc_mask.extend(['true'] * 2)
                         visible = 'false'
-                        title = 'dB'
 
-                    self.emit_js_node('{{x: ', end='')
-                    self.emit_data_array(xs[pol_ind].data[~power[pol_ind].mask], '{x:.3f}', self.emit_js_node)
-                    self.emit_js_node(',\ny: ', end='')
-                    self.emit_data_array(ys[pol_ind].data[~power[pol_ind].mask], '{x:.3f}', self.emit_js_node)
-                    self.emit_js_node(",\nmode: 'markers'", end='')
-                    self.emit_js_node(",\nvisible: {visible}", visible=visible, end='')
-                    self.emit_js_node(",\ntext: ", end='')
-                    self.emit_text_array(__text[pol_ind][~power[pol_ind].mask], '{x}', self.emit_js_node)
-                    self.emit_js_node(',\n marker: {{  color:', end='')
-                    self.emit_data_array(power[pol_ind].data[~power[pol_ind].mask], '{x:.3f}', self.emit_js_node)
-                    self.emit_js_node(", cmin: {vmin}, cmax: {vmax}, ", vmin=vmin[pow_ind], vmax=vmax[pow_ind], end='')
-                    self.emit_js_node("colorscale: '{colorscale}', size: 14,", colorscale=colorscale, end='')
-                    self.emit_js_node("\ncolorbar: {{thickness: 20, title: '{title}'}}", title=title, end='')
-                    self.emit_js_node("}},\nhovertemplate: '%{{text}}<extra></extra>'", end='')
-                    self.emit_js_node('}},', end='\n')
+                    _power = {"x": xs[pol_ind].data[~power[pol_ind].mask],
+                              "y": ys[pol_ind].data[~power[pol_ind].mask],
+                              "text": _text[pol_ind][~power[pol_ind].mask],
+                              "mode:": 'markers',
+                              "visible": "{}".format(visible),
+                              "marker": {"color": power[pol_ind].data[~power[pol_ind].mask],
+                                         "size": 14,
+                                         "cmin": vmin,
+                                         "cmax": vmax,
+                                         "colorscale": colorscale,
+                                         "colorbar": {"thickness": 20,
+                                                      "title": cbar_title}
+                                         },
+                              "hovertemplate": "%{text}<extra></extra>"}
 
-                    self.emit_js_node('{{x: ', end='')
-                    self.emit_data_array(xs[pol_ind].data[power[pol_ind].mask], '{x:.3f}', self.emit_js_node)
-                    self.emit_js_node(',\ny: ', end='')
-                    self.emit_data_array(ys[pol_ind].data[power[pol_ind].mask], '{x:.3f}', self.emit_js_node)
-                    self.emit_js_node(",\nmode: 'markers'", end='')
-                    self.emit_js_node(",\nvisible: {visible}", visible=visible, end='')
-                    self.emit_js_node(",\ntext: ", end='')
-                    self.emit_text_array(__text[pol_ind][power[pol_ind].mask], '{x}', self.emit_js_node)
-                    self.emit_js_node(",\n marker: {{  color: 'orange'", end='')
-                    self.emit_js_node(", size: 14", end='')
-                    self.emit_js_node("}},\nhovertemplate: '%{{text}}<extra></extra>'", end='')
-                    self.emit_js_node('}},\n', end='\n')
+                    data_node.append(_power)
 
-        self.emit_js_node(']', end='\n')
+                    _power_offline = {"x": xs[pol_ind].data[power[pol_ind].mask],
+                                      "y": ys[pol_ind].data[power[pol_ind].mask],
+                                      "text": __text[pol_ind][power[pol_ind].mask],
+                                      "mode:": 'markers',
+                                      "visible": "{}".format(visible),
+                                      "marker": {"color": "orange",
+                                                 "size": 14,
+                                                 },
+                                      "hovertemplate": "%{text}<extra></extra>"}
 
-        self.emit_js_node(' var updatemenus=[')
-        self.emit_js_node('{{buttons : [')
+                    data_node.append(_power_offline)
 
-        # Amplitude Button
-        self.emit_js_node('{{')
-        self.emit_js_node('args: [')
-        self.emit_js_node("{{'visible': ", end='')
-        self.emit_data_array(amp_mask, '{x}', self.emit_js_node)
-        self.emit_js_node("}},\n{{'title': '',")
-        self.emit_js_node("'annotations': {{}} }}")
-        self.emit_js_node('],')
-        self.emit_js_node("label: 'Auto Corr',")
-        self.emit_js_node("method: 'update'")
-        self.emit_js_node('}},')
+        layout_node = {"xaxis": {"title": "Node Number",
+                                 "dtick": 1,
+                                 "tick0": 0,
+                                 "showgrid": "false",
+                                 "zeroline": "false"},
+                       "yaxis": {"showticklabels": "false",
+                                 "showgrid": "false",
+                                 "zeroline": "false"},
+                       "hoverlabel": {"align": "left"},
+                       "margin": {"t": 10},
+                       "autosize": "true",
+                       "showlegend": "false",
+                       "hovermode": "closest"
+                       }
 
-        # PAMS buttons
-        self.emit_js_node('{{')
-        self.emit_js_node('args: [')
-        self.emit_js_node("{{'visible': ", end='')
-        self.emit_data_array(pam_mask, '{x}', self.emit_js_node)
-        self.emit_js_node("}},\n{{'title': '',")
-        self.emit_js_node("'annotations': {{}} }}")
-        self.emit_js_node('],')
-        self.emit_js_node("label: 'Pam Power',")
-        self.emit_js_node("method: 'update'")
-        self.emit_js_node('}},')
+        # Render all the power vs ndde files
+        plotname = "ploty-node"
+        html_template = env.get_template("plotly_base.html")
+        js_template = env.get_template("plotly_updatemenus.js")
 
-        # ADC buttons
-        self.emit_js_node('{{')
-        self.emit_js_node('args: [')
-        self.emit_js_node("{{'visible': ", end='')
-        self.emit_data_array(adc_mask, '{x}', self.emit_js_node)
-        self.emit_js_node("}},\n{{'title': '',")
-        self.emit_js_node("'annotations': {{}} }}")
-        self.emit_js_node('],')
-        self.emit_js_node("label: 'ADC Power',")
-        self.emit_js_node("method: 'update'")
-        self.emit_js_node('}},')
+        rendered_hex_html = html_template.render(plotname=plotname,
+                                                 data_type="Auto correlations",
+                                                 plotstyle="height: 85vh",
+                                                 gen_date=now.iso,
+                                                 iso_date=latest.iso,
+                                                 jd_date=latest.jd,
+                                                 js_name="hex_amp")
 
-        self.emit_js_node('],', end='\n')
-        self.emit_js_node('showactive: true,')
-        self.emit_js_node("type: 'buttons',")
-        self.emit_js_node('}},')
-        self.emit_js_node(']', end='\n')
+        rendered_hex_js = js_template.render(gen_time_unix_ms=now.unix * 1000,
+                                             data=data_node,
+                                             layout=layout_node,
+                                             updatemenus=updatemenus_hex,
+                                             plotname=plotname)
 
-        self.emit_js_node("""
+        with open('hex_amp.html', 'w') as h_file:
+            h_file.write(rendered_hex_html)
 
-var layout = {{
-    // title: 'Power vs Node',
-    xaxis: {{title: 'Node Number',
-             dtick:1,
-             tick0: 0,
-             shogrid: false,
-             zeroline: false}},
-    yaxis: {{showticklabels: false,
-             showgrid: false,
-             zeroline: false}},
-    "hoverlabel": {{"align": "left"}},
-    margin: {{
-           t: 10,
-    }},
-    autosize: true,
-    showlegend: false,
-    updatemenus: updatemenus,
-    hovermode: 'closest'
-}};
-
-Plotly.plot("plotly-node", data, layout, {{responsive: true}});
-//window.onresize = function() {{
-// Plotly.relayout("plotly-div", {{
-//                    width: 0.7 * window.innerWidth,
-//                    height: 0.8 * window.innerHeight
-//                          }})
-// }}""")
-
-    def emit(self):
-        self.emit_html_hex(HTML_HEADER)
-
-        self.emit_html_hex("""\
-<body>
-<div class="container">
-  <div class="row">
-    <div id="plotly-hex" class="col-md-12", style="height: 85vh"></div>
-  </div>
-  <div class="row">
-    <div class="col-md-12">
-        <p class="text-center">Report generated <span id="age">???</span> ago (at {gen_date} UTC)</p>
-    </div>
-    <div class="col-md-12">
-        <p class="text-center">Auto correlations observed on {iso_date} (JD: {jd_date:.6f})</p>
-    </div>
-  </div>
-""", gen_date=self.now.iso,
-     iso_date=self.latest.iso,
-     jd_date=self.latest.jd)
-
-        self.emit_js_hex(JS_HEADER,
-                         gen_time_unix_ms=self.now.unix * 1000,
-                         )
-
-        self.emit_html_node(HTML_HEADER)
-        self.emit_html_node("""\
- <body>
- <div class="container">
-   <div class="row">
-     <div id="plotly-node" class="col-md-12", style="height: 70vh"></div>
-   </div>
-   <div class="row">
-     <div class="col-md-12">
-         <p class="text-center">Report generated <span id="age">???</span> ago (at {gen_date} UTC)</p>
-     </div>
-     <div class="col-md-12">
-         <p class="text-center">Auto correlations observed on {iso_date} (JD: {jd_date:.6f})</p>
-     </div>
-   </div>
- """, gen_date=self.now.iso,
-      iso_date=self.latest.iso,
-      jd_date=self.latest.jd)
-
-        self.emit_js_node(JS_HEADER,
-                          gen_time_unix_ms=self.now.unix * 1000,
-                          )
-        self.prep_data()
-
-        self.emit_html_hex(HTML_FOOTER, js_name='hex_amp')
-        self.emit_html_node(HTML_FOOTER, js_name='node_amp')
+        with open('hex_amp.js', 'w') as js_file:
+            js_file.wirte(rendered_hex_js)
 
 
 if __name__ == '__main__':
