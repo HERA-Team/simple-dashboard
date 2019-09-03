@@ -17,7 +17,11 @@ from jinja2 import Environment, FileSystemLoader
 
 
 def main():
-    env = Environment(loader=FileSystemLoader('templates'))
+    # templates are stored relative to the script dir
+    script_dir = os.path.dirname(os.path.realpath(__file__))
+    template_dir = os.path.join(script_dir, 'templates')
+
+    env = Environment(loader=FileSystemLoader(template_dir))
     # The standard M&C argument parser
     parser = mc.get_mc_argument_parser()
     # we'll have to add some extra options too
@@ -445,7 +449,7 @@ def main():
                        }
 
         # Render all the power vs ndde files
-        plotname = "ploty-node"
+        plotname = "plotly-node"
         html_template = env.get_template("plotly_base.html")
         js_template = env.get_template("plotly_updatemenus.js")
 
