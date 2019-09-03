@@ -208,16 +208,16 @@ def main():
                     _text[pol_cnt, ant_cnt] += '<br>' + 'PAM/ADC - No Data'
                 else:
                     _text[pol_cnt, ant_cnt] += '<br>' + 'PAM/ADC: {0:.2f} hrs old'.format(time_array[pol_cnt, ant_cnt])
-        amp_mask = ['true']
-        pam_mask = ['true']
-        adc_mask = ['true']
+        amp_mask = [True]
+        pam_mask = [True]
+        adc_mask = [True]
         # Offline antennas
         data_hex = []
         offline_ants = {"x": xs_offline.tolist(),
                         "y": ys_offline.tolist(),
                         "text": name_offline.tolist(),
                         "mode": 'markers',
-                        "visible": "true",
+                        "visible": True,
                         "marker": {"color": 'black',
                                    "size": 14,
                                    "opacity": .5,
@@ -240,21 +240,21 @@ def main():
             for pol_ind, pol in enumerate(pols):
                 cbar_title = 'dB'
                 if pow_ind == 0:
-                    amp_mask.extend(['true'] * 2)
-                    pam_mask.extend(['false'] * 2)
-                    adc_mask.extend(['false'] * 2)
-                    visible = 'true'
+                    amp_mask.extend([True] * 2)
+                    pam_mask.extend([False] * 2)
+                    adc_mask.extend([False] * 2)
+                    visible = True
 
                 elif pow_ind == 1:
-                    amp_mask.extend(['false'] * 2)
-                    pam_mask.extend(['true'] * 2)
-                    adc_mask.extend(['false'] * 2)
-                    visible = 'false'
+                    amp_mask.extend([False] * 2)
+                    pam_mask.extend([True] * 2)
+                    adc_mask.extend([False] * 2)
+                    visible = False
                 else:
-                    amp_mask.extend(['false'] * 2)
-                    pam_mask.extend(['false'] * 2)
-                    adc_mask.extend(['true'] * 2)
-                    visible = 'false'
+                    amp_mask.extend([False] * 2)
+                    pam_mask.extend([False] * 2)
+                    adc_mask.extend([True] * 2)
+                    visible = False
 
                 _power = {"x": xs.data[~power[pol_ind].mask].tolist(),
                           "y": ys[pol_ind].data[~power[pol_ind].mask].tolist(),
@@ -321,7 +321,7 @@ def main():
         buttons.append(adc_button)
 
         updatemenus_hex = [{"buttons": buttons,
-                            "show_active": "true",
+                            "show_active": True,
                             "type": "buttons"
                             }
                            ]
@@ -330,8 +330,8 @@ def main():
                       "yaxis": {"title": "North-South Position [m]"},
                       "hoverlabel": {"align": "left"},
                       "margin": {"t": 10},
-                      "autosize": "true",
-                      "showlegend": "false",
+                      "autosize": True,
+                      "showlegend": False,
                       "hovermode": "closest"
                       }
 
@@ -389,20 +389,20 @@ def main():
 
                 for pol_ind, pol in enumerate(pols):
                     if pow_ind == 0:
-                        amp_mask.extend(['true'] * 2)
-                        pam_mask.extend(['false'] * 2)
-                        adc_mask.extend(['false'] * 2)
-                        visible = 'true'
+                        amp_mask.extend([True] * 2)
+                        pam_mask.extend([False] * 2)
+                        adc_mask.extend([False] * 2)
+                        visible = True
                     elif pow_ind == 1:
-                        amp_mask.extend(['false'] * 2)
-                        pam_mask.extend(['true'] * 2)
-                        adc_mask.extend(['false'] * 2)
-                        visible = 'false'
+                        amp_mask.extend([False] * 2)
+                        pam_mask.extend([True] * 2)
+                        adc_mask.extend([False] * 2)
+                        visible = False
                     else:
-                        amp_mask.extend(['false'] * 2)
-                        pam_mask.extend(['false'] * 2)
-                        adc_mask.extend(['true'] * 2)
-                        visible = 'false'
+                        amp_mask.extend([False] * 2)
+                        pam_mask.extend([False] * 2)
+                        adc_mask.extend([True] * 2)
+                        visible = False
 
                     _power = {"x": xs[pol_ind].data[~power[pol_ind].mask].tolist(),
                               "y": ys[pol_ind].data[~power[pol_ind].mask].tolist(),
@@ -424,7 +424,7 @@ def main():
                     _power_offline = {"x": xs[pol_ind].data[power[pol_ind].mask].tolist(),
                                       "y": ys[pol_ind].data[power[pol_ind].mask].tolist(),
                                       "text": __text[pol_ind][power[pol_ind].mask].tolist(),
-                                      "mode:": 'markers',
+                                      "mode": 'markers',
                                       "visible": "{}".format(visible),
                                       "marker": {"color": "orange",
                                                  "size": 14,
@@ -436,15 +436,15 @@ def main():
         layout_node = {"xaxis": {"title": "Node Number",
                                  "dtick": 1,
                                  "tick0": 0,
-                                 "showgrid": "false",
-                                 "zeroline": "false"},
-                       "yaxis": {"showticklabels": "false",
-                                 "showgrid": "false",
-                                 "zeroline": "false"},
+                                 "showgrid": False,
+                                 "zeroline": False},
+                       "yaxis": {"showticklabels": False,
+                                 "showgrid": False,
+                                 "zeroline": False},
                        "hoverlabel": {"align": "left"},
                        "margin": {"t": 10},
-                       "autosize": "true",
-                       "showlegend": "false",
+                       "autosize": True,
+                       "showlegend": False,
                        "hovermode": "closest"
                        }
 
