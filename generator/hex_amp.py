@@ -495,7 +495,7 @@ def main():
                                                  gen_date=now.iso,
                                                  iso_date=latest.iso,
                                                  jd_date=latest.jd,
-                                                 js_name="hex_amp")
+                                                 js_name="node_amp")
 
         rendered_hex_js = js_template.render(gen_time_unix_ms=now.unix * 1000,
                                              data=data_node,
