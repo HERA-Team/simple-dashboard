@@ -467,11 +467,11 @@ def main():
                                              updatemenus=updatemenus_hex,
                                              plotname=plotname)
 
-        with open('hex_amp.html', 'w') as h_file:
+        with open('node_amp.html', 'w') as h_file:
             h_file.write(rendered_hex_html)
 
-        with open('hex_amp.js', 'w') as js_file:
-            js_file.wirte(rendered_hex_js)
+        with open('node_amp.js', 'w') as js_file:
+            js_file.write(rendered_hex_js)
 
 
 if __name__ == '__main__':
