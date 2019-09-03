@@ -12,7 +12,7 @@ Every 10 minutes on `qmaster`,
 [a cronjob](https://github.com/HERA-Team/HERA_Commissioning/blob/master/scripts/qmaster/dashboard.sh)
 runs the scripts and uploads the outputs to the server.
 
-The [local](local/) subdirectory has scripts mean to be run on-site for diagnostic plots.
+The [local](local/) subdirectory has scripts meant to be run on-site for diagnostic plots.
 
 The “meat” of the server happens inside a Docker container, and it would be
 straightforward to have the server run additional Docker containers that
