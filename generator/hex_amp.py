@@ -411,8 +411,8 @@ def main():
                               "visible": visible,
                               "marker": {"color": power[pol_ind].data[~power[pol_ind].mask].tolist(),
                                          "size": 14,
-                                         "cmin": vmin,
-                                         "cmax": vmax,
+                                         "cmin": vmin[pow_ind],
+                                         "cmax": vmax[pow_ind],
                                          "colorscale": colorscale,
                                          "colorbar": {"thickness": 20,
                                                       "title": cbar_title}
