@@ -1,4 +1,4 @@
-{% extends "ploty_base.js" %}
+{% extends "plotly_base.js" %}
 
 {% block content %}
     var updatemenus = {{ updatemenus|tojson|wordwrap }};
