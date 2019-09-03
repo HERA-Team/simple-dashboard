@@ -260,7 +260,7 @@ def main():
                           "y": ys[pol_ind].data[~power[pol_ind].mask].tolist(),
                           "text": _text[pol_ind][~power[pol_ind].mask].tolist(),
                           "mode": 'markers',
-                          "visible": "{}".format(visible),
+                          "visible": visible,
                           "marker": {"color": power[pol_ind].data[~power[pol_ind].mask].tolist(),
                                      "size": 14,
                                      "cmin": vmin,
@@ -277,7 +277,7 @@ def main():
                                   "y": ys[pol_ind].data[power[pol_ind].mask].tolist(),
                                   "text": _text[pol_ind][power[pol_ind].mask].tolist(),
                                   "mode": 'markers',
-                                  "visible": "{}".format(visible),
+                                  "visible": visible,
                                   "marker": {"color": "orange",
                                              "size": 14,
                                              "cmin": vmin,
@@ -408,7 +408,7 @@ def main():
                               "y": ys[pol_ind].data[~power[pol_ind].mask].tolist(),
                               "text": __text[pol_ind][~power[pol_ind].mask].tolist(),
                               "mode": 'markers',
-                              "visible": "{}".format(visible),
+                              "visible": visible,
                               "marker": {"color": power[pol_ind].data[~power[pol_ind].mask].tolist(),
                                          "size": 14,
                                          "cmin": vmin,
@@ -425,13 +425,49 @@ def main():
                                       "y": ys[pol_ind].data[power[pol_ind].mask].tolist(),
                                       "text": __text[pol_ind][power[pol_ind].mask].tolist(),
                                       "mode": 'markers',
-                                      "visible": "{}".format(visible),
+                                      "visible": visible,
                                       "marker": {"color": "orange",
                                                  "size": 14,
                                                  },
                                       "hovertemplate": "%{text}<extra></extra>"}
 
                     data_node.append(_power_offline)
+        buttons = []
+        amp_button = {"args": [{"visible": amp_mask},
+                               {"title": '',
+                                "annotations": {}
+                                }
+                               ],
+                      "label": "Auto Corr",
+                      "method": "restyle"
+                      }
+        buttons.append(amp_button)
+
+        pam_button = {"args": [{"visible": pam_mask},
+                               {"title": '',
+                                "annotations": {}
+                                }
+                               ],
+                      "label": "Pam Power",
+                      "method": "restyle"
+                      }
+        buttons.append(pam_button)
+
+        adc_button = {"args": [{"visible": adc_mask},
+                               {"title": '',
+                                "annotations": {}
+                                }
+                               ],
+                      "label": "ADC Power",
+                      "method": "restyle"
+                      }
+        buttons.append(adc_button)
+
+        updatemenus_node = [{"buttons": buttons,
+                             "show_active": True,
+                             "type": "buttons"
+                             }
+                            ]
 
         layout_node = {"xaxis": {"title": "Node Number",
                                  "dtick": 1,
@@ -464,7 +500,7 @@ def main():
         rendered_hex_js = js_template.render(gen_time_unix_ms=now.unix * 1000,
                                              data=data_node,
                                              layout=layout_node,
-                                             updatemenus=updatemenus_hex,
+                                             updatemenus=updatemenus_node,
                                              plotname=plotname)
 
         with open('node_amp.html', 'w') as h_file:
