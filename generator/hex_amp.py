@@ -213,10 +213,10 @@ def main():
         adc_mask = ['true']
         # Offline antennas
         data_hex = []
-        offline_ants = {"x": xs_offline,
-                        "y": ys_offline,
-                        "text": name_offline,
-                        "mode:": 'markers',
+        offline_ants = {"x": xs_offline.tolist(),
+                        "y": ys_offline.tolist(),
+                        "text": name_offline.tolist(),
+                        "mode": 'markers',
                         "visible": "true",
                         "marker": {"color": 'black',
                                    "size": 14,
@@ -256,12 +256,12 @@ def main():
                     adc_mask.extend(['true'] * 2)
                     visible = 'false'
 
-                _power = {"x": xs.data[~power[pol_ind].mask],
-                          "y": ys[pol_ind].data[~power[pol_ind].mask],
-                          "text": _text[pol_ind][~power[pol_ind].mask],
-                          "mode:": 'markers',
+                _power = {"x": xs.data[~power[pol_ind].mask].tolist(),
+                          "y": ys[pol_ind].data[~power[pol_ind].mask].tolist(),
+                          "text": _text[pol_ind][~power[pol_ind].mask].tolist(),
+                          "mode": 'markers',
                           "visible": "{}".format(visible),
-                          "marker": {"color": power[pol_ind].data[~power[pol_ind].mask],
+                          "marker": {"color": power[pol_ind].data[~power[pol_ind].mask].tolist(),
                                      "size": 14,
                                      "cmin": vmin,
                                      "cmax": vmax,
@@ -273,10 +273,10 @@ def main():
 
                 data_hex.append(_power)
 
-                _power_offline = {"x": xs.data[power[pol_ind].mask],
-                                  "y": ys[pol_ind].data[power[pol_ind].mask],
-                                  "text": _text[pol_ind][power[pol_ind].mask],
-                                  "mode:": 'markers',
+                _power_offline = {"x": xs.data[power[pol_ind].mask].tolist(),
+                                  "y": ys[pol_ind].data[power[pol_ind].mask].tolist(),
+                                  "text": _text[pol_ind][power[pol_ind].mask].tolist(),
+                                  "mode": 'markers',
                                   "visible": "{}".format(visible),
                                   "marker": {"color": "orange",
                                              "size": 14,
@@ -358,7 +358,7 @@ def main():
             h_file.write(rendered_hex_html)
 
         with open('hex_amp.js', 'w') as js_file:
-            js_file.wirte(rendered_hex_js)
+            js_file.write(rendered_hex_js)
 
         # now prepare the data to be plotted vs node number
         data_node = []
@@ -404,12 +404,12 @@ def main():
                         adc_mask.extend(['true'] * 2)
                         visible = 'false'
 
-                    _power = {"x": xs[pol_ind].data[~power[pol_ind].mask],
-                              "y": ys[pol_ind].data[~power[pol_ind].mask],
-                              "text": _text[pol_ind][~power[pol_ind].mask],
-                              "mode:": 'markers',
+                    _power = {"x": xs[pol_ind].data[~power[pol_ind].mask].tolist(),
+                              "y": ys[pol_ind].data[~power[pol_ind].mask].tolist(),
+                              "text": __text[pol_ind][~power[pol_ind].mask].tolist(),
+                              "mode": 'markers',
                               "visible": "{}".format(visible),
-                              "marker": {"color": power[pol_ind].data[~power[pol_ind].mask],
+                              "marker": {"color": power[pol_ind].data[~power[pol_ind].mask].tolist(),
                                          "size": 14,
                                          "cmin": vmin,
                                          "cmax": vmax,
@@ -421,9 +421,9 @@ def main():
 
                     data_node.append(_power)
 
-                    _power_offline = {"x": xs[pol_ind].data[power[pol_ind].mask],
-                                      "y": ys[pol_ind].data[power[pol_ind].mask],
-                                      "text": __text[pol_ind][power[pol_ind].mask],
+                    _power_offline = {"x": xs[pol_ind].data[power[pol_ind].mask].tolist(),
+                                      "y": ys[pol_ind].data[power[pol_ind].mask].tolist(),
+                                      "text": __text[pol_ind][power[pol_ind].mask].tolist(),
                                       "mode:": 'markers',
                                       "visible": "{}".format(visible),
                                       "marker": {"color": "orange",
