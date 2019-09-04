@@ -71,7 +71,7 @@ def main():
     html_template = env.get_template("mc_table.html")
 
     rendered_html = html_template.render(dt_days=dt_days,
-                                         dt_hours=dt_hours,
+                                         dt_hours=int(dt_hours),
                                          numfiles=numfiles,
                                          node_pings=node_pings,
                                          is_recording=is_recording,
