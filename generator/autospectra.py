@@ -95,7 +95,7 @@ def main():
                 auto = np.frombuffer(d, dtype=np.float32)[0:NCHANS].copy()
                 auto[auto < 10 ** -2.5] = 10 ** -2.5
                 auto = 10 * np.log10(auto)
-                _auto = {"x": frange.tolist(),
+                _auto = {"x": frange_mhz.tolist(),
                          "y": auto.tolist(),
                          "text": frange_mhz.tolist(),
                          "name": linename,
