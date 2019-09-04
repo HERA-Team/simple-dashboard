@@ -32,7 +32,7 @@
       <tr>
         {% if is_recording %}
         <th scope="row"> Correlator is </th><td bgcolor="green"> ON    (last change: {{ last_update }})</td>
-        {$ else %}
+        {% else %}
         <th scope="row"> Correlator is </th><td bgcolor="red"> OFF    (last change: {{ last_update }})</td>
         {% endif %}
       <\tr>
