@@ -286,7 +286,7 @@ var layout = {{
     yaxis: {{title: 'Power [dBm]',
              showticklabels: true}},
     "hoverlabel": {{"align": "left"}},
-    margin: {{ l: 40, b: 0, r: 40, t: 30}},
+    margin: {{ l: 40, b: 30, r: 40, t: 30}},
     autosize: true,
     showlegend: true,
     hovermode: 'closest',
