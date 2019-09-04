@@ -87,7 +87,6 @@ def main():
                 auto = 10 * np.log10(auto)
                 _auto = {"x": frange_mhz.tolist(),
                          "y": auto.tolist(),
-                         "text": frange_mhz.tolist(),
                          "name": linename,
                          "type": "scatter",
                          "hovertemplate": "%{x:.1f}\tMhz<br>%{y:.3f}\t[dB]"
