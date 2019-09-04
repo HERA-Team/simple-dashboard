@@ -266,7 +266,7 @@ class Emitter(object):
             self.emit_js("label: {host},", host=host)
             self.emit_js("method: 'restyle'")
             self.emit_js('}},')
-        self.emit_js(']', end='\n')
+        self.emit_js('],', end='\n')
         self.emit_js('showactive: true,')
         self.emit_js('}},')
         self.emit_js(']', end='\n')
