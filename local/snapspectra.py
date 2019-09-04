@@ -181,6 +181,7 @@ class Emitter(object):
             # Try to get the snap info. Output is a dictionary with 'e' and 'n' keys
             # connect to M&C to find all the hooked up Snap hostnames and corresponding ant-pols
             mc_name = 'HH{:d}'.format(ant)
+            print("Finding snap info: ", mc_name)
             snap_info = hsession.get_part_at_station_from_type(mc_name,
                                                                'now', 'snap')
 
