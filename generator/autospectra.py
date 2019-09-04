@@ -12,7 +12,6 @@ Adapted from https://github.com/HERA-Team/hera_corr_cm/blob/master/hera_today/re
 from __future__ import absolute_import, division, print_function
 
 import os
-import time
 import re
 import redis
 import numpy as np
@@ -54,7 +53,6 @@ def main():
 
     ants = np.unique(ants)
 
-    n_ants = ants.size
     # Generate frequency axis
     NCHANS = int(2048 // 4 * 3)
     NCHANS_F = 8192
@@ -63,19 +61,12 @@ def main():
     # average over channels
     frange = frange.reshape(NCHANS, NCHAN_SUM).sum(axis=1) / NCHAN_SUM
     frange_mhz = frange / 1e6
-    # frange_str = ', '.join('%f' % freq for freq in frange)
-    # linenames = []
 
     got_time = False
     n_signals = 0
-    # with open('spectra.html', 'w') as fh:
-        # fh.write(html_preamble)
-        # fh.write(plotly_preamble)
-        # Get time of plot
+
     t_plot_jd = np.frombuffer(r['auto:timestamp'], dtype=np.float64)[0]
-    t_plot_unix = Time(t_plot_jd, format='jd').unix
     t_plot_iso = Time(t_plot_jd, format='jd').iso
-    # print(t_plot_jd, t_plot_unix)
     got_time = True
     # grab data from redis and format it according to plotly's javascript api
     autospectra = []
@@ -85,7 +76,6 @@ def main():
             if not got_time:
                 t_plot_jd = float(r.hget('visdata://%d/%d/%s%s' % (i, i, pol, pol), 'time'))
                 if t_plot_jd is not None:
-                    t_plot_unix = Time(t_plot_jd, format='jd').unix
                     got_time = True
             linename = 'ant%d%s' % (i, pol)
             d = r.get('auto:%d%s' % (i, pol))
