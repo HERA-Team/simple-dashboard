@@ -250,6 +250,7 @@ class Emitter(object):
                     self.emit_data_array(freqs, '{x:.3f}')
                     self.emit_js(',\ny: ', end='')
                     self.emit_data_array(autos[ant_name], '{x:.3f}')
+                    self.emit_js(',\nname: "{name}"', name=name, end='')
                     self.emit_js(",\nvisible: {visible}", visible=visible, end='')
                     self.emit_js(",\nhovertemplate: '%{{x:.3f}}<extra>{name}</extra>'", name=name, end='')
                     self.emit_js("}}, ", end='\n')
@@ -287,6 +288,7 @@ var layout = {{
     "hoverlabel": {{"align": "left"}},
     margin: {{ l: 40, b: 0, r: 40, t: 30}},
     autosize: true,
+    showlegend: true,
     hovermode: 'closest',
     updatemenus: updatemenus
 }};
