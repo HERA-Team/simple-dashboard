@@ -213,7 +213,7 @@ class Emitter(object):
         # the mask is different for each host, but each mask is the total
         # length of all data, 8 because loc_nums go 0-3 each with 'e' and 'n' pols
         host_masks = np.full((len(hostnames), len(hostnames) * 8), 'false',
-                             dtype=np.str_)
+                             dtype='object')
         host_title = np.zeros((len(hostnames)), dtype='object')
 
         # Generate frequency axis
@@ -224,6 +224,7 @@ class Emitter(object):
         frange = np.linspace(0, 250e6, NCHANS_F + 1)[1536:1536 + (8192 // 4 * 3)]
         # average over channels
         freqs = frange.reshape(NCHANS, NCHAN_SUM).sum(axis=1) / NCHAN_SUM
+        freqs /= 1e6
 
         for host_cnt, host in enumerate(hostname_lookup.keys()):
             mask_cnt = host_cnt * 8
@@ -257,6 +258,8 @@ class Emitter(object):
         self.emit_js(' var updatemenus=[')
         self.emit_js('{{buttons: [')
         for host_cnt, host in enumerate(hostnames):
+            print("host:", host)
+            print('mask: ', host_masks[host_cnt])
             self.emit_js('{{')
             self.emit_js('args: [')
             self.emit_js("{{'visible': ", end='')
@@ -264,7 +267,7 @@ class Emitter(object):
             self.emit_js("}},\n{{'title': {title},", title=host_title[host_cnt])
             self.emit_js("'annotations': {{}} }}")
             self.emit_js('],')
-            self.emit_js("label: {host},", host=host)
+            self.emit_js("label: '{host}',", host=host)
             self.emit_js("method: 'restyle'")
             self.emit_js('}},')
         self.emit_js('],', end='\n')
@@ -274,8 +277,10 @@ class Emitter(object):
 
         self.emit_js("""
 var layout = {{
-    xaxis: {{title: 'Frequency [MHz]'}},
-    yaxis: {{title: 'Power [dBm]'}},
+    xaxis: {{title: 'Frequency [MHz]',
+            showticklabels: true}},
+    yaxis: {{title: 'Power [dBm]',
+             showticklabels: true}},
     "hoverlabel": {{"align": "left"}},
     margin: {{ l: 40, b: 0, r: 40, t: 30}},
     autosize: true,
