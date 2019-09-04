@@ -1,4 +1,4 @@
-# ! /usr/bin/env python
+#! /usr/bin/env python
 # -*- mode: python; coding: utf-8 -*-
 # Copyright 2017-2019 the HERA Collaboration
 # Licensed under the 2-clause BSD license.
