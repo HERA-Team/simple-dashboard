@@ -190,11 +190,9 @@ class Emitter(object):
                 ant_loc_num.setdefault(int(ant), {})
 
                 for pol_key in snap_info[_key].keys():
+                    name = "{ant:d}:{pol}".format(ant=ant, pol=pol_key)
                     if snap_info[_key][pol_key] is not None:
                         snap_serial[ant][pol_key] = snap_info[_key][pol_key]
-
-                        name = "{ant:d}:{pol}".format(ant=ant,
-                                                      pol=pol_key)
 
                         for _stat in all_snap_statuses:
                             if _stat.serial_number == snap_serial[ant][pol_key]:
