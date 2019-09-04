@@ -276,6 +276,7 @@ class Emitter(object):
         self.emit_js('],', end='\n')
         self.emit_js('showactive: true,')
         self.emit_js("type: 'buttons',")
+        self.emit_js("x: -.1,")
         self.emit_js('}},')
         self.emit_js(']', end='\n')
 
