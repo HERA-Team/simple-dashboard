@@ -218,12 +218,13 @@ class Emitter(object):
 
         # Generate frequency axis
         # this is taken directly from autospectra.py
-        NCHANS = int(2048 // 4 * 2)
-        NCHANS_F = 8192
-        NCHAN_SUM = 6
-        frange = np.linspace(0, 250e6, NCHANS_F + 1)[1536:1536 + (8192 // 4 * 3)]
+        # NCHANS = int(2048 // 4 * 2)
+        # NCHANS_F = 8192
+        # NCHAN_SUM = 6
+        # frange = np.linspace(0, 250e6, NCHANS_F + 1)[1536:1536 + (8192 // 4 * 3)]
         # average over channels
-        freqs = frange.reshape(NCHANS, NCHAN_SUM).sum(axis=1) / NCHAN_SUM
+        # freqs = frange.reshape(NCHANS, NCHAN_SUM).sum(axis=1) / NCHAN_SUM
+        freqs = np.linspace(0, 250e6, 1024)
         freqs /= 1e6
 
         for host_cnt, host in enumerate(hostname_lookup.keys()):
