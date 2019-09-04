@@ -17,120 +17,66 @@ import redis
 import numpy as np
 import argparse
 from astropy.time import Time
+from jinja2 import Environment, FileSystemLoader
 
 # Two redis instances run on this server.
 # port 6379 is the hera-digi mirror
 # port 6380 is the paper1 mirror
+def main():
+    # templates are stored relative to the script dir
+    script_dir = os.path.dirname(os.path.realpath(__file__))
+    template_dir = os.path.join(script_dir, 'templates')
 
-parser = argparse.ArgumentParser(
-    description=('Create auto-correlation spectra plot for heranow dashboard')
-)
-parser.add_argument('--redishost', dest='redishost', type=str,
-                    default='redishost',
-                    help=('The host name for redis to connect to, defaults to "redishost"'))
-parser.add_argument('--port', dest='port', type=int, default=6379,
-                    help='Redis port to connect.')
-args = parser.parse_args()
-r = redis.Redis(args.redishost, port=args.port)
+    env = Environment(loader=FileSystemLoader(template_dir))
 
-keys = [k.decode() for k in r.keys()
-        if k.startswith(b'auto') and not k.endswith(b'timestamp')]
+    parser = argparse.ArgumentParser(
+        description=('Create auto-correlation spectra plot for heranow dashboard')
+    )
+    parser.add_argument('--redishost', dest='redishost', type=str,
+                        default='redishost',
+                        help=('The host name for redis to connect to, defaults to "redishost"'))
+    parser.add_argument('--port', dest='port', type=int, default=6379,
+                        help='Redis port to connect.')
+    args = parser.parse_args()
+    r = redis.Redis(args.redishost, port=args.port)
 
-ants = []
-for key in keys:
-    match = re.search(r'auto:(?P<ant>\d+)(?P<pol>e|n)', key)
-    if match is not None:
-        ant, pol = int(match.group('ant')), match.group('pol')
-        ants.append(ant)
+    keys = [k.decode() for k in r.keys()
+            if k.startswith(b'auto') and not k.endswith(b'timestamp')]
 
-ants = np.unique(ants)
+    ants = []
+    for key in keys:
+        match = re.search(r'auto:(?P<ant>\d+)(?P<pol>e|n)', key)
+        if match is not None:
+            ant, pol = int(match.group('ant')), match.group('pol')
+            ants.append(ant)
 
-n_ants = ants.size
-# Generate frequency axis
-NCHANS = int(2048 // 4 * 3)
-NCHANS_F = 8192
-NCHAN_SUM = 4
-frange = np.linspace(0, 250e6, NCHANS_F + 1)[1536:1536 + (8192 // 4 * 3)]
-# average over channels
-frange = frange.reshape(NCHANS, NCHAN_SUM).sum(axis=1) / NCHAN_SUM
-frange_str = ', '.join('%f' % freq for freq in frange)
-linenames = []
+    ants = np.unique(ants)
 
-# All this code does is build an html file
-# containing a bunch of javascript nonsense.
-# define the start and end text of the file here,
-# then dynamically populate the data sections.
+    n_ants = ants.size
+    # Generate frequency axis
+    NCHANS = int(2048 // 4 * 3)
+    NCHANS_F = 8192
+    NCHAN_SUM = 4
+    frange = np.linspace(0, 250e6, NCHANS_F + 1)[1536:1536 + (8192 // 4 * 3)]
+    # average over channels
+    frange = frange.reshape(NCHANS, NCHAN_SUM).sum(axis=1) / NCHAN_SUM
+    frange_mhz = frange / 1e6
+    # frange_str = ', '.join('%f' % freq for freq in frange)
+    # linenames = []
 
-html_preamble = """\
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <!--- <meta http-equiv="refresh" content="60" > -->
-  <title>HERA Auto Spectra Dashboard</title>
-  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
-  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap-theme.min.css">
-  <!--[if lt IE 9]>
-    <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
-    <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
-  <![endif]-->
-  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-<script type="text/javascript">
-setInterval(function () { if (document.getElementById('autoRefreshCheckbox').checked) { location.reload(); } }, 60000);
-</script>
-</head>
-<span>Auto Refresh</span>&nbsp;<input type="checkbox" id="autoRefreshCheckbox" value="true" checked="checked" />
-"""
-
-plotly_preamble = '''
-<div class="container">
-  <div class="row">
-   <!-- Plotly chart will be drawn inside this div -->
-   <div id="plotly-div" class="col-md-12" style="height: 80vh"></div>
-   <script>
-
-
-'''
-
-plotly_postamble = '''
-    layout = {
-      xaxis: {title: 'Frequency [MHz]'},
-      yaxis: {title: 'Power [dB]'},
-      autosize: true,
-      showlegend: true,
-      legend: {
-        x: 1,
-        y: 1,
-      },
-      // title: 'Autocorrelation Powers',
-      margin: {l: 40, b: 0, r: 40, t: 30},
-      hovermode: 'closest'
-    };
-    Plotly.plot('plotly-div', {data:data, layout:layout}, {responsive: true});
-
-    </script>
-'''
-
-html_postamble = '''
-    </div>
-  </div>
-  </body>
-</html>
-'''
-
-got_time = False
-n_signals = 0
-with open('spectra.html', 'w') as fh:
-    fh.write(html_preamble)
-    fh.write(plotly_preamble)
-    # Get time of plot
+    got_time = False
+    n_signals = 0
+    # with open('spectra.html', 'w') as fh:
+        # fh.write(html_preamble)
+        # fh.write(plotly_preamble)
+        # Get time of plot
     t_plot_jd = np.frombuffer(r['auto:timestamp'], dtype=np.float64)[0]
     t_plot_unix = Time(t_plot_jd, format='jd').unix
-    print(t_plot_jd, t_plot_unix)
+    t_plot_iso = Time(t_plot_jd, format='jd').iso
+    # print(t_plot_jd, t_plot_unix)
     got_time = True
     # grab data from redis and format it according to plotly's javascript api
+    autospectra = []
     for i in ants:
         for pol in ['e', 'n']:
             # get the timestamp from redis for the first ant-pol
@@ -143,24 +89,53 @@ with open('spectra.html', 'w') as fh:
             d = r.get('auto:%d%s' % (i, pol))
             if d is not None:
                 n_signals += 1
-                linenames += [linename]
-                fh.write('%s = {\n' % (linename))
-                fh.write('  x: [%s],\n' % frange_str)
-                f = np.frombuffer(d, dtype=np.float32)[0:NCHANS].copy()
-                f[f < 10 ** -2.5] = 10 ** -2.5
-                f = 10 * np.log10(f)
-                f_str = ', '.join('%f' % freq for freq in f)
-                fh.write('  y: [%s],\n' % f_str)
-                fh.write("  name: '%s',\n" % linename)
-                fh.write("  type: 'scatter'\n")
-                fh.write('};\n')
-                fh.write('\n')
-    fh.write('data = [%s];\n' % ', '.join(linenames))
+                # linenames += [linename]
+                auto = np.frombuffer(d, dtype=np.float32)[0:NCHANS].copy()
+                auto[auto < 10 ** -2.5] = 10 ** -2.5
+                auto = 10 * np.log10(auto)
+                _auto = {"x": frange.tolist(),
+                         "y": auto.tolist(),
+                         "text": frange_mhz.tolist(),
+                         "name": linename,
+                         "type": "scatter",
+                         }
+                autospectra.append(_auto)
+    layout = {"xaxis": {"title": "Frequency [MHz]"},
+              "yaxis": {"title": "Power [dB]"},
+              "autosize": True,
+              "showlegend": True,
+              "legend": {"x": 1,
+                         "y": 1},
+              "margin": {"l": 40,
+                         "b": 0,
+                         "r": 40,
+                         "t": 30},
+              "hovermode": "closest",
+              }
+    plotname = "plotly-autos"
 
-    fh.write(plotly_postamble)
-    fh.write('<p>Plots from %s UTC (JD: %f)</p>\n' % (time.ctime(t_plot_unix), t_plot_jd))
-    fh.write('<p>Queried on %s UTC</p>\n' % time.ctime())
-    # fh.write('<p>CMINFO source: %s</p>\n' % r['cminfo_source'])
-    fh.write(html_postamble)
+    js_template = env.get_template("plotly_base.js")
+    html_template = env.get_template("refresh_button.html")
 
-print('Got %d signals' % n_signals)
+    rendered_html = html_template.render(plotname=plotname,
+                                         data_type="Auto correlations",
+                                         plotstyle="height: 85vh",
+                                         gen_date=Time.now().iso,
+                                         iso_date=t_plot_iso,
+                                         jd_date=t_plot_jd,
+                                         js_name="spectra")
+
+    rendered_js = js_template.render(gen_time_unix_ms=Time.now().unix * 1000,
+                                     data=autospectra,
+                                     layout=layout,
+                                     plotname=plotname)
+
+    print('Got %d signals' % n_signals)
+    with open('spectra.html', 'w') as h_file:
+        h_file.write(rendered_html)
+    with open('spectra.js', 'w') as js_file:
+        js_file.write(rendered_js)
+
+
+if __name__ == '__main__':
+    main()
