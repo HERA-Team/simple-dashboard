@@ -172,8 +172,9 @@ class Emitter(object):
                                               pol=stat.antenna_feed_pol)
                 try:
                     tmp_auto = ant_status_from_snaps[name]["autocorrelation"]
+                    tmp_auto = np.ma.masked_invalid(10 * np.log10(np.real(tmp_auto)))
+                    autos[name] = tmp_auto.filled(-100)
 
-                    autos[name] = 10 * np.log10(np.real(tmp_auto))
                 except KeyError:
                     print("Ant-pol with no autocorrelation", name)
                     raise
