@@ -77,7 +77,7 @@ def main():
                                          is_recording=is_recording,
                                          last_update=last_update.iso,
                                          now=Time.now().iso,
-                                         scriptname=__file__,
+                                         scriptname=os.path.basename(__file__),
                                          hostname=hostname)
 
     with open("mc_html_summary.html", 'w') as h_file:
