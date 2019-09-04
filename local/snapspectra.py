@@ -209,7 +209,7 @@ class Emitter(object):
                                 grp2.append(name)
 
         self.emit_js("var data = [")
-        # create a mask to make things visibile for only that hostname
+        # create a mask to make things visible for only that hostname
         # the mask is different for each host, but each mask is the total
         # length of all data, 8 because loc_nums go 0-3 each with 'e' and 'n' pols
         host_masks = np.full((len(hostnames), len(hostnames) * 8), 'false',
@@ -248,7 +248,7 @@ class Emitter(object):
                     self.emit_data_array(freqs, '{x:.3f}')
                     self.emit_js(',\ny: ', end='')
                     self.emit_data_array(autos[ant_name], '{x:.3f}')
-                    self.emit_js(",\nvisibile: {visible}", visible=visible, end='')
+                    self.emit_js(",\nvisible: {visible}", visible=visible, end='')
                     self.emit_js(",\nhovertemplate: '%{{x:.3f}}<extra>{name}</extra>'", name=name, end='')
                     self.emit_js("}}, ", end='\n')
         # end data var
@@ -259,8 +259,8 @@ class Emitter(object):
         for host_cnt, host in enumerate(hostnames):
             self.emit_js('{{')
             self.emit_js('args: [')
-            self.emit_js("{{'visibile': ", end='')
-            self.emit_data_array(host_masks[host_cnt], 'x')
+            self.emit_js("{{'visible': ", end='')
+            self.emit_data_array(host_masks[host_cnt], '{x}')
             self.emit_js("}},\n{{'title': {title},", title=host_title[host_cnt])
             self.emit_js("'annotations': {{}} }}")
             self.emit_js('],')
