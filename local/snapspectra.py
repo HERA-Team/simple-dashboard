@@ -157,9 +157,7 @@ class Emitter(object):
 
         # all_snap_statuses = self.session.get_snap_status(most_recent=True)
         all_snap_statuses = self.corr_cm.get_f_status()
-        print("M&C all_snap_statuses: ", all_snap_statuses)
         hostnames = list(set(all_snap_statuses.keys()))
-        print("all hostnames:", hostnames)
         autos = {}
 
         ant_status_from_snaps = self.corr_cm.get_ant_status()
@@ -181,13 +179,11 @@ class Emitter(object):
             # Try to get the snap info. Output is a dictionary with 'e' and 'n' keys
             # connect to M&C to find all the hooked up Snap hostnames and corresponding ant-pols
             mc_name = 'HH{:d}'.format(ant)
-            print("Finding snap info: ", mc_name)
             snap_info = hsession.get_part_at_station_from_type(mc_name,
                                                                'now', 'snap')
             node_info = hsession.get_part_at_station_from_type(mc_name,
                                                                'now', 'node')
 
-            print('\t ', snap_info)
             for _key in snap_info.keys():
                 # initialize a dict if they key does not exist already
                 snap_serial.setdefault(int(ant), {})
@@ -215,7 +211,6 @@ class Emitter(object):
                                 grp2.append(name)
                     else:
                         print("No snap information for antennna: " + name)
-        print("host lookup table:", hostname_lookup)
         self.emit_js("var data = [")
         # create a mask to make things visible for only that hostname
         # the mask is different for each host, but each mask is the total
