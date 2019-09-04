@@ -75,7 +75,7 @@ def main():
                                          numfiles=numfiles,
                                          node_pings=node_pings,
                                          is_recording=is_recording,
-                                         last_update=last_update.ios,
+                                         last_update=last_update.iso,
                                          now=Time.now().iso,
                                          scriptname=__file__,
                                          hostname=hostname)
