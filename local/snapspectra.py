@@ -278,13 +278,16 @@ class Emitter(object):
         self.emit_js("""
 var layout = {{
     xaxis: {{title: 'Frequency [MHz]',
-            showticklabels: true}},
+            showticklabels: true,
+            tick0:0,
+            dtick:10}},
     yaxis: {{title: 'Power [dBm]',
              showticklabels: true}},
     "hoverlabel": {{"align": "left"}},
     margin: {{ l: 40, b: 0, r: 40, t: 30}},
     autosize: true,
-    hovermode: 'closest'
+    hovermode: 'closest',
+    updatemenus: updatemenus
 }};
 
 Plotly.plot("plotly-snap", data, layout, {{responsive: true}});
