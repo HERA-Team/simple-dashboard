@@ -100,7 +100,7 @@ def main():
                          "text": frange_mhz.tolist(),
                          "name": linename,
                          "type": "scatter",
-                         "hovertemplate": "%{x:.1}\tMhz<br>%{y:.3}\t[dB]"
+                         "hovertemplate": "%{x:.1f}\tMhz<br>%{y:.3f}\t[dB]"
                          }
                 autospectra.append(_auto)
     layout = {"xaxis": {"title": "Frequency [MHz]"},
