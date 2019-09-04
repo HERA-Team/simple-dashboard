@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block meta %}
+  <meta http-equiv="refresh" content="300">
+
+{% endblock %}
+
+{% block head %}
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+    <!-- Include all compiled plugins (below), or include individual files as needed -->
+{% endblock %}
+
+{% block body %}
+
+  <table class="table">
+    <tbody>
+      <tr>
+         <th scope="row">Time Since Last Obs</th>
+            <td>{{ dt_days }} days {{ dt_hours }} hours </td>
+         </th>
+      </tr>
+      <tr>
+          <th scope="row">Raw Files Recorded (last 24 hours)</th>
+              <td>{{ numfiles }}</td>
+          </th>
+      </tr>
+      <tr>
+          <th scope="row">Node Sensor Readings (last 24 hours)</th>
+          <td>{{ node_pings }}
+          </td>
+      </tr>
+      <tr>
+        {% if is_recording %}
+        <th scope="row"> Correlator is </th><td bgcolor="green"> ON    (last change: {{ last_update }})</td>
+        {$ else %}
+        <th scope="row"> Correlator is </th><td bgcolor="red"> OFF    (last change: {{ last_update }})</td>
+      <\tr>
+    </tbody>
+  </table>
+
+
+  <footer class="footer navbar-default">
+    <p class="text-muted text-center"><small><small>Table last updated: {{ now }}<br>
+      Script location: {{ scriptname }}<br>
+      Executing host: {{ hostname }}
+    </small></small></p>
+  </footer>
+
+{% endblock %}
