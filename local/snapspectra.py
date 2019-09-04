@@ -155,11 +155,11 @@ class Emitter(object):
         ant_loc_num = {}
 
         all_snap_statuses = self.session.get_snap_status(most_recent=True)
-
+        print("M&C all_snap_statuses: ", all_snap_statuses)
         hostnames = []
         hostnames = [stat.hostname for stat in all_snap_statuses
                      if stat.hostname not in hostnames]
-
+        print("all hostnames:", hostnames)
         autos = {}
 
         ant_status_from_snaps = self.corr_cm.get_ant_status()
@@ -208,7 +208,7 @@ class Emitter(object):
                                 grp2.append(name)
                     else:
                         print("No snap information for antennna: " + name)
-
+        print("host lookup table:", hostname_lookup)
         self.emit_js("var data = [")
         # create a mask to make things visible for only that hostname
         # the mask is different for each host, but each mask is the total
