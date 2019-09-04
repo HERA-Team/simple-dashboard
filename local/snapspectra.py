@@ -207,6 +207,8 @@ class Emitter(object):
                                 # empty list
                                 grp2 = grp1.setdefault(_stat.snap_loc_num, [])
                                 grp2.append(name)
+                    else:
+                        print("No snap information for antennna: " + name)
 
         self.emit_js("var data = [")
         # create a mask to make things visible for only that hostname
@@ -260,8 +262,6 @@ class Emitter(object):
         self.emit_js(' var updatemenus=[')
         self.emit_js('{{buttons: [')
         for host_cnt, host in enumerate(hostnames):
-            print("host:", host)
-            print('mask: ', host_masks[host_cnt])
             self.emit_js('{{')
             self.emit_js('args: [')
             self.emit_js("{{'visible': ", end='')
