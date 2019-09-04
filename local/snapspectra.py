@@ -184,7 +184,7 @@ class Emitter(object):
             print("Finding snap info: ", mc_name)
             snap_info = hsession.get_part_at_station_from_type(mc_name,
                                                                'now', 'snap')
-
+            print('\t ', snap_info)
             for _key in snap_info.keys():
                 # initialize a dict if they key does not exist already
                 snap_serial.setdefault(int(ant), {})
