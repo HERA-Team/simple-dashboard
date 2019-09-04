@@ -81,7 +81,6 @@ def main():
             d = r.get('auto:%d%s' % (i, pol))
             if d is not None:
                 n_signals += 1
-                # linenames += [linename]
                 auto = np.frombuffer(d, dtype=np.float32)[0:NCHANS].copy()
                 auto[auto < 10 ** -2.5] = 10 ** -2.5
                 auto = 10 * np.log10(auto)
