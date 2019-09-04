@@ -7,6 +7,7 @@
 
 from __future__ import absolute_import, division, print_function
 
+import re
 import numpy as np
 import redis
 from hera_mc import mc, cm_sysutils
@@ -154,11 +155,10 @@ class Emitter(object):
         snap_serial = {}
         ant_loc_num = {}
 
-        all_snap_statuses = self.session.get_snap_status(most_recent=True)
+        # all_snap_statuses = self.session.get_snap_status(most_recent=True)
+        all_snap_statuses = self.corr_cm.get_f_status()
         print("M&C all_snap_statuses: ", all_snap_statuses)
-        hostnames = []
-        hostnames = [stat.hostname for stat in all_snap_statuses
-                     if stat.hostname not in hostnames]
+        hostnames = list(set(all_snap_statuses.keys()))
         print("all hostnames:", hostnames)
         autos = {}
 
@@ -184,6 +184,9 @@ class Emitter(object):
             print("Finding snap info: ", mc_name)
             snap_info = hsession.get_part_at_station_from_type(mc_name,
                                                                'now', 'snap')
+            node_info = hsession.get_part_at_station_from_type(mc_name,
+                                                               'now', 'node')
+
             print('\t ', snap_info)
             for _key in snap_info.keys():
                 # initialize a dict if they key does not exist already
@@ -194,8 +197,12 @@ class Emitter(object):
                     name = "{ant:d}:{pol}".format(ant=ant, pol=pol_key)
                     if snap_info[_key][pol_key] is not None:
                         snap_serial[ant][pol_key] = snap_info[_key][pol_key]
+                        _node_num = re.findall(r'N(\d+)', node_info[_key][pol_key])[0]
 
-                        for _stat in all_snap_statuses:
+                        snap_stats = self.session.get_snap_status(nodeID=int(_node_num),
+                                                                  most_recent=True)
+
+                        for _stat in snap_stats:
                             if _stat.serial_number == snap_serial[ant][pol_key]:
                                 ant_loc_num[ant][pol_key] = _stat.snap_loc_num
 
