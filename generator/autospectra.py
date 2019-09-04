@@ -11,6 +11,7 @@ Adapted from https://github.com/HERA-Team/hera_corr_cm/blob/master/hera_today/re
 
 from __future__ import absolute_import, division, print_function
 
+import os
 import time
 import re
 import redis
@@ -18,6 +19,7 @@ import numpy as np
 import argparse
 from astropy.time import Time
 from jinja2 import Environment, FileSystemLoader
+
 
 # Two redis instances run on this server.
 # port 6379 is the hera-digi mirror
@@ -98,6 +100,7 @@ def main():
                          "text": frange_mhz.tolist(),
                          "name": linename,
                          "type": "scatter",
+                         "hovertemplate": "%{x:.1}\tMhz<br>%{y:.3}\t[dB]"
                          }
                 autospectra.append(_auto)
     layout = {"xaxis": {"title": "Frequency [MHz]"},
