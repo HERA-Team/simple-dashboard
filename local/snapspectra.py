@@ -265,9 +265,11 @@ class Emitter(object):
         for host_cnt, host in enumerate(hostnames):
             prog_time = all_snap_statuses[host]['last_programmed']
             timestamp = all_snap_statuses[host]['timestampe']
-            label = '{host}<br>programmed: {start}<br>last obserbed: {obs}'.format(host=host,
-                                                        start=prog_time.iso,
-                                                        obs=timestamp.iso)
+            label = ('{host}<br>programmed:\t{start}'
+                     '<br>last\tobserved:\t{obs}'.format(host=host,
+                                                         start=prog_time.iso,
+                                                         obs=timestamp.iso)
+                     )
             self.emit_js('{{')
             self.emit_js('args: [')
             self.emit_js("{{'visible': ", end='')
