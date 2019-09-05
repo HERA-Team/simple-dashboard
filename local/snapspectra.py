@@ -264,7 +264,7 @@ class Emitter(object):
         self.emit_js('{{buttons: [')
         for host_cnt, host in enumerate(hostnames):
             prog_time = all_snap_statuses[host]['last_programmed']
-            timestamp = all_snap_statuses[host]['timestampe']
+            timestamp = all_snap_statuses[host]['timestamp']
             label = ('{host}<br>programmed:\t{start}'
                      '<br>last\tobserved:\t{obs}'.format(host=host,
                                                          start=prog_time.iso,
