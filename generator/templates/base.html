@@ -12,10 +12,19 @@
       <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
       <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
     <![endif]-->
+    <style>
+       .footer { margin-top: 20px; }
+     </style>
     {% block head %}{% endblock %}
   </head>
   <body>
-  {% block body %}{% endblock %}
-  {% block footer %}{% endblock %}
+    {% block body %}{% endblock %}
+    <footer class="footer navbar-default">
+      {% block footer %}{% endblock %}
+      <p class="text-muted text-center"><small><small>(c) HERA Collaboration 2019</small></small></p>
+    </footer>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
   </body>
+
 </html>

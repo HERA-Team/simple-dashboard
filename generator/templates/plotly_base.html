@@ -11,17 +11,13 @@
         <div id="{{ plotname }}" class="col-md-12", style="{{ plotstyle }}"></div>
       </div>
     </div>
-
 {% endblock %}
 {% block footer %}
-    <footer class="footer navbar-default">
       <p class="text-muted text-center"><small><small>Table last updated: <span id="age">???</span> ago at {{ now }}<br>
         {{ data_type }} observed on {{data_date}} (JD: {{ data_jd_date }})<br>
         Script location: {{ scriptname }}<br>
         Executing host: {{ hostname }}<br>
         <a href="https://github.com/HERA-Team/simple-dashboard">Source code</a>
       </small></small></p>
-    </footer>
     <script src="{{js_name}}.js"></script>
-
 {% endblock %}
