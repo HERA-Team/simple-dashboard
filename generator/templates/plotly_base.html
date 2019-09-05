@@ -13,11 +13,12 @@
     </div>
 {% endblock %}
 {% block footer %}
-      <p class="text-muted text-center"><small><small>Last updated: <span id="age">???</span> ago at {{ now }}<br>
+      <p class="text-muted text-center"><small><small>
         {{ data_type }} observed on {{data_date}} (JD: {{ data_jd_date }})<br>
-        Script location: {{ scriptname }}<br>
-        Executing host: {{ hostname }}<br>
-        <a href="https://github.com/HERA-Team/simple-dashboard">Source code</a>
+        Last updated: <span id="age">???</span> ago at {{ now }}<br>
+        Script location: {{ scriptname }}
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        Executing host: {{ hostname }}
       </small></small></p>
     <script src="{{js_name}}.js"></script>
 {% endblock %}
