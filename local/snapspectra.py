@@ -265,10 +265,22 @@ class Emitter(object):
         for host_cnt, host in enumerate(hostnames):
             prog_time = all_snap_statuses[host]['last_programmed']
             timestamp = all_snap_statuses[host]['timestamp']
+            temp = all_snap_statuses[host]['temp']
+            uptime = all_snap_statuses[host]['uptime']
+            pps = all_snap_statuses[host]['pps_count']
+
             label = ('{host}<br>programmed:\t{start}'
-                     '<br>last\tobserved:\t{obs}'.format(host=host,
-                                                         start=prog_time.isoformat(' '),
-                                                         obs=timestamp.isoformat(' '))
+                     '<br>last\tobserved:\t{obs}<br>'
+                     'Temp:\t{temp:.0f}\tC&nsbp;&nsbp;'
+                     'PPS\tcount:\t{pps}\tCycles&nsbp;&nsbp;'
+                     'Uptime:\t{uptime}&nsbp;&nsbp;'
+                     ''.format(host=host,
+                               start=prog_time.isoformat(' '),
+                               obs=timestamp.isoformat(' '),
+                               temp=temp,
+                               pps=pps,
+                               uptime=uptime
+                               )
                      )
             self.emit_js('{{')
             self.emit_js('args: [')
