@@ -357,7 +357,7 @@ def main():
                                                  js_name="hex_amp",
                                                  now=now.iso,
                                                  scriptname=os.path.basename(__file__),
-                                                 hostname=hostname)
+                                                 hostname=computer_hostname)
 
         rendered_hex_js = js_template.render(gen_time_unix_ms=now.unix * 1000,
                                              data=data_hex,
