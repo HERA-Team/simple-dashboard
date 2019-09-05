@@ -12,6 +12,7 @@ Adapted from https://github.com/HERA-Team/hera_corr_cm/blob/master/hera_today/re
 from __future__ import absolute_import, division, print_function
 
 import os
+import sys
 import re
 import redis
 import numpy as np
@@ -29,6 +30,13 @@ def main():
     template_dir = os.path.join(script_dir, 'templates')
 
     env = Environment(loader=FileSystemLoader(template_dir))
+
+    if sys.version_info[0] < 3:
+        # py2
+        hostname = os.uname()[1]
+    else:
+        # py3
+        hostname = os.uname().nodename
 
     parser = argparse.ArgumentParser(
         description=('Create auto-correlation spectra plot for heranow dashboard')
@@ -95,10 +103,10 @@ def main():
               "yaxis": {"title": "Power [dB]"},
               "autosize": True,
               "showlegend": True,
-              "legend": {"x": 1,
+              "legend": {"x": 1.,
                          "y": 1},
               "margin": {"l": 40,
-                         "b": 0,
+                         "b": 30,
                          "r": 40,
                          "t": 30},
               "hovermode": "closest",
@@ -112,9 +120,12 @@ def main():
                                          data_type="Auto correlations",
                                          plotstyle="height: 85vh",
                                          gen_date=Time.now().iso,
-                                         iso_date=t_plot_iso,
-                                         jd_date=t_plot_jd,
-                                         js_name="spectra")
+                                         data_date=t_plot_iso,
+                                         data_jd_date=t_plot_jd,
+                                         js_name="spectra",
+                                         now=Time.now().iso,
+                                         scriptname=os.path.basename(__file__),
+                                         hostname=hostname)
 
     rendered_js = js_template.render(gen_time_unix_ms=Time.now().unix * 1000,
                                      data=autospectra,

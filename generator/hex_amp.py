@@ -8,6 +8,7 @@
 from __future__ import absolute_import, division, print_function
 
 import os
+import sys
 import numpy as np
 import re
 import redis
@@ -22,6 +23,13 @@ def main():
     template_dir = os.path.join(script_dir, 'templates')
 
     env = Environment(loader=FileSystemLoader(template_dir))
+    if sys.version_info[0] < 3:
+        # py2
+        hostname = os.uname()[1]
+    else:
+        # py3
+        hostname = os.uname().nodename
+
     # The standard M&C argument parser
     parser = mc.get_mc_argument_parser()
     # we'll have to add some extra options too
@@ -344,9 +352,12 @@ def main():
                                                  data_type="Auto correlations",
                                                  plotstyle="height: 85vh",
                                                  gen_date=now.iso,
-                                                 iso_date=latest.iso,
-                                                 jd_date=latest.jd,
-                                                 js_name="hex_amp")
+                                                 data_date=latest.iso,
+                                                 data_jd_date=latest.jd,
+                                                 js_name="hex_amp",
+                                                 now=now.iso,
+                                                 scriptname=os.path.basename(__file__),
+                                                 hostname=hostname)
 
         rendered_hex_js = js_template.render(gen_time_unix_ms=now.unix * 1000,
                                              data=data_hex,
@@ -499,9 +510,12 @@ def main():
                                                  data_type="Auto correlations",
                                                  plotstyle="height: 85vh",
                                                  gen_date=now.iso,
-                                                 iso_date=latest.iso,
-                                                 jd_date=latest.jd,
-                                                 js_name="node_amp")
+                                                 data_date=latest.iso,
+                                                 data_jd_date=latest.jd,
+                                                 js_name="node_amp",
+                                                 now=now.iso,
+                                                 scriptname=os.path.basename(__file__),
+                                                 hostname=hostname)
 
         rendered_hex_js = js_template.render(gen_time_unix_ms=now.unix * 1000,
                                              data=data_node,
