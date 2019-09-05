@@ -103,7 +103,7 @@ def main():
               "yaxis": {"title": "Power [dB]"},
               "autosize": True,
               "showlegend": True,
-              "legend": {"x": 1.,
+              "legend": {"x": 1,
                          "y": 1},
               "margin": {"l": 40,
                          "b": 30,
