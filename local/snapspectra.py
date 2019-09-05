@@ -271,10 +271,10 @@ class Emitter(object):
 
             label = ('{host}<br>programmed:\t{start}'
                      '<br>last\tobserved:\t{obs}<br>'
-                     'Temp:\t{temp:.0f}\tC&nsbp;&nsbp;'
+                     '<small>Temp:\t{temp:.0f}\tC&nsbp;&nsbp;'
                      'PPS\tcount:\t{pps}\tCycles&nsbp;&nsbp;'
                      'Uptime:\t{uptime}&nsbp;&nsbp;'
-                     ''.format(host=host,
+                     '</small>'.format(host=host,
                                start=prog_time.isoformat(' '),
                                obs=timestamp.isoformat(' '),
                                temp=temp,
