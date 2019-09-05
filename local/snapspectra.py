@@ -270,10 +270,10 @@ class Emitter(object):
             pps = all_snap_statuses[host]['pps_count']
 
             label = ('{host}<br>programmed:\t{start}'
-                     '<br>Spectra\trecorded:\t{obs}<br>'
-                     'Temp:\t{temp:.0f}\tC\t'
-                     'PPS\tcount:\t{pps}\tCycles\t\t\t'
-                     'Uptime:\t{uptime}'
+                     '<br>spectra\trecorded:\t{obs}<br>'
+                     'temp:\t{temp:.0f}\tC\t'
+                     'pps\tcount:\t{pps}\tCycles\t\t\t'
+                     'uptime:\t{uptime}'
                      ''.format(host=host,
                                start=prog_time.isoformat(' '),
                                obs=timestamp.isoformat(' '),
