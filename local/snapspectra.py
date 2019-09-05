@@ -321,13 +321,8 @@ Plotly.plot("plotly-snap", data, layout, {{responsive: true}});
     <div class="col-md-12">
         <p class="text-center">Report generated <span id="age">???</span> ago (at {gen_date} UTC)</p>
     </div>
-    <div class="col-md-12">
-        <p class="text-center">Auto correlations observed on {iso_date} (JD: {jd_date:.6f})</p>
-    </div>
   </div>
-""", gen_date=self.now.iso,
-     iso_date=self.latest.iso,
-     jd_date=self.latest.jd)
+""", gen_date=self.now.iso)
 
         self.emit_js(JS_HEADER,
                      gen_time_unix_ms=self.now.unix * 1000,
