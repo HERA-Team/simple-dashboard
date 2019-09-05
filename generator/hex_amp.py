@@ -25,10 +25,10 @@ def main():
     env = Environment(loader=FileSystemLoader(template_dir))
     if sys.version_info[0] < 3:
         # py2
-        hostname = os.uname()[1]
+        computer_hostname = os.uname()[1]
     else:
         # py3
-        hostname = os.uname().nodename
+        computer_hostname = os.uname().nodename
 
     # The standard M&C argument parser
     parser = mc.get_mc_argument_parser()
@@ -515,7 +515,7 @@ def main():
                                                  js_name="node_amp",
                                                  now=now.iso,
                                                  scriptname=os.path.basename(__file__),
-                                                 hostname=hostname)
+                                                 hostname=computer_hostname)
 
         rendered_hex_js = js_template.render(gen_time_unix_ms=now.unix * 1000,
                                              data=data_node,

@@ -33,10 +33,10 @@ def main():
 
     if sys.version_info[0] < 3:
         # py2
-        hostname = os.uname()[1]
+        computer_hostname = os.uname()[1]
     else:
         # py3
-        hostname = os.uname().nodename
+        computer_hostname = os.uname().nodename
 
     parser = argparse.ArgumentParser(
         description=('Create auto-correlation spectra plot for heranow dashboard')
@@ -125,7 +125,7 @@ def main():
                                          js_name="spectra",
                                          now=Time.now().iso,
                                          scriptname=os.path.basename(__file__),
-                                         hostname=hostname)
+                                         hostname=computer_hostname)
 
     rendered_js = js_template.render(gen_time_unix_ms=Time.now().unix * 1000,
                                      data=autospectra,
