@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "base_footer.html" %}
 
 {% block meta %}
   <meta http-equiv="refresh" content="300">
@@ -40,11 +40,5 @@
   </table>
 
 
-  <footer class="footer navbar-default">
-    <p class="text-muted text-center"><small><small>Table last updated: {{ now }}<br>
-      Script location: {{ scriptname }}<br>
-      Executing host: {{ hostname }}
-    </small></small></p>
-  </footer>
 
 {% endblock %}
