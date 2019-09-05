@@ -267,8 +267,8 @@ class Emitter(object):
             timestamp = all_snap_statuses[host]['timestamp']
             label = ('{host}<br>programmed:\t{start}'
                      '<br>last\tobserved:\t{obs}'.format(host=host,
-                                                         start=prog_time.iso,
-                                                         obs=timestamp.iso)
+                                                         start=prog_time.isoformat(' '),
+                                                         obs=timestamp.isoformat(' '))
                      )
             self.emit_js('{{')
             self.emit_js('args: [')
