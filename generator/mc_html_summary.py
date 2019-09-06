@@ -93,8 +93,8 @@ def main():
         on_off_row.color = 'green'
     else:
         on_off_row.text = "OFF"
-        on_off_row.color = None
-    on_off_row.text += "     (last change: {}".format(last_update)
+        on_off_row.color = 'red'
+    on_off_row.text += "     (last change: {})".format(last_update.iso)
     table.append(on_off_row)
 
     html_template = env.get_template("mc_table.html")
