@@ -1,9 +1,10 @@
 {% extends "base.html" %}
 
 {% block footer %}
-      <p class="text-muted text-center"><small><small>Table last updated: {{ now }}<br>
-        Script location: {{ scriptname }}<br>
+      <p class="text-muted text-center"><small><small>
+        Last updated: <span id="age">???</span> ago at {{ now }}<br>
+        Script location: {{ scriptname }}
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
         Executing host: {{ hostname }}
-        <a href="https://github.com/HERA-Team/simple-dashboard">Source code</a>
       </small></small></p>
 {% endblock %}
