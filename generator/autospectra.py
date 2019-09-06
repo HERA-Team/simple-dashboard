@@ -96,7 +96,7 @@ def main():
                          "y": auto.tolist(),
                          "name": linename,
                          "type": "scatter",
-                         "hovertemplate": "%{x:.1f}\tMhz<br>%{y:.3f}\t[dB]"
+                         "hovertemplate": "%{x:.1f}\tMHz<br>%{y:.3f}\t[dB]"
                          }
                 autospectra.append(_auto)
     layout = {"xaxis": {"title": "Frequency [MHz]"},
