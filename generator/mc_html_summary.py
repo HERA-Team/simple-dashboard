@@ -55,7 +55,7 @@ def main():
     dt_hours = (dt - dt_days * 3600 * 24) / 3600.
     last_obs_row = row(label="Time Since Last Obs",
                        text="{dt_days} days {dt_hours} hours".format(dt_days=dt_days,
-                                                                     dt_hours=dt_hours))
+                                                                     dt_hours=int(dt_hours)))
     table.append(last_obs_row)
 
     # get the number of raw files in the last 24 hours
