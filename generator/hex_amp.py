@@ -349,7 +349,7 @@ def main():
         # Render all the power vs position files
         plotname = "plotly-hex"
         html_template = env.get_template("plotly_base.html")
-        js_template = env.get_template("plotly_updatemenus.js")
+        js_template = env.get_template("plotly_base.js")
 
         rendered_hex_html = html_template.render(plotname=plotname,
                                                  data_type="Auto correlations",
@@ -506,7 +506,7 @@ def main():
         # Render all the power vs ndde files
         plotname = "plotly-node"
         html_template = env.get_template("plotly_base.html")
-        js_template = env.get_template("plotly_updatemenus.js")
+        js_template = env.get_template("plotly_base.js")
 
         rendered_hex_html = html_template.render(plotname=plotname,
                                                  data_type="Auto correlations",
