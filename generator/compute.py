@@ -191,7 +191,7 @@ def main():
                 rendered_js = js_template.render(plotname=_name,
                                                  data=data_dict[pname],
                                                  layout=layout)
-                if pname == 'lib-load':
+                if _name == 'lib-load':
                     open_type = 'w'
                 else:
                     open_type = 'a'
