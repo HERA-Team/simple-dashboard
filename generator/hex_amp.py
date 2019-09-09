@@ -332,7 +332,7 @@ def main():
         buttons.append(adc_button)
 
         updatemenus_hex = [{"buttons": buttons,
-                            "show_active": True,
+                            "showactive": True,
                             "type": "buttons"
                             }
                            ]
@@ -484,7 +484,7 @@ def main():
         buttons.append(adc_button)
 
         updatemenus_node = [{"buttons": buttons,
-                             "show_active": True,
+                             "showactive": True,
                              "type": "buttons"
                              }
                             ]
