@@ -18,11 +18,13 @@
         {# otherwise assume item is a string of a single plot #}
         {% if namelist is iterable and namelist is not string %}
         {% for name in namelist %}
-        <div id="{{ name }}" class="col-md-{{ colsize or 6 }}"></div>
+
+        <div id="{{ name }}" class="col-md-{{ colsize or 6 }}", style="{{ plotstyle or 'height: 85vh'}}"></div>
         {% endfor %}
         {% else %}
-        <div id="{{ namelist }}" class="col-md-{{ colsize or 12 }}"></div>
+        <div id="{{ namelist }}" class="col-md-{{ colsize or 12 }}", style="{{ plotstyle or 'height: 85vh'}}"></div>
         {% endif %}
+        
       </div>
       {% endfor %}
       {% else %}
@@ -33,7 +35,7 @@
       {% endif %}
 
     </div>
-    
+
 {% endblock %}
 
 {% block footer %}
