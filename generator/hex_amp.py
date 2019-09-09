@@ -512,14 +512,14 @@ def main():
                                                  data_type="Auto correlations",
                                                  plotstyle="height: 85vh",
                                                  gen_date=now.iso,
+                                                 gen_time_unix_ms=now.unix * 1000,
                                                  data_date=latest.iso,
                                                  data_jd_date=latest.jd,
                                                  js_name="node_amp",
                                                  scriptname=os.path.basename(__file__),
                                                  hostname=computer_hostname)
 
-        rendered_hex_js = js_template.render(gen_time_unix_ms=now.unix * 1000,
-                                             data=data_node,
+        rendered_hex_js = js_template.render(data=data_node,
                                              layout=layout_node,
                                              updatemenus=updatemenus_node,
                                              plotname=plotname)
