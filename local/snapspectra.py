@@ -8,6 +8,7 @@
 from __future__ import absolute_import, division, print_function
 
 import os
+import sys
 import re
 import numpy as np
 import redis
@@ -26,6 +27,7 @@ def main():
     template_dir = os.path.join(split_dir[0], 'templates')
 
     env = Environment(loader=FileSystemLoader(template_dir))
+
     if sys.version_info[0] < 3:
         # py2
         computer_hostname = os.uname()[1]
