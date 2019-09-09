@@ -126,7 +126,6 @@ def main():
                                          data_date=t_plot_iso,
                                          data_jd_date=t_plot_jd,
                                          js_name="spectra",
-                                         now=Time.now().iso,
                                          gen_time_unix_ms=Time.now().unix * 1000,
                                          scriptname=os.path.basename(__file__),
                                          hostname=computer_hostname)

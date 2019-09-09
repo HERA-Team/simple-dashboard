@@ -358,7 +358,6 @@ def main():
                                                  data_date=latest.iso,
                                                  data_jd_date=latest.jd,
                                                  js_name="hex_amp",
-                                                 now=now.iso,
                                                  gen_time_unix_ms=now.unix * 1000,
                                                  scriptname=os.path.basename(__file__),
                                                  hostname=computer_hostname)
@@ -516,7 +515,6 @@ def main():
                                                  data_date=latest.iso,
                                                  data_jd_date=latest.jd,
                                                  js_name="node_amp",
-                                                 now=now.iso,
                                                  scriptname=os.path.basename(__file__),
                                                  hostname=computer_hostname)
 
