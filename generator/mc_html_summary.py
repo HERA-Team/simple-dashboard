@@ -102,7 +102,7 @@ def main():
     on_off_row.text += "     (last change: {})".format(last_update.iso)
     table.append(on_off_row)
 
-    html_template = env.get_template("base_table.html")
+    html_template = env.get_template("mc_stat_table.html")
 
     rendered_html = html_template.render(table=table,
                                          gen_date=Time.now().iso,
