@@ -19,8 +19,11 @@ from jinja2 import Environment, FileSystemLoader
 
 def main():
     # templates are stored relative to the script dir
+    # stored one level up, find the parent directory
+    # and split the parent directory away
     script_dir = os.path.dirname(os.path.realpath(__file__))
-    template_dir = os.path.join(script_dir, 'templates')
+    split_dir = os.path.split(script_dir)
+    template_dir = os.path.join(split_dir[0], 'templates')
 
     env = Environment(loader=FileSystemLoader(template_dir))
     if sys.version_info[0] < 3:
@@ -356,11 +359,11 @@ def main():
                                                  data_jd_date=latest.jd,
                                                  js_name="hex_amp",
                                                  now=now.iso,
+                                                 gen_time_unix_ms=now.unix * 1000,
                                                  scriptname=os.path.basename(__file__),
                                                  hostname=computer_hostname)
 
-        rendered_hex_js = js_template.render(gen_time_unix_ms=now.unix * 1000,
-                                             data=data_hex,
+        rendered_hex_js = js_template.render(data=data_hex,
                                              layout=layout_hex,
                                              updatemenus=updatemenus_hex,
                                              plotname=plotname)

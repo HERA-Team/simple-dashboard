@@ -26,8 +26,11 @@ from jinja2 import Environment, FileSystemLoader
 # port 6380 is the paper1 mirror
 def main():
     # templates are stored relative to the script dir
+    # stored one level up, find the parent directory
+    # and split the parent directory away
     script_dir = os.path.dirname(os.path.realpath(__file__))
-    template_dir = os.path.join(script_dir, 'templates')
+    split_dir = os.path.split(script_dir)
+    template_dir = os.path.join(split_dir[0], 'templates')
 
     env = Environment(loader=FileSystemLoader(template_dir))
 
@@ -124,11 +127,11 @@ def main():
                                          data_jd_date=t_plot_jd,
                                          js_name="spectra",
                                          now=Time.now().iso,
+                                         gen_time_unix_ms=Time.now().unix * 1000,
                                          scriptname=os.path.basename(__file__),
                                          hostname=computer_hostname)
 
-    rendered_js = js_template.render(gen_time_unix_ms=Time.now().unix * 1000,
-                                     data=autospectra,
+    rendered_js = js_template.render(data=autospectra,
                                      layout=layout,
                                      plotname=plotname)
 

@@ -31,8 +31,12 @@ def main():
         hostname = os.uname()[1]
 
     # templates are stored relative to the script dir
+    # stored one level up, find the parent directory
+    # and split the parent directory away
     script_dir = os.path.dirname(os.path.realpath(__file__))
-    template_dir = os.path.join(script_dir, 'templates')
+    split_dir = os.path.split(script_dir)
+    template_dir = os.path.join(split_dir[0], 'templates')
+
     env = Environment(loader=FileSystemLoader(template_dir))
 
     parser = mc.get_mc_argument_parser()
