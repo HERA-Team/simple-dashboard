@@ -80,11 +80,11 @@ UI_HOSTNAMES = {
 
 
 def get_status(session, tablecls, hostnames, cutoff):
-    data_dict = {"load": {},
-                 "timediff": {},
-                 "mem": {},
-                 "disk": {},
-                 "bandwidth": {},
+    data_dict = {"load": [],
+                 "timediff": [],
+                 "mem": [],
+                 "disk": [],
+                 "bandwidth": [],
                  }
     for host in hostnames:
         data = (session.query(tablecls)
@@ -93,7 +93,7 @@ def get_status(session, tablecls, hostnames, cutoff):
                 .order_by(tablecls.mc_time)
                 .all())
         _name = UI_HOSTNAMES.get(host, host)
-        time_array = [Time.time(rec.mc_time, format='gps').iso
+        time_array = [Time(rec.mc_time, format='gps').isot
                       for rec in data]
         load_array = [rec.cpu_load_pct for rec in data]
         tdiff_array = [rec.mc_system_timediff for rec in data]
@@ -103,10 +103,11 @@ def get_status(session, tablecls, hostnames, cutoff):
         data_arrays = [load_array, tdiff_array, mem_array,
                        disk_array, net_array]
         for pname, array in zip(data_dict.keys(), data_arrays):
-            data_dict[pname][_name] = {"x": time_array,
-                                       "y": array,
-                                       "name": _name
-                                       }
+            data_dict[pname].extend({"x": time_array,
+                                     "y": array,
+                                     "name": _name
+                                     }
+                                    )
     return data_dict
 
 
@@ -137,16 +138,16 @@ def main():
 
     plotnames = [[n1 + '-' + n2 for n1 in ['lib', 'rtp']]
                  for n2 in ['load', 'disk', 'mem', 'bandwidth', 'timediff']
-                ]
+                 ]
     colsize = 6
     TIME_WINDOW = 14  # days
     now = Time.now()
     cutoff = now - TimeDelta(TIME_WINDOW, format='jd')
-    time_axis_range = [cutoff.iso, now.iso]
+    time_axis_range = [cutoff.isot, now.isot]
 
     html_template = env.get_template("plotly_base.html")
     rendered_html = html_template.render(plotname=plotnames,
-                                         plotstyle="height: 200",
+                                         plotstyle="height: 220",
                                          colsize=colsize,
                                          gen_date=now.iso,
                                          gen_time_unix_ms=now.unix * 1000,
