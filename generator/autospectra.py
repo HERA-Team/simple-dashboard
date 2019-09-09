@@ -116,8 +116,8 @@ def main():
               }
     plotname = "plotly-autos"
 
-    js_template = env.get_template("plotly_base.js")
     html_template = env.get_template("refresh_button.html")
+    js_template = env.get_template("plotly_base.js")
 
     rendered_html = html_template.render(plotname=plotname,
                                          data_type="Auto correlations",

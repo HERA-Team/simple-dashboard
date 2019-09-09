@@ -228,7 +228,7 @@ def main():
                   }
 
         plotname = "plotly-snap"
-        html_template = env.get_template("plotly_base.html")
+        html_template = env.get_template("plotly_single.html")
         js_template = env.get_template("plotly_base.js")
 
         rendered_html = html_template.render(plotname=plotname,

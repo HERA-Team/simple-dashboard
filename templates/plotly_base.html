@@ -4,14 +4,12 @@
   <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 {% block subhead %}{% endblock %}
 {% endblock %}
+
 {% block body %}
 {% block subbody %}{% endblock %}
-    <div class="container">
-      <div class="row">
-        <div id="{{ plotname }}" class="col-md-12", style="{{ plotstyle }}"></div>
-      </div>
-    </div>
+{% block plotgrid %}{% endblock %}
 {% endblock %}
+
 {% block footer %}
       {% if data_type is defined %}
       <p class="text-muted text-center"><small><small>

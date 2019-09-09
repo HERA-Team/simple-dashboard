@@ -8,3 +8,10 @@
 {% block subbody %}
   <span>Auto Refresh</span>&nbsp;<input type="checkbox" id="autoRefreshCheckbox" value="true" checked="checked" />
 {% endblock %}
+{% block plotgrid %}
+<div class="container">
+  <div class="row">
+    <div id="{{ plotname }}" class="col-md-12", style="{{ plotstyle }}"></div>
+  </div>
+</div>
+{% endblock %}
