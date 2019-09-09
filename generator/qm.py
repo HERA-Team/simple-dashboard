@@ -48,7 +48,7 @@ def do_xy_array_metric(session, metric_base, yexpression=ArrayMetrics.val,
         suffixes = ['_XX', '_YY']
     else:
         suffixes = ['_x', '_y']
-
+    _data = []
     for desc, suffix in zip('XY', suffixes):
         data = (session.query(ArrayMetrics.obsid, yexpression)
                 .filter(ArrayMetrics.metric == metric_base + suffix)
@@ -62,14 +62,15 @@ def do_xy_array_metric(session, metric_base, yexpression=ArrayMetrics.val,
             time_array = time_array.isot.tolist()
         else:
             time_array = []
-        _data = [{"x": time_array,
+        __data = {"x": time_array,
                   "y": (np.ma.masked_invalid([t[1] for t in data])
                         .filled(None).tolist()),
                   "name": desc,
                   "mode": ymode,
                   }
-                 ]
-        return _data
+        _data.append(__data)
+
+    return _data
 
 
 def main():
