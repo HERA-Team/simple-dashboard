@@ -37,7 +37,8 @@ def main():
     split_dir = os.path.split(script_dir)
     template_dir = os.path.join(split_dir[0], 'templates')
 
-    env = Environment(loader=FileSystemLoader(template_dir))
+    env = Environment(loader=FileSystemLoader(template_dir),
+                      trim_blocks=True)
 
     parser = mc.get_mc_argument_parser()
     args = parser.parse_args()
