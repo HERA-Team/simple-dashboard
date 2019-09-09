@@ -104,7 +104,7 @@ def main():
     html_template = env.get_template("base_table.html")
 
     rendered_html = html_template.render(table=table,
-                                         gen_date=Time.now.iso,
+                                         gen_date=Time.now().iso,
                                          gen_time_unix_ms=Time.now().unix * 1000,
                                          scriptname=os.path.basename(__file__),
                                          hostname=hostname)
