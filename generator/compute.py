@@ -103,11 +103,11 @@ def get_status(session, tablecls, hostnames, cutoff):
         data_arrays = [load_array, tdiff_array, mem_array,
                        disk_array, net_array]
         for pname, array in zip(data_dict.keys(), data_arrays):
-            data_dict[pname].extend({"x": time_array,
-                                     "y": array,
-                                     "name": _name
-                                     }
-                                    )
+            _data = {"x": time_array,
+                     "y": array,
+                     "name": _name
+                     }
+            data_dict[pname].append(_data)
     return data_dict
 
 
@@ -191,7 +191,7 @@ def main():
                 rendered_js = js_template.render(plotname=_name,
                                                  data=data_dict[pname],
                                                  layout=layout)
-                if pname == 'load':
+                if pname == 'lib-load':
                     open_type = 'w'
                 else:
                     open_type = 'a'
