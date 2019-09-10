@@ -234,7 +234,7 @@ def do_raid_errors(session, cutoff):
 
     for rec in q:
         _row = {}
-        _row.time = Time(rec.time, format='gps').isot
+        _row.time = Time(rec.time, format='gps').iso.replace(' ', '\t')
         _row.hostname = rec.hostname
         _row.disk = rec.disk
         _row.message = escape(rec.log)
@@ -257,7 +257,7 @@ def do_raid_status(session, cutoff):
 
     for rec in q:
         _row = {}
-        _row.time = Time(rec.time, format='gps').isot
+        _row.time = Time(rec.time, format='gps').iso.replace(' ', '\t')
         _row.hostname = rec.hostname
         _row.disk = rec.num_disks
         _row.message = escape(rec.info)
