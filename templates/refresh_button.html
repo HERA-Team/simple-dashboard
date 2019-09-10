@@ -5,6 +5,6 @@
     setInterval(function () { if (document.getElementById('autoRefreshCheckbox').checked) { location.reload(); } }, 60000);
   </script>
 {% endblock %}
-{% block subbody %}
+{% block prebody %}
 <span>Auto Refresh</span>&nbsp;<input type="checkbox" id="autoRefreshCheckbox" value="true" checked="checked" />
 {% endblock %}

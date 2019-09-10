@@ -5,7 +5,7 @@
 {% block subhead %}{% endblock %}
 {% endblock %}
 {% block body %}
-{% block subbody %}{% endblock %}
+{% block prebody %}{% endblock %}
 
     <div class="container">
       {# Want to be able to support a list of names as input #}
@@ -34,6 +34,7 @@
       </div>
       {% endif %}
 
+      {% block postbody %}{% endblock %}
     </div>
 
 {% endblock %}
