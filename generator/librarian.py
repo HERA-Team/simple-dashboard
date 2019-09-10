@@ -10,7 +10,7 @@ from __future__ import absolute_import, division, print_function
 import os
 import sys
 from astropy.time import Time, TimeDelta
-from cgi import escape
+from html import escape
 from hera_mc import mc
 from hera_mc.librarian import LibRAIDErrors, LibRAIDStatus, LibRemoteStatus, LibServerStatus, LibStatus
 from jinja2 import Environment, FileSystemLoader
@@ -79,12 +79,12 @@ def do_server_loads(session, cutoff):
             time_array = time_array.isot.tolist()
         else:
             time_array = []
-        __data = [{"x": time_array,
-                   "y": [t[1] for t in data],
-                   "name": UI_HOSTNAMES.get(host, host),
-                   "type": "scatter"
-                   }
-                  ]
+        __data = {"x": time_array,
+                  "y": [t[1] for t in data],
+                  "name": UI_HOSTNAMES.get(host, host),
+                  "type": "scatter"
+                  }
+
         _data.append(__data)
     return _data
 
@@ -148,6 +148,8 @@ def do_upload_ages(session, cutoff):
               "type": "scatter"
               }
     _data.append(__data)
+
+    return _data
 
 
 def do_bandwidths(session, cutoff):
