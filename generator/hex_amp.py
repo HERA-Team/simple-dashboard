@@ -112,26 +112,32 @@ def main():
         pam_power = {}
         adc_power = {}
         time_array = {}
+        eq_coeffs = {}
         for ant in ants:
             for pol in pols:
                 amps.setdefault((ant, pol), np.Inf)
                 pam_power.setdefault((ant, pol), np.Inf)
                 adc_power.setdefault((ant, pol), np.Inf)
+                eq_coeffs.setdefault((ant, pol), np.Inf)
                 time_array.setdefault((ant, pol), now - Time(0, format='gps'))
 
         for ant_cnt, ant in enumerate(ants):
             station_status = session.get_antenna_status(most_recent=True,
                                                         antenna_number=int(ant))
+
             for status in station_status:
+                antpol = (status.antenna_number, status.antenna_feed_pol)
                 if status.pam_power is not None:
-                    pam_power[(status.antenna_number,
-                               status.antenna_feed_pol)] = status.pam_power
+                    pam_power[antpol] = status.pam_power
                 if status.adc_power is not None:
-                    adc_power[(status.antenna_number,
-                               status.antenna_feed_pol)] = status.adc_power
+                    adc_power[antpol] = status.adc_power
                 if status.time is not None:
-                    time_array[(status.antenna_number,
-                                status.antenna_feed_pol)] = now - Time(status.time, format='gps')
+                    time_array[antpol] = now - Time(status.time, format='gps')
+                if status.eq_coeffs is not None:
+                    _coeffs = np.fromstring(status.eq_coeffs.strip('[]'),
+                                            sep=',')
+                    # just track the median coefficient for now
+                    eq_coeffs[antpol] = np.median(_coeffs)
 
             # Try to get the snap info. Output is a dictionary with 'e' and 'n' keys
             mc_name = 'HH{:d}'.format(ant)
@@ -193,6 +199,9 @@ def main():
         _adc_power = 10 * np.log10(_adc_power)
         _pam_power = np.ma.masked_invalid([[pam_power[ant, pol] for ant in ants]
                                            for pol in pols])
+        _eq_coeffs = np.ma.masked_invalid([[eq_coeffs[ant, pol] for ant in ants]
+                                           for pol in pols])
+
         time_array = np.array([[time_array[ant, pol].to('hour').value
                                for ant in ants] for pol in pols])
         xs = np.ma.masked_array(antpos[0, ant_index], mask=_amps[0].mask)
@@ -208,21 +217,26 @@ def main():
         #  want to format No Data where data was not retrieved for each type of power
         for pol_cnt, pol in enumerate(pols):
             for ant_cnt, ant in enumerate(ants):
-                for _name, _power in zip(['Auto', 'PAM', 'ADC'], [_amps, _pam_power, _adc_power]):
+                for _name, _power in zip(['Auto  [dB]', 'PAM [dB]', 'ADC [dB]', 'EQ COEF '],
+                                         [_amps, _pam_power, _adc_power, _eq_coeffs]):
                     if not _power.mask[pol_cnt, ant_cnt]:
-                        _text[pol_cnt, ant_cnt] += '<br>' + _name + '\t[dB]:\t{0:.2f}'.format(_power[pol_cnt, ant_cnt])
+                        _text[pol_cnt, ant_cnt] += '<br>' + _name + ': {0:.2f}'.format(_power[pol_cnt, ant_cnt])
                     else:
-                        _text[pol_cnt, ant_cnt] += '<br>' + _name + '\t[dB]:\tNo\tData'
+                        _text[pol_cnt, ant_cnt] += '<br>' + _name + ': No Data'
                 if time_array[pol_cnt, ant_cnt] > 2 * 24 * 365:
                     # if the value is older than 2 years it is bad
                     # value are stored in hours.
                     # 2 was chosen arbitraritly.
-                    _text[pol_cnt, ant_cnt] += '<br>' + 'PAM/ADC\t-\tNo\tData'
+                    _text[pol_cnt, ant_cnt] += '<br>' + 'PAM/ADC - No Data'
                 else:
-                    _text[pol_cnt, ant_cnt] += '<br>' + 'PAM/ADC:\t{0:.2f}\thrs\told'.format(time_array[pol_cnt, ant_cnt])
+                    _text[pol_cnt, ant_cnt] += '<br>' + 'PAM/ADC: {0:.2f} hrs old'.format(time_array[pol_cnt, ant_cnt])
+                # having spaces will cause odd wrapping issues, replace all
+                # spaces by \t
+                _text[pol_cnt, ant_cnt] = _text[pol_cnt, ant_cnt].replace(' ', '\t')
         amp_mask = [True]
         pam_mask = [True]
         adc_mask = [True]
+        eq_mask = [True]
         # Offline antennas
         data_hex = []
         offline_ants = {"x": xs_offline.tolist(),
@@ -241,7 +255,7 @@ def main():
         #  save up a mask array used for the buttons later
         #  also plot the bad ones!3
         colorscale = "Viridis"
-        for pow_ind, power in enumerate([_amps, _pam_power, _adc_power]):
+        for pow_ind, power in enumerate([_amps, _pam_power, _adc_power, _eq_coeffs]):
             if power.compressed().size > 0:
                 vmax = np.max(power.compressed())
                 vmin = np.min(power.compressed())
@@ -249,23 +263,33 @@ def main():
                 vmax = 1
                 vmin = 0
 
+            cbar_title = 'dB'
             for pol_ind, pol in enumerate(pols):
-                cbar_title = 'dB'
                 if pow_ind == 0:
                     amp_mask.extend([True] * 2)
                     pam_mask.extend([False] * 2)
                     adc_mask.extend([False] * 2)
+                    eq_mask.extend([False] * 2)
                     visible = True
 
                 elif pow_ind == 1:
                     amp_mask.extend([False] * 2)
                     pam_mask.extend([True] * 2)
                     adc_mask.extend([False] * 2)
+                    eq_mask.extend([False] * 2)
                     visible = False
-                else:
+                elif pow_ind == 2:
                     amp_mask.extend([False] * 2)
                     pam_mask.extend([False] * 2)
                     adc_mask.extend([True] * 2)
+                    eq_mask.extend([False] * 2)
+                    visible = False
+                else:
+                    cbar_title = 'Median Coeff'
+                    amp_mask.extend([False] * 2)
+                    pam_mask.extend([False] * 2)
+                    adc_mask.extend([False] * 2)
+                    eq_mask.extend([True] * 2)
                     visible = False
 
                 _power = {"x": xs.data[~power[pol_ind].mask].tolist(),
@@ -332,6 +356,16 @@ def main():
                       }
         buttons.append(adc_button)
 
+        eq_button = {"args": [{"visible": eq_mask},
+                              {"title": '',
+                               "annotations": {}
+                               }
+                              ],
+                     "label": "EQ Coeffs",
+                     "method": "restyle"
+                     }
+        buttons.append(eq_button)
+
         updatemenus_hex = [{"buttons": buttons,
                             "showactive": True,
                             "type": "buttons"
@@ -380,11 +414,12 @@ def main():
         amp_mask = []
         pam_mask = []
         adc_mask = []
+        eq_mask = []
 
         vmax = [np.max(power.compressed()) if power.compressed().size > 1 else 1
-                for power in [_amps, _pam_power, _adc_power]]
+                for power in [_amps, _pam_power, _adc_power, _eq_coeffs]]
         vmin = [np.min(power.compressed()) if power.compressed().size > 1 else 0
-                for power in [_amps, _pam_power, _adc_power]]
+                for power in [_amps, _pam_power, _adc_power, _eq_coeffs]]
         for node in nodes:
             node_index = np.where(node_ind == node)[0]
 
@@ -396,26 +431,37 @@ def main():
             __amps = _amps[:, node_index]
             __adc = _adc_power[:, node_index]
             __pam = _pam_power[:, node_index]
+            __eqs = _eq_coeffs[:, node_index]
             __text = _text[:, node_index]
 
-            cbar_title = 'dB'
-            for pow_ind, power in enumerate([__amps, __pam, __adc]):
+            for pow_ind, power in enumerate([__amps, __pam, __adc, __eqs]):
+                cbar_title = 'dB'
 
                 for pol_ind, pol in enumerate(pols):
                     if pow_ind == 0:
                         amp_mask.extend([True] * 2)
                         pam_mask.extend([False] * 2)
                         adc_mask.extend([False] * 2)
+                        eq_mask.extend([False] * 2)
                         visible = True
                     elif pow_ind == 1:
                         amp_mask.extend([False] * 2)
                         pam_mask.extend([True] * 2)
                         adc_mask.extend([False] * 2)
+                        eq_mask.extend([False] * 2)
                         visible = False
-                    else:
+                    elif pow_ind == 2:
                         amp_mask.extend([False] * 2)
                         pam_mask.extend([False] * 2)
                         adc_mask.extend([True] * 2)
+                        eq_mask.extend([False] * 2)
+                        visible = False
+                    else:
+                        cbar_title = 'Median Coeff'
+                        amp_mask.extend([False] * 2)
+                        pam_mask.extend([False] * 2)
+                        adc_mask.extend([False] * 2)
+                        eq_mask.extend([True] * 2)
                         visible = False
 
                     _power = {"x": xs[pol_ind].data[~power[pol_ind].mask].tolist(),
@@ -482,6 +528,16 @@ def main():
                       "method": "restyle"
                       }
         buttons.append(adc_button)
+
+        eq_button = {"args": [{"visible": eq_mask},
+                              {"title": '',
+                               "annotations": {}
+                               }
+                              ],
+                     "label": "EQ Coeffs",
+                     "method": "restyle"
+                     }
+        buttons.append(eq_button)
 
         updatemenus_node = [{"buttons": buttons,
                              "showactive": True,
