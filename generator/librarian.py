@@ -150,7 +150,6 @@ def do_upload_ages(session, cutoff):
     _data.append(__data)
 
 
-
 def do_bandwidths(session, cutoff):
     _data = []
 
