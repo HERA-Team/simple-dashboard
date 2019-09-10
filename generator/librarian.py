@@ -169,7 +169,7 @@ def do_bandwidths(session, cutoff):
             time_array = []
         __data = {"x": time_array,
                   "y": [t[1] for t in data],
-                  "name": "Time since last upload".replace(' ', '\t'),
+                  "name": "{remote} ping time".replace(' ', '\t'),
                   "type": "scatter"
                   }
         _data.append(__data)
