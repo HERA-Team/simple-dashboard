@@ -7,64 +7,35 @@
 
 from __future__ import absolute_import, division, print_function
 
+import os
+import sys
 import re
 import numpy as np
 import redis
 from hera_mc import mc, cm_sysutils
 from astropy.time import Time
 import hera_corr_cm
-
-
-HTML_HEADER = """\
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>HERA Compute Dashboard</title>
-  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
-  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap-theme.min.css">
-  <!--[if lt IE 9]>
-    <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
-    <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
-  <![endif]-->
-</head>
-"""
-
-JS_HEADER = """\
-var report_age = 0.001 * (Date.now() - {gen_time_unix_ms});
-var age_text = "?";
-if (report_age < 300) {{
-  age_text = report_age.toFixed(0) + " seconds";
-}} else if (report_age < 10800) {{ // 3 hours
-  age_text = (report_age / 60).toFixed(0) + " minutes";
-}} else if (report_age < 172800) {{ // 48 hours
-  age_text = (report_age / 3600).toFixed(0) + " hours";
-}} else {{
-  age_text = (report_age / 86400).toFixed(1) + " days";
-}}
-document.getElementById("age").textContent = age_text;
-if (report_age > 1800) {{
-    document.getElementById("age").style.color = 'red';
-}}
-"""
-
-HTML_FOOTER = """\
-<div class="row">
-<div class="col-md-12">
-<p class="text-center"><a href="https://github.com/HERA-Team/simple-dashboard">Source code</a></p>
-</div>
-</div>
-</div>
-<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-<script src="snapspectra.js"></script>
-</body>
-</html>
-"""
+from jinja2 import Environment, FileSystemLoader
 
 
 def main():
+    # templates are stored relative to the script dir
+    # stored one level up, find the parent directory
+    # and split the parent directory away
+    script_dir = os.path.dirname(os.path.realpath(__file__))
+    split_dir = os.path.split(script_dir)
+    template_dir = os.path.join(split_dir[0], 'templates')
+
+    env = Environment(loader=FileSystemLoader(template_dir),
+                      trim_blocks=True)
+
+    if sys.version_info[0] < 3:
+        # py2
+        computer_hostname = os.uname()[1]
+    else:
+        # py3
+        computer_hostname = os.uname().nodename
+
     # The standard M&C argument parser
     parser = mc.get_mc_argument_parser()
     # we'll have to add some extra options too
@@ -86,63 +57,9 @@ def main():
     except Exception as err:
         raise SystemExit(str(err))
 
-    with db.sessionmaker() as session, \
-            open('snapspectra.html', 'wt') as html_file, \
-            open('snapspectra.js', 'wt') as js_file:
-
-        def emit_html(f, end='\n', **kwargs):
-            print(f.format(**kwargs), file=html_file, end=end)
-
-        def emit_js(f, end='\n', **kwargs):
-            print(f.format(**kwargs), file=js_file, end=end)
-
-        Emitter(session, redis_db, args.redishost,
-                emit_html, emit_js).emit()
-
-
-class Emitter(object):
-
-    def __init__(self, session, redis_db, redishost,
-                 emit_html, emit_js):
-        self.session = session
-        self.corr_cm = hera_corr_cm.HeraCorrCM(redishost=redishost)
-        self.redis_db = redis_db
-
-        self.emit_html = emit_html
-        self.emit_js = emit_js
-        self.latest = Time(np.frombuffer(self.redis_db.get('auto:timestamp'),
-                           dtype=np.float64).item(), format='jd')
-
-        self.now = Time.now()
-
-    def emit_data_array(self, data, fmt):
-        self.emit_js('[', end='')
-        first = True
-
-        for x in data:
-            if first:
-                first = False
-            else:
-                self.emit_js(',', end='')
-            self.emit_js(fmt, x=x, end='')
-
-        self.emit_js(']', end='')
-
-    def emit_text_array(self, data, fmt):
-        self.emit_js('[', end='')
-        first = True
-
-        for x in data:
-            if first:
-                first = False
-            else:
-                self.emit_js(',', end='')
-            self.emit_js("'" + fmt + "'", x=x, end='')
-
-        self.emit_js(']', end='')
-
-    def prep_data(self):
-        hsession = cm_sysutils.Handling(self.session)
+    with db.sessionmaker() as session:
+        corr_cm = hera_corr_cm.HeraCorrCM(redishost=args.redishost)
+        hsession = cm_sysutils.Handling(session)
         stations = hsession.get_all_fully_connected_at_date(at_date='now')
 
         ants = []
@@ -155,23 +72,23 @@ class Emitter(object):
         snap_serial = {}
         ant_loc_num = {}
 
-        # all_snap_statuses = self.session.get_snap_status(most_recent=True)
-        all_snap_statuses = self.corr_cm.get_f_status()
+        # all_snap_statuses = session.get_snap_status(most_recent=True)
+        all_snap_statuses = corr_cm.get_f_status()
         hostnames = list(set(all_snap_statuses.keys()))
-        autos = {}
+        snapautos = {}
 
-        ant_status_from_snaps = self.corr_cm.get_ant_status()
+        ant_status_from_snaps = corr_cm.get_ant_status()
 
         for ant_cnt, ant in enumerate(ants):
-            mc_ant_status = self.session.get_antenna_status(antenna_number=int(ant),
-                                                            most_recent=True)
+            mc_ant_status = session.get_antenna_status(antenna_number=int(ant),
+                                                       most_recent=True)
             for stat in mc_ant_status:
                 name = "{ant:d}:{pol}".format(ant=stat.antenna_number,
                                               pol=stat.antenna_feed_pol)
                 try:
                     tmp_auto = ant_status_from_snaps[name]["autocorrelation"]
                     tmp_auto = np.ma.masked_invalid(10 * np.log10(np.real(tmp_auto)))
-                    autos[name] = tmp_auto.filled(-100)
+                    snapautos[name] = tmp_auto.filled(-100)
 
                 except KeyError:
                     print("Ant-pol with no autocorrelation", name)
@@ -195,8 +112,8 @@ class Emitter(object):
                         snap_serial[ant][pol_key] = snap_info[_key][pol_key]
                         _node_num = re.findall(r'N(\d+)', node_info[_key][pol_key])[0]
 
-                        snap_stats = self.session.get_snap_status(nodeID=int(_node_num),
-                                                                  most_recent=True)
+                        snap_stats = session.get_snap_status(nodeID=int(_node_num),
+                                                             most_recent=True)
 
                         for _stat in snap_stats:
                             if _stat.serial_number == snap_serial[ant][pol_key]:
@@ -211,7 +128,7 @@ class Emitter(object):
                                 grp2.append(name)
                     else:
                         print("No snap information for antennna: " + name)
-        self.emit_js("var data = [")
+        data = []
         # create a mask to make things visible for only that hostname
         # the mask is different for each host, but each mask is the total
         # length of all data, 8 because loc_nums go 0-3 each with 'e' and 'n' pols
@@ -248,20 +165,15 @@ class Emitter(object):
                     mask_cnt += 1
 
                     name = 'ant{}'.format(ant_name.replace(":", ""))
-
-                    self.emit_js('{{x: ', end='')
-                    self.emit_data_array(freqs, '{x:.3f}')
-                    self.emit_js(',\ny: ', end='')
-                    self.emit_data_array(autos[ant_name], '{x:.3f}')
-                    self.emit_js(',\nname: "{name}"', name=name, end='')
-                    self.emit_js(",\nvisible: {visible}", visible=visible, end='')
-                    self.emit_js(",\nhovertemplate: '%{{x:.3f}}\tMHz<br>${{y:.3f}}\t[dBm]<extra>{name}</extra>'", name=name, end='')
-                    self.emit_js("}}, ", end='\n')
-        # end data var
-        self.emit_js(']', end='\n')
-
-        self.emit_js(' var updatemenus=[')
-        self.emit_js('{{buttons: [')
+                    _data = {"x": freqs,
+                             "y": snapautos[ant_name],
+                             "name": name,
+                             "visible": visible,
+                             "hovertemplate": ('%{{x:.3f}}\tMHz<br>${{y:.3f}}'
+                                               '\t[dBm]<extra>{name}</extra>')
+                             }
+                    data.append(_data)
+        buttons = []
         for host_cnt, host in enumerate(hostnames):
             prog_time = all_snap_statuses[host]['last_programmed']
             timestamp = all_snap_statuses[host]['timestamp']
@@ -282,67 +194,62 @@ class Emitter(object):
                                uptime=uptime
                                )
                      )
-            self.emit_js('{{')
-            self.emit_js('args: [')
-            self.emit_js("{{'visible': ", end='')
-            self.emit_data_array(host_masks[host_cnt], '{x}')
-            self.emit_js("}},\n{{'title': {title},", title=host_title[host_cnt])
-            self.emit_js("'annotations': {{}} }}")
-            self.emit_js('],')
-            self.emit_js("label: '{host}',", host=label)
-            self.emit_js("method: 'restyle'")
-            self.emit_js('}},')
-        self.emit_js('],', end='\n')
-        self.emit_js('showactive: true,')
-        self.emit_js("type: 'buttons',")
-        self.emit_js("x: -.1,")
-        self.emit_js('}},')
-        self.emit_js(']', end='\n')
+            _button = {"args": [{"visible": host_masks[host_cnt]},
+                                {"title": host_title[host_cnt],
+                                 "annotations": {}
+                                 }
+                                ],
+                       "label": label,
+                       "method": "restyle"
+                       }
+            buttons.append(_button)
+        updatemenus = [{"buttons": buttons,
+                        "showactive": True,
+                        "type": "dropdown",
+                        "x": .7,
+                        "y": 1.1,
+                        }
+                       ]
+        layout = {"xaxis": {"title": "Frequency [MHz]",
+                            "showticklabels": True,
+                            "tick0": 0,
+                            "dtick": 10,
+                            "range": [40, 250]
+                            },
+                  "yaxis": {"title": 'Power [dBm]',
+                            "showticklabels": True,
+                            "range": [-20, 20]
+                            },
+                  "hoverlabel": {"align": "left"},
+                  "margin": {"l": 40, "b": 30,
+                             "r": 40, "t": 30},
+                  "autosize": True,
+                  "showlegend": True,
+                  "hovermode": 'closest',
+                  }
 
-        self.emit_js("""
-var layout = {{
-    xaxis: {{title: 'Frequency [MHz]',
-            showticklabels: true,
-            tick0:0,
-            dtick:10,
-            range: [40, 250]}},
-    yaxis: {{title: 'Power [dBm]',
-             showticklabels: true,
-             range: [-20, 20]}},
-    "hoverlabel": {{"align": "left"}},
-    margin: {{ l: 40, b: 30, r: 40, t: 30}},
-    autosize: true,
-    showlegend: true,
-    hovermode: 'closest',
-    updatemenus: updatemenus
-}};
+        plotname = "plotly-snap"
+        html_template = env.get_template("plotly_base.html")
+        js_template = env.get_template("plotly_base.js")
 
-Plotly.plot("plotly-snap", data, layout, {{responsive: true}});
-                """)
+        rendered_html = html_template.render(plotname=plotname,
+                                             plotstyle="height: 85vh",
+                                             gen_date=Time.now().iso,
+                                             js_name='snapspectra',
+                                             gen_time_unix_ms=Time.now().unix * 1000,
+                                             scriptname=os.path.basename(__file__),
+                                             hostname=computer_hostname
+                                             )
+        rendered_js = js_template.render(data=data,
+                                         layout=layout,
+                                         updatemenus=updatemenus,
+                                         plotname=plotname)
 
-    def emit(self):
-        self.emit_html(HTML_HEADER)
+        with open('snapspectra.html', 'w') as h_file:
+            h_file.write(rendered_html)
 
-        self.emit_html("""\
-<body>
-<div class="container">
-  <div class="row">
-    <div id="plotly-snap" class="col-md-12", style="height: 85vh"></div>
-  </div>
-  <div class="row">
-    <div class="col-md-12">
-        <p class="text-center">Report generated <span id="age">???</span> ago (at {gen_date} UTC)</p>
-    </div>
-  </div>
-""", gen_date=self.now.iso)
-
-        self.emit_js(JS_HEADER,
-                     gen_time_unix_ms=self.now.unix * 1000,
-                     )
-
-        self.prep_data()
-
-        self.emit_html(HTML_FOOTER)
+        with open('snapspectra.js', 'w') as js_file:
+            js_file.write(rendered_js)
 
 
 if __name__ == '__main__':

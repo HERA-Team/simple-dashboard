@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block head %}
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+{% block subhead %}{% endblock %}
+{% endblock %}
+{% block body %}
+{% block prebody %}{% endblock %}
+
+    <div class="container">
+      {# Want to be able to support a list of names as input #}
+      {# if not a list assume a single string as a name #}
+      {% if plotname is iterable and plotname is not string %}
+      {% for namelist in plotname %}
+
+      <div class="row">
+        {# if the first item is a list, make a grid of plots #}
+        {# otherwise assume item is a string of a single plot #}
+        {% if namelist is iterable and namelist is not string %}
+        {% for name in namelist %}
+
+        <div id="{{ name }}" class="col-md-{{ colsize or 6 }}", style="{{ plotstyle or 'height: 85vh'}}"></div>
+        {% endfor %}
+        {% else %}
+        <div id="{{ namelist }}" class="col-md-{{ colsize or 12 }}", style="{{ plotstyle or 'height: 85vh'}}"></div>
+        {% endif %}
+
+      </div>
+      {% endfor %}
+      {% else %}
+
+      <div class="row">
+        <div id="{{ plotname }}" class="col-md-{{ colsize or 12 }}", style="{{ plotstyle or 'height: 85vh'}}"></div>
+      </div>
+      {% endif %}
+
+      {% block postbody %}{% endblock %}
+    </div>
+
+{% endblock %}
+
+{% block footer %}
+      {% if data_type is defined %}
+      <p class="text-muted text-center"><small><small>
+        {{ data_type }} observed on {{data_date}} (JD: {{ data_jd_date }})<br>
+        Last updated: <span id="age">???</span> ago at {{ gen_date }}<br>
+        Script name: {{ scriptname }}
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        Executing host: {{ hostname }}
+      </small></small></p>
+      {% else %}
+      <p class="text-muted text-center"><small><small>
+        Last updated: <span id="age">???</span> ago at {{ gen_date }}<br>
+        Script name: {{ scriptname }}
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        Executing host: {{ hostname }}
+      </small></small></p>
+      {% endif %}
+    <script src="{{js_name}}.js"></script>
+{% endblock %}

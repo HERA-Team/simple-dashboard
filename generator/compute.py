@@ -7,85 +7,13 @@
 
 from __future__ import absolute_import, division, print_function
 
+import os
+import sys
 from astropy.time import Time, TimeDelta
-from cgi import escape
 from hera_mc import mc
 from hera_mc.librarian import LibServerStatus
 from hera_mc.rtp import RTPServerStatus
-
-
-def main():
-    parser = mc.get_mc_argument_parser()
-    args = parser.parse_args()
-
-    try:
-        db = mc.connect_to_mc_db(args)
-    except RuntimeError as e:
-        raise SystemExit(str(e))
-
-    with db.sessionmaker() as session, \
-         open('compute.html', 'wt') as html_file, \
-         open('compute.js', 'wt') as js_file:
-        def emit_html(f, end='\n', **kwargs):
-            print(f.format(**kwargs), file=html_file, end=end)
-        def emit_js(f, end='\n', **kwargs):
-            print(f.format(**kwargs), file=js_file, end=end)
-
-        Emitter(session, emit_html, emit_js).emit()
-
-
-HTML_HEADER="""\
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>HERA Compute Dashboard</title>
-  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
-  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap-theme.min.css">
-  <!--[if lt IE 9]>
-    <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
-    <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
-  <![endif]-->
-</head>
-"""
-
-JS_HEADER = """\
-var report_age = 0.001 * (Date.now() - {gen_time_unix_ms});
-var age_text = "?";
-if (report_age < 300) {{
-  age_text = report_age.toFixed(0) + " seconds";
-}} else if (report_age < 10800) {{ // 3 hours
-  age_text = (report_age / 60).toFixed(0) + " minutes";
-}} else if (report_age < 172800) {{ // 48 hours
-  age_text = (report_age / 3600).toFixed(0) + " hours";
-}} else {{
-  age_text = (report_age / 86400).toFixed(1) + " days";
-}}
-document.getElementById("age").textContent = age_text;
-if (report_age > 1800) {{
-    document.getElementById("age").style.color = 'red';
-}}
-
-function extract(data, keyname) {{
-  var items = [];
-  for (var h in data) {{
-    items.push({{x: data[h].t, y: data[h][keyname], name: h, type: "scatter"}});
-  }}
-  return items;
-}}
-
-layout = {{
-    xaxis: {{{time_axis_range}}},
-    yaxis: {{title: 'placeholder', rangemode: 'tozero'}},
-    height: 200,
-    margin: {{t: 2, r: 10, b: 2, l: 40}},
-    legend: {{orientation: 'h', x: 0.15, y: -0.15}},
-    showlegend: true,
-    hovermode: 'closest'
-}};\
-"""
+from jinja2 import Environment, FileSystemLoader
 
 LIB_HOSTNAMES = [
     'qmaster',
@@ -151,143 +79,126 @@ UI_HOSTNAMES = {
 }
 
 
-class Emitter(object):
-    TIME_WINDOW = 14 # days
-
-    def __init__(self, session, emit_html, emit_js):
-        self.session = session
-        self.emit_html = emit_html
-        self.emit_js = emit_js
-
-        self.now = Time.now()
-        self.cutoff = self.now - TimeDelta(self.TIME_WINDOW, format='jd')
-        self.cutoff_gps = self.cutoff.gps
-        self.time_axis_range = 'range: ["{}", "{}"]'.format(self.cutoff.iso, self.now.iso)
-
-
-    def emit(self):
-        self.emit_html(HTML_HEADER)
-
-        self.emit_html("""\
-<body>
-<div class="container">
-  <div class="row">
-    <div class="col-md-12">
-        <p class="text-center">Report generated <span id="age">???</span> ago (at {gen_date} UTC)</p>
-    </div>
-  </div>
-  <div class="row">
-    <div id="lib-load" class="col-md-6"></div>
-    <div id="rtp-load" class="col-md-6"></div>
-  </div>
-  <div class="row">
-    <div id="lib-disk" class="col-md-6"></div>
-    <div id="rtp-disk" class="col-md-6"></div>
-  </div>
-  <div class="row">
-    <div id="lib-mem" class="col-md-6"></div>
-    <div id="rtp-mem" class="col-md-6"></div>
-  </div>
-  <div class="row">
-    <div id="lib-bandwidth" class="col-md-6"></div>
-    <div id="rtp-bandwidth" class="col-md-6"></div>
-  </div>
-  <div class="row">
-    <div id="lib-timediff" class="col-md-6"></div>
-    <div id="rtp-timediff" class="col-md-6"></div>
-  </div>
-""", gen_date = self.now.iso)
-
-        self.emit_js(JS_HEADER,
-                     gen_time_unix_ms = self.now.unix * 1000,
-                     time_axis_range = self.time_axis_range,
-        )
-
-        self.do_status(LibServerStatus, LIB_HOSTNAMES, 'lib')
-        self.do_status(RTPServerStatus, RTP_HOSTNAMES, 'rtp')
-
-        self.emit_html("""\
-  <div class="row">
-    <div class="col-md-12">
-        <p class="text-center"><a href="https://github.com/HERA-Team/simple-dashboard">Source code</a>.</p>
-    </div>
-  </div>
-</div>
-<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-<script src="compute.js"></script>
-</body>
-</html>
-""")
+def get_status(session, tablecls, hostnames, cutoff):
+    data_dict = {"load": [],
+                 "timediff": [],
+                 "mem": [],
+                 "disk": [],
+                 "bandwidth": [],
+                 }
+    for host in hostnames:
+        data = (session.query(tablecls)
+                .filter(tablecls.hostname == host)
+                .filter(tablecls.mc_time > cutoff.gps)
+                .order_by(tablecls.mc_time)
+                .all())
+        _name = UI_HOSTNAMES.get(host, host)
+        time_array = [Time(rec.mc_time, format='gps').isot
+                      for rec in data]
+        load_array = [rec.cpu_load_pct for rec in data]
+        tdiff_array = [rec.mc_system_timediff for rec in data]
+        mem_array = [rec.memory_used_pct for rec in data]
+        disk_array = [rec.disk_space_pct for rec in data]
+        net_array = [rec.network_bandwidth_mbs for rec in data]
+        data_arrays = [load_array, tdiff_array, mem_array,
+                       disk_array, net_array]
+        for pname, array in zip(data_dict.keys(), data_arrays):
+            _data = {"x": time_array,
+                     "y": array,
+                     "name": _name
+                     }
+            data_dict[pname].append(_data)
+    return data_dict
 
 
-    def do_status(self, tablecls, hostnames, div_prefix):
-        sep = ''
-        self.emit_js('data = {{')
+def main():
+    # templates are stored relative to the script dir
+    # stored one level up, find the parent directory
+    # and split the parent directory away
+    script_dir = os.path.dirname(os.path.realpath(__file__))
+    split_dir = os.path.split(script_dir)
+    template_dir = os.path.join(split_dir[0], 'templates')
 
-        for host in hostnames:
-            data = (self.session.query(tablecls)
-                    .filter(tablecls.hostname == host)
-                    .filter(tablecls.mc_time > self.cutoff_gps)
-                    .order_by(tablecls.mc_time)
-                    .all())
+    env = Environment(loader=FileSystemLoader(template_dir),
+                      trim_blocks=True)
+    if sys.version_info[0] < 3:
+        # py2
+        computer_hostname = os.uname()[1]
+    else:
+        # py3
+        computer_hostname = os.uname().nodename
 
-            self.emit_js('{sep}"{host}": {{t:', host=UI_HOSTNAMES.get(host, host), sep=sep, end='')
-            self.emit_gpstime_array(rec.mc_time for rec in data)
-            self.emit_js(',load:', end='')
-            self.emit_data_array((rec.cpu_load_pct for rec in data), '{x:.1f}')
-            self.emit_js(',timediff:', end='')
-            self.emit_data_array((rec.mc_system_timediff for rec in data), '{x:.3f}')
-            self.emit_js(',mem:', end='')
-            self.emit_data_array((rec.memory_used_pct for rec in data), '{x:.1f}')
-            self.emit_js(',disk:', end='')
-            self.emit_data_array((rec.disk_space_pct for rec in data), '{x:.1f}')
-            self.emit_js(',net:', end='')
-            self.emit_data_array((rec.network_bandwidth_mbs for rec in data), '{x:.2f}')
-            self.emit_js('}}')
-            sep = ','
+    parser = mc.get_mc_argument_parser()
+    args = parser.parse_args()
 
-        self.emit_js("""\
-}};
+    try:
+        db = mc.connect_to_mc_db(args)
+    except RuntimeError as e:
+        raise SystemExit(str(e))
 
-layout.yaxis.title = 'Load % per CPU';
-Plotly.plot('{div_prefix}-load', {{data: extract(data, 'load'), layout: layout}});
-layout.yaxis.title = 'Local disk usage (%)';
-Plotly.plot('{div_prefix}-disk', {{data: extract(data, 'disk'), layout: layout}});
-layout.yaxis.title = 'Memory usage (%)';
-Plotly.plot('{div_prefix}-mem', {{data: extract(data, 'mem'), layout: layout}});
-layout.yaxis.title = 'Network I/O (MB/s)';
-Plotly.plot('{div_prefix}-bandwidth', {{data: extract(data, 'net'), layout: layout}});
-layout.yaxis.title = 'M&C time diff. (s)';
-Plotly.plot('{div_prefix}-timediff', {{data: extract(data, 'timediff'), layout: layout}});\
-""", div_prefix=div_prefix)
+    plotnames = [[n1 + '-' + n2 for n1 in ['lib', 'rtp']]
+                 for n2 in ['load', 'disk', 'mem', 'bandwidth', 'timediff']
+                 ]
+    colsize = 6
+    TIME_WINDOW = 14  # days
+    now = Time.now()
+    cutoff = now - TimeDelta(TIME_WINDOW, format='jd')
+    time_axis_range = [cutoff.isot, now.isot]
 
+    html_template = env.get_template("plotly_base.html")
+    rendered_html = html_template.render(plotname=plotnames,
+                                         plotstyle="height: 220",
+                                         colsize=colsize,
+                                         gen_date=now.iso,
+                                         gen_time_unix_ms=now.unix * 1000,
+                                         js_name='compute',
+                                         hostname=computer_hostname,
+                                         scriptname=os.path.basename(__file__)
+                                         )
+    with open('compute.html', 'w') as h_file:
+        h_file.write(rendered_html)
 
-    def emit_data_array(self, data, fmt):
-        self.emit_js('[', end='')
-        first = True
+    with db.sessionmaker() as session:
+        lib_data = get_status(session, LibServerStatus, LIB_HOSTNAMES, cutoff)
+        rtp_data = get_status(session, RTPServerStatus, RTP_HOSTNAMES, cutoff)
 
-        for x in data:
-            if first:
-                first = False
-            else:
-                self.emit_js(',', end='')
-            self.emit_js(fmt, x=x, end='')
+        layout = {"xaxis": {"range": time_axis_range},
+                  "yaxis": {"title": 'placeholder',
+                            "rangemode": "tozero"
+                            },
+                  "height": 200,
+                  "margin": {"t": 2, "r": 10,
+                             "b": 2, "l": 40},
+                  "legend": {"orientation": "h",
+                             "x": 0.15,
+                             "y": -0.15
+                             },
+                  "showlegend": True,
+                  "hovermode": "closest"
+                  }
+        titles = {"load": "Load % per CPU",
+                  "disk": "Local disk usage (%)",
+                  "mem": "Memory usage (%)",
+                  "bandwidth": "Network I/O (MB/s)",
+                  "timediff": "M&C time diff. (s)"
+                  }
+        for server_type, data_dict in zip(['lib', 'rtp'], [lib_data, rtp_data]):
+            js_template = env.get_template('plotly_base.js')
 
-        self.emit_js(']', end='')
+            for pname in ['load', 'disk', 'mem', 'bandwidth', 'timediff']:
+                layout['yaxis']['title'] = titles[pname]
+                _name = server_type + '-' + pname
+                rendered_js = js_template.render(plotname=_name,
+                                                 data=data_dict[pname],
+                                                 layout=layout)
+                if _name == 'lib-load':
+                    open_type = 'w'
+                else:
+                    open_type = 'a'
 
-
-    def emit_gpstime_array(self, data):
-        self.emit_js('[', end='')
-        first = True
-
-        for t in data:
-            if first:
-                first = False
-            else:
-                self.emit_js(',', end='')
-            self.emit_js('"{x}"', x=Time(t, format='gps').iso, end='')
-
-        self.emit_js(']', end='')
+                with open('compute.js', open_type) as js_file:
+                    js_file.write(rendered_js)
+                    js_file.write('\n\n')
 
 
 if __name__ == '__main__':

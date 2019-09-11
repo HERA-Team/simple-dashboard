@@ -1,0 +1,34 @@
+{% extends "base_footer.html" %}
+
+{% block meta %}
+  <meta http-equiv="refresh" content="300">
+
+{% endblock %}
+
+{% block head %}
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+    <!-- Include all compiled plugins (below), or include individual files as needed -->
+{% endblock %}
+
+{% block body %}
+  <table class="table">
+    <tbody>
+      {% for row in table %}
+      {% if row.color is none %}
+      <tr>
+          <th scope="row">{{ row.label }}</th>
+            <td>{{ row.text }} </td>
+      </tr>
+      {% else %}
+      <tr>
+          <th scope="row">{{ row.label }}</th>
+            <td bgcolor={{row.color}}>{{ row.text }} </td>
+      </tr>
+      {% endif %}
+      {% endfor %}
+    </tbody>
+  </table>
+
+
+
+{% endblock %}

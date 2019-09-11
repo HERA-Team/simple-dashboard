@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    {% block meta %}{% endblock %}
+    <title>HERA Compute Dashboard</title>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap-theme.min.css">
+    <!--[if lt IE 9]>
+      <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+      <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+    <style>
+       .footer { margin-top: 20px; }
+     </style>
+    {% block head %}{% endblock %}
+  </head>
+  <body>
+    {% block body %}{% endblock %}
+    <footer class="footer navbar-default">
+      {% block footer %}{% endblock %}
+      <p class="text-muted text-center"><small><small>
+        (c) HERA Collaboration 2019
+        &nbsp;&nbsp;&nbsp;&nbsp;
+        <a href="https://github.com/HERA-Team/simple-dashboard">Source code</a>
+        </small></small>
+      </p>
+    </footer>
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+    <script type='text/javascript'>
+    var report_age = 0.001 * (Date.now() - {{gen_time_unix_ms}});
+    var age_text = "?";
+    if (report_age < 300) {
+      age_text = report_age.toFixed(0) + " seconds";
+    } else if (report_age < 10800) { // 3 hours
+      age_text = (report_age / 60).toFixed(0) + " minutes";
+    } else if (report_age < 172800) { // 48 hours
+      age_text = (report_age / 3600).toFixed(0) + " hours";
+    } else {
+      age_text = (report_age / 86400).toFixed(1) + " days";
+    }
+    document.getElementById("age").textContent = age_text;
+    if (report_age > 1800) {
+        document.getElementById("age").style.color = 'red';
+    }
+    </script>
+  </body>
+
+</html>

@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+
+{% block footer %}
+      <p class="text-muted text-center"><small><small>
+        Last updated: <span id="age">???</span> ago at {{ gen_date }}<br>
+        Script name: {{ scriptname }}
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        Executing host: {{ hostname }}
+      </small></small></p>
+{% endblock %}
