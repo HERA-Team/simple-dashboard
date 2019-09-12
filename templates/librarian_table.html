@@ -1,0 +1,36 @@
+{% extends "plotly_base.html" %}
+
+{% block meta %}
+  <meta http-equiv="refresh" content="300">
+
+{% endblock %}
+
+{% block postbody %}
+  {% for table in tables %}
+  <h2> {{ table.title }} </h2>
+  <div class="table-responsive">
+  <table class="table table-striped">
+    <thead>
+    <tr>
+    {% for head in table.headers %}
+    <th>{{ head }}</th>
+    {% endfor %}
+    </thead><tbody>
+    </tr>
+      {% if table.rows|length > 0 %}
+      {% for row in table.rows %}
+      <tr>
+         <td>{{ row.time }}<td>{{ row.hostname }}<td>{{ row.disk }}<td>{{ row.message }}
+      </tr>
+      {% endfor %}
+      {% else %}
+      <tr>
+        <td><td><td><td>(no recent reports)
+      </tr>
+      {% endif %}
+
+    </tbody>
+  </table>
+  </div>
+  {% endfor %}
+{% endblock %}

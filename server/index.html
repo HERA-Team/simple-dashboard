@@ -26,6 +26,14 @@
          position: absolute;
          clip: rect(100px,0,100px,0);
        }
+       .dashboard-inset-titlebar {
+         text-align: center;
+         margin: 0 auto;
+         background-color: rgb(27, 68, 104);
+         color: white;
+         border-left: 5px solid white;
+         border-right: 5px solid white;
+       }
      </style>
 <script src="sidereal.js"></script><script>
 const clocks = document.getElementsByClassName("clock_sidereal");
@@ -63,6 +71,21 @@ updateDates();
 <script>
 !function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src='https://weatherwidget.io/js/widget.min.js';fjs.parentNode.insertBefore(js,fjs);}}(document,'script','weatherwidget-io-js');
 </script>
+
+<script>
+
+
+function reloadradiosky() {
+ var frameHolder=document.getElementById('radiosky');
+frameHolder.src = frameHolder.src;
+}
+setInterval(reloadradiosky, 30000);
+
+
+</script>
+
+
+
    </head>
    <body>
        <nav class="navbar navbar-default">
@@ -72,14 +95,15 @@ updateDates();
    	</div>
     <ul class="nav navbar-nav">
       <li class="dropdown">
-  	      <a href="#" class="dropdown-toggle" data-toggle="dropdown">Time History Dashboards
+  	      <a href="#" class="dropdown-toggle" data-toggle="dropdown">Detail Dashboards
   		        <b class="caret"></b></a>
           <ul class="dropdown-menu">
-  		          <li><a href="http://enterprise.sese.asu.edu:3000/d/fXTf7MWWk/nodes">Nodes</a></li>
-  		          <li><a href="http://enterprise.sese.asu.edu:3000/d/WpruWhnZk/antennas?orgId=1&from=now-1d&to=now&var-antenna_number=All">Antennas</a></li>
-                <li><a href="http://enterprise.sese.asu.edu:3000/d/Eg-zPcnZk/hera-weather?orgId=1&var-weather_var=All&from=now-7d&to=now">Weather</a></li>
-                <li><a href="http://enterprise.sese.asu.edu:3000/d/Vk00efMZz/rtp_status?orgId=1">Compute and Processing</a></li>
-                <li><a href="http://enterprise.sese.asu.edu:3000/d/B04wvfSZk/mandc-internals?orgId=1">Monitoring Daemons</a></li>
+  		          <li><a href="http://enterprise.sese.asu.edu:8484/d/fXTf7MWWk/nodes">Nodes</a></li>
+  		          <li><a href="http://enterprise.sese.asu.edu:8484/d/WpruWhnZk/antennas?orgId=1&from=now-1d&to=now&var-antenna_number=All">Antennas</a></li>
+                <li><a href="http://enterprise.sese.asu.edu:8484/d/Eg-zPcnZk/hera-weather?orgId=1&var-weather_var=All&from=now-7d&to=now">Weather</a></li>
+                <li><a href="http://enterprise.sese.asu.edu:8484/d/Vk00efMZz/rtp_status?orgId=1">Compute and Processing</a></li>
+                <li><a href="http://enterprise.sese.asu.edu:8484/d/B04wvfSZk/mandc-internals?orgId=1">Monitoring Daemons</a></li>
+                <li><a href="http://heranow.reionization.org/librarian/">Librarian logs</a>
   	      </ul>
         </li>
         <li class="dropdown">
@@ -89,11 +113,18 @@ updateDates();
                 <li><a href="https://forms.gle/DwiY9GYdjtHdNdrE8">New Site Report</a></li>
                 <li><a href="https://forms.gle/cpRoY7WdQok44jqB7">New Observer Report</a></li>
               </ul>
-      </li>
+         </li>
+         <li>
+           <a href="http://heranow.reionization.org/hookup.html">Cable Hookup Listing</a>
+         </li>
+         <li>
+           <a href="http://hera.pbworks.com/w/page/117456570/Commissioning">Help</a>
+         </li>
     </ul>
     <div class="librarian-time-bar">
       Local Time: <span class="date" data-timezone="Africa/Johannesburg">Jan 1</span><br>
       Sidereal time: <span class="clock_sidereal" data-timezone="Africa/Johannesburg">00:00:00</span><br>
+      Brexit: <span id="days">0</span> days  <span id="hours">0</span> hrs <span id="minutes">0</span>mins <span id="seconds">0</span>
      </div></div>
 
 
@@ -103,14 +134,20 @@ updateDates();
 
 <table>
   <tr>
-  <td><iframe src="http://heranow.reionization.org/powers.html" width=500 height=400 frameborder="0"></iframe></td>
-<td><iframe src="http://heranow.reionization.org/hex_amp.html" width=500 height=400 frameborder="0"></iframe></td>
-<td><iframe src="http://heranow.reionization.org/mc_html_summary.html" width=500 height=400 frameborder="0"></iframe></td>
-</tr>
-<tr>
-<td><iframe src="http://heranow.reionization.org/node_amp.html" width=500 height=400 frameborder="0"></iframe></td>
-<td><iframe width="650" height="450" src="https://embed.windy.com/embed2.html?lat=-30.411&lon=21&zoom=5&level=surface&overlay=wind&menu=&message=&marker=true&calendar=&pressure=&type=map&location=coordinates&detail=&detailLat=-31.421&detailLon=21&metricWind=default&metricTemp=%C2%B0C&radarRange=-1" frameborder="0"></iframe></td>
-<td><img src="http://heranow.reionization.org/radiosky.png"</img></td>
+      <td><div class="dashboard-inset-titlebar">Autocorrelations -- <a target="_blank" href="http://heranow.reionization.org/spectra.html">(open in new tab)</a></div>
+        <iframe src="http://heranow.reionization.org/spectra.html" width=500 height=400 frameborder="0"></iframe></td>
+      <td><div class="dashboard-inset-titlebar">Power by Antenna -- <a target="_blank" href="http://heranow.reionization.org/hex_amp.html">(open in new tab)</a></div>
+        <iframe src="http://heranow.reionization.org/hex_amp.html" width=500 height=400 frameborder="0"></iframe></td>
+      <td><iframe  id="radiosky" src="http://heranow.reionization.org/radiosky.png" width=500 height=400></iframe></td>
+  </tr>
+
+  <tr>
+      <td><div class="dashboard-inset-titlebar">Power by Node -- <a target="_blank" href="http://heranow.reionization.org/node_amp.html">(open in new tab)</a></div>
+        <iframe src="http://heranow.reionization.org/node_amp.html" width=500 height=400 frameborder="0"></iframe></td>
+      <td><div class="dashboard-inset-titlebar">System Summary</div>
+        <iframe src="http://heranow.reionization.org/mc_html_summary.html" width=500 height=400 frameborder="0"></iframe></td>
+      <td>
+  <iframe width="400" height="450" src="https://embed.windy.com/embed2.html?lat=-30.411&lon=21&zoom=5&level=surface&overlay=wind&menu=&message=&marker=true&calendar=&pressure=&type=map&location=coordinates&detail=&detailLat=-31.421&detailLon=21&metricWind=default&metricTemp=%C2%B0C&radarRange=-1" frameborder="0"></iframe></td>
 </table>
 
 
@@ -129,4 +166,47 @@ updateDates();
   <!-- Latest compiled and minified JavaScript -->
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/js/bootstrap.min.js"></script>
 </body>
+
+<script>
+  (function (d, DEADLINE, serverTime) {
+    var timeDelta = serverTime - (Date.now() + 3600000) / 1000,
+      interval;
+
+    var UI = {
+      days: d.getElementById('days'),
+      hours: d.getElementById('hours'),
+      minutes: d.getElementById('minutes'),
+      seconds: d.getElementById('seconds')
+    };
+
+    function getTimeRemaining() {
+      var dt = DEADLINE - (Date.now() + 3600000) / 1000 - timeDelta;
+      return {
+        total: dt,
+        days: Math.floor(dt / (60 * 60 * 24)),
+        hours: Math.floor((dt / (60 * 60)) % 24),
+        minutes: Math.floor((dt / 60) % 60),
+        seconds: Math.floor(dt % 60)
+      };
+    }
+
+    function updateClock() {
+      var t = getTimeRemaining();
+      if (t.total < 0) {
+        clearInterval(interval);
+        return;
+      }
+      UI.days.innerHTML = t.days;
+      UI.hours.innerHTML = ('0' + t.hours).slice(-2);
+      UI.minutes.innerHTML = ('0' + t.minutes).slice(-2);
+      UI.seconds.innerHTML = ('0' + t.seconds).slice(-2);
+    }
+
+    d.documentElement.className = 'js';
+    interval = setInterval(updateClock, 1000);
+    updateClock();
+
+  })(document, 1572562800, (Date.now()) / 1000);
+</script>
+
 </html>
