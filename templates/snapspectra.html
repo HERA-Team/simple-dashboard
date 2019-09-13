@@ -1,14 +1,5 @@
-{% extends "plotly_base.html" %}
+{% extends "refresh_button.html" %}
 
-
-{% block subhead %}
-  <script type="text/javascript">
-    setInterval(function () { if (document.getElementById('autoRefreshCheckbox').checked) { location.reload(); } }, 60000);
-  </script>
-{% endblock %}
-{% block prebody %}
-<span>Auto Refresh</span>&nbsp;<input type="checkbox" id="autoRefreshCheckbox" value="true" checked="checked" />
-{% endblock %}
 
 {% block postbody %}
   {% for table in tables %}
@@ -26,9 +17,5 @@
     </tbody>
   </table>
   </div>
-  {% block body %}
-    <table class="table">
-
-    </table>
   {% endfor %}
 {% endblock %}
