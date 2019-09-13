@@ -95,8 +95,7 @@ def main():
                     raise
                 except TypeError:
                     print("Received TypeError when taking log.")
-                    print("Type of item in dictionary: "
-                          + type(ant_status_from_snaps[name]["autocorrelation"]))
+                    print("Type of item in dictionary: ", type(ant_status_from_snaps[name]["autocorrelation"]))
                     print("Value of item: ", tmp_auto)
                     raise
             # Try to get the snap info. Output is a dictionary with 'e' and 'n' keys
