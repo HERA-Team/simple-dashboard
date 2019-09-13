@@ -81,7 +81,8 @@ def main():
         table = {}
         table["title"] = "Antennas with No Data"
         rows = {}
-        text = []
+        text = ''
+        bad_ants = []
         for ant_cnt, ant in enumerate(ants):
             mc_ant_status = session.get_antenna_status(antenna_number=int(ant),
                                                        most_recent=True)
@@ -92,7 +93,8 @@ def main():
                     tmp_auto = ant_status_from_snaps[name]["autocorrelation"]
                     if tmp_auto == "None":
                         print("No Data for ", name)
-                        text.extend([name + "\n"])
+                        text += name + "\n"
+                        bad_ants.append(name)
                         continue
                     tmp_auto = np.ma.masked_invalid(10 * np.log10(np.real(tmp_auto)))
                     snapautos[name] = tmp_auto.filled(-100)
@@ -164,6 +166,8 @@ def main():
 
             for loc_num in hostname_lookup[host].keys():
                 for ant_cnt, ant_name in enumerate(hostname_lookup[host][loc_num]):
+                    if ant_name in bad_ants:
+                        continue
                     # this 8 and 2 business is because the mask is raveled
                     # and needs to account for the 8 different feed pols connected to each snap
                     # the loc_num helps to track the antenna
