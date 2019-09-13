@@ -179,7 +179,8 @@ def main():
                              "y": snapautos[ant_name].tolist(),
                              "name": name,
                              "visible": visible,
-                             "hovertemplate": '%{{x:.3f}}\tMHz<br>${{y:.3f}}\t[dBm]<extra>{name}</extra>'
+                             "hovertemplate": ('%{x:.3f}\tMHz<br>%{y:.3f}'
+                                               '\t[dBm]<extra>%{name}</extra>')
                              }
                     data.append(_data)
         buttons = []
