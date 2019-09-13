@@ -80,7 +80,7 @@ def main():
         ant_status_from_snaps = corr_cm.get_ant_status()
         table = {}
         table["title"] = "Antennas with No Data"
-        rows = {}
+        rows = []
         text = ''
         bad_ants = []
         for ant_cnt, ant in enumerate(ants):
@@ -142,7 +142,9 @@ def main():
                                 grp2.append(name)
                     else:
                         print("No snap information for antennna: " + name)
-        rows["text"] = text
+        row = {}
+        row["text"] = text
+        rows.append(row)
         table["rows"] = rows
         data = []
         # create a mask to make things visible for only that hostname
@@ -171,7 +173,7 @@ def main():
                     # this 8 and 2 business is because the mask is raveled
                     # and needs to account for the 8 different feed pols connected to each snap
                     # the loc_num helps to track the antenna
-                    host_masks[host_cnt, mask_cnt] = visible
+                    host_masks[host_cnt, mask_cnt] = True
                     mask_cnt += 1
 
                     name = 'ant{}'.format(ant_name.replace(":", ""))
