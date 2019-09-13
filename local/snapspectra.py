@@ -93,7 +93,7 @@ def main():
                     tmp_auto = ant_status_from_snaps[name]["autocorrelation"]
                     if tmp_auto == "None":
                         print("No Data for ", name)
-                        text += name + "\n"
+                        text += name + "\t"
                         bad_ants.append(name)
                         continue
                     tmp_auto = np.ma.masked_invalid(10 * np.log10(np.real(tmp_auto)))
