@@ -201,8 +201,8 @@ def main():
                                uptime=uptime
                                )
                      )
-            _button = {"args": [{"visible": host_masks[host_cnt]},
-                                {"title": host_title[host_cnt],
+            _button = {"args": [{"visible": host_masks[host_cnt].tolist()},
+                                {"title": host_title[host_cnt].tolist(),
                                  "annotations": {}
                                  }
                                 ],
