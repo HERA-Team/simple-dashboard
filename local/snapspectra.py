@@ -148,7 +148,7 @@ def main():
         # create a mask to make things visible for only that hostname
         # the mask is different for each host, but each mask is the total
         # length of all data, 8 because loc_nums go 0-3 each with 'e' and 'n' pols
-        host_masks = np.full((len(hostnames), len(hostnames) * 8), 'false',
+        host_masks = np.full((len(hostnames), len(hostnames) * 8), False,
                              dtype='object')
 
         # Generate frequency axis
@@ -158,9 +158,9 @@ def main():
         for host_cnt, host in enumerate(hostname_lookup.keys()):
             mask_cnt = host_cnt * 8
             if host_cnt == 0:
-                visible = 'true'
+                visible = True
             else:
-                visible = 'false'
+                visible = False
 
             # host_title[host_cnt] = '{} Integration over {} seconds'.format(host, length)
 
@@ -171,7 +171,7 @@ def main():
                     # this 8 and 2 business is because the mask is raveled
                     # and needs to account for the 8 different feed pols connected to each snap
                     # the loc_num helps to track the antenna
-                    host_masks[host_cnt, mask_cnt] = 'true'
+                    host_masks[host_cnt, mask_cnt] = visible
                     mask_cnt += 1
 
                     name = 'ant{}'.format(ant_name.replace(":", ""))
@@ -179,8 +179,7 @@ def main():
                              "y": snapautos[ant_name].tolist(),
                              "name": name,
                              "visible": visible,
-                             "hovertemplate": ('%{{x:.3f}}\tMHz<br>${{y:.3f}}'
-                                               '\t[dBm]<extra>{name}</extra>')
+                             "hovertemplate": '%{{x:.3f}}\tMHz<br>${{y:.3f}}\t[dBm]<extra>{name}</extra>'
                              }
                     data.append(_data)
         buttons = []
@@ -249,7 +248,7 @@ def main():
                                              gen_time_unix_ms=Time.now().unix * 1000,
                                              scriptname=os.path.basename(__file__),
                                              hostname=computer_hostname,
-                                             tables=table
+                                             table=table
                                              )
         rendered_js = js_template.render(data=data,
                                          layout=layout,
