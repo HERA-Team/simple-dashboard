@@ -93,6 +93,12 @@ def main():
                 except KeyError:
                     print("Ant-pol with no autocorrelation", name)
                     raise
+                except TypeError:
+                    print("Received TypeError when taking log.")
+                    print("Type of item in dictionary: "
+                          + type(ant_status_from_snaps[name]["autocorrelation"]))
+                    print("Value of item: ", tmp_auto)
+                    raise
             # Try to get the snap info. Output is a dictionary with 'e' and 'n' keys
             # connect to M&C to find all the hooked up Snap hostnames and corresponding ant-pols
             mc_name = 'HH{:d}'.format(ant)
