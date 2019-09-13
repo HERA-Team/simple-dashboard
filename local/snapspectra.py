@@ -148,7 +148,6 @@ def main():
         # length of all data, 8 because loc_nums go 0-3 each with 'e' and 'n' pols
         host_masks = np.full((len(hostnames), len(hostnames) * 8), 'false',
                              dtype='object')
-        host_title = np.zeros((len(hostnames)), dtype='object')
 
         # Generate frequency axis
         freqs = np.linspace(0, 250e6, 1024)
@@ -202,8 +201,7 @@ def main():
                                )
                      )
             _button = {"args": [{"visible": host_masks[host_cnt].tolist()},
-                                {"title": host_title[host_cnt].tolist(),
-                                 "annotations": {}
+                                {"annotations": {}
                                  }
                                 ],
                        "label": label,
