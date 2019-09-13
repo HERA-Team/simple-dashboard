@@ -1,0 +1,29 @@
+{% extends "plotly_base.html" %}
+
+{% block meta %}
+  <meta http-equiv="refresh" content="300">
+
+{% endblock %}
+
+{% block postbody %}
+  {% for table in tables %}
+  <h2> {{ table.title }} </h2>
+  <div class="table-responsive">
+  <table class="table table-striped">
+    <tbody>
+      {% if table.rows|length > 0 %}
+      {% for row in table.rows %}
+      <tr>
+            <td>{{ row.text }} </td>
+      </tr>
+      {% endfor %}
+      {% endif %}
+    </tbody>
+  </table>
+  </div>
+  {% block body %}
+    <table class="table">
+
+    </table>
+  {% endfor %}
+{% endblock %}

@@ -78,7 +78,9 @@ def main():
         snapautos = {}
 
         ant_status_from_snaps = corr_cm.get_ant_status()
-
+        table = {}
+        table["title"] = "Antennas with No Data"
+        rows = []
         for ant_cnt, ant in enumerate(ants):
             mc_ant_status = session.get_antenna_status(antenna_number=int(ant),
                                                        most_recent=True)
@@ -87,6 +89,10 @@ def main():
                                               pol=stat.antenna_feed_pol)
                 try:
                     tmp_auto = ant_status_from_snaps[name]["autocorrelation"]
+                    if tmp_auto == "None":
+                        print("No Data for ", name)
+                        rows.extend(name + "\n")
+                        tmp_auto = np.full(1024, -np.inf)
                     tmp_auto = np.ma.masked_invalid(10 * np.log10(np.real(tmp_auto)))
                     snapautos[name] = tmp_auto.filled(-100)
 
@@ -133,6 +139,7 @@ def main():
                                 grp2.append(name)
                     else:
                         print("No snap information for antennna: " + name)
+        table["rows"] = rows
         data = []
         # create a mask to make things visible for only that hostname
         # the mask is different for each host, but each mask is the total
@@ -142,13 +149,6 @@ def main():
         host_title = np.zeros((len(hostnames)), dtype='object')
 
         # Generate frequency axis
-        # this is taken directly from autospectra.py
-        # NCHANS = int(2048 // 4 * 2)
-        # NCHANS_F = 8192
-        # NCHAN_SUM = 6
-        # frange = np.linspace(0, 250e6, NCHANS_F + 1)[1536:1536 + (8192 // 4 * 3)]
-        # average over channels
-        # freqs = frange.reshape(NCHANS, NCHAN_SUM).sum(axis=1) / NCHAN_SUM
         freqs = np.linspace(0, 250e6, 1024)
         freqs /= 1e6
 
@@ -234,7 +234,7 @@ def main():
                   }
 
         plotname = "plotly-snap"
-        html_template = env.get_template("plotly_base.html")
+        html_template = env.get_template("snapspectra.html")
         js_template = env.get_template("plotly_base.js")
 
         rendered_html = html_template.render(plotname=plotname,
@@ -243,7 +243,8 @@ def main():
                                              js_name='snapspectra',
                                              gen_time_unix_ms=Time.now().unix * 1000,
                                              scriptname=os.path.basename(__file__),
-                                             hostname=computer_hostname
+                                             hostname=computer_hostname,
+                                             tables=table
                                              )
         rendered_js = js_template.render(data=data,
                                          layout=layout,
