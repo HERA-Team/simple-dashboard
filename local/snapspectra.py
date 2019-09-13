@@ -81,7 +81,6 @@ def main():
         table = {}
         table["title"] = "Antennas with No Data"
         rows = {}
-        rows["text"] = []
         text = []
         for ant_cnt, ant in enumerate(ants):
             mc_ant_status = session.get_antenna_status(antenna_number=int(ant),
@@ -141,6 +140,7 @@ def main():
                                 grp2.append(name)
                     else:
                         print("No snap information for antennna: " + name)
+        rows["text"] = text
         table["rows"] = rows
         data = []
         # create a mask to make things visible for only that hostname
