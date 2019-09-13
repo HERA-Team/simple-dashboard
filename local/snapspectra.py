@@ -172,8 +172,8 @@ def main():
                     mask_cnt += 1
 
                     name = 'ant{}'.format(ant_name.replace(":", ""))
-                    _data = {"x": freqs,
-                             "y": snapautos[ant_name],
+                    _data = {"x": freqs.tolist(),
+                             "y": snapautos[ant_name].tolist(),
                              "name": name,
                              "visible": visible,
                              "hovertemplate": ('%{{x:.3f}}\tMHz<br>${{y:.3f}}'
