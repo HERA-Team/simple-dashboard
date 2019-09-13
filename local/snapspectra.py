@@ -80,7 +80,9 @@ def main():
         ant_status_from_snaps = corr_cm.get_ant_status()
         table = {}
         table["title"] = "Antennas with No Data"
-        rows = []
+        rows = {}
+        rows["text"] = []
+        text = []
         for ant_cnt, ant in enumerate(ants):
             mc_ant_status = session.get_antenna_status(antenna_number=int(ant),
                                                        most_recent=True)
@@ -91,7 +93,7 @@ def main():
                     tmp_auto = ant_status_from_snaps[name]["autocorrelation"]
                     if tmp_auto == "None":
                         print("No Data for ", name)
-                        rows.extend(name + "\n")
+                        text.extend(name + "\n")
                         tmp_auto = np.full(1024, -np.inf)
                     tmp_auto = np.ma.masked_invalid(10 * np.log10(np.real(tmp_auto)))
                     snapautos[name] = tmp_auto.filled(-100)
