@@ -92,8 +92,8 @@ def main():
                     tmp_auto = ant_status_from_snaps[name]["autocorrelation"]
                     if tmp_auto == "None":
                         print("No Data for ", name)
-                        text.extend(name + "\n")
-                        tmp_auto = np.full(1024, -np.inf)
+                        text.extend([name + "\n"])
+                        continue
                     tmp_auto = np.ma.masked_invalid(10 * np.log10(np.real(tmp_auto)))
                     snapautos[name] = tmp_auto.filled(-100)
 
@@ -201,7 +201,8 @@ def main():
                                )
                      )
             _button = {"args": [{"visible": host_masks[host_cnt].tolist()},
-                                {"annotations": {}
+                                {"title": '',
+                                 "annotations": {}
                                  }
                                 ],
                        "label": label,
