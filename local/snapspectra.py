@@ -181,7 +181,6 @@ def main():
                              "hovertemplate": "%{x:.1f}\tMHz<br>%{y:.3f}\t[dBm]"
                              }
                     data.append(_data)
-        print(len(data))
         buttons = []
         for host_cnt, host in enumerate(hostnames):
             prog_time = all_snap_statuses[host]['last_programmed']
