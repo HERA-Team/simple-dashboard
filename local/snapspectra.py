@@ -149,30 +149,27 @@ def main():
         data = []
         # create a mask to make things visible for only that hostname
         # the mask is different for each host, but each mask is the total
-        # length of all data, 8 because loc_nums go 0-3 each with 'e' and 'n' pols
-        host_masks = np.full((len(hostnames), len(hostnames) * 8), False,
+        # length of all data, 6 inputs per snap * number of snaps
+        host_masks = np.full((len(hostnames), len(hostnames) * 6), False,
                              dtype='object')
 
         # Generate frequency axis
         freqs = np.linspace(0, 250e6, 1024)
         freqs /= 1e6
-
+        mask_cnt = 0  #letting mask_cnt inca lets it match with indexing to append(_data)
         for host_cnt, host in enumerate(hostname_lookup.keys()):
-            mask_cnt = host_cnt * 8
+            #mask_cnt = host_cnt * 6
             if host_cnt == 0:
                 visible = True
             else:
                 visible = False
 
             # host_title[host_cnt] = '{} Integration over {} seconds'.format(host, length)
-
+            #loc_num is the snap#, there is always 1 (one) per host bc a host is a snap
             for loc_num in hostname_lookup[host].keys():
                 for ant_cnt, ant_name in enumerate(hostname_lookup[host][loc_num]):
                     if ant_name in bad_ants:
                         continue
-                    # this 8 and 2 business is because the mask is raveled
-                    # and needs to account for the 8 different feed pols connected to each snap
-                    # the loc_num helps to track the antenna
                     host_masks[host_cnt, mask_cnt] = True
                     mask_cnt += 1
 
@@ -184,6 +181,7 @@ def main():
                              "hovertemplate": "%{x:.1f}\tMHz<br>%{y:.3f}\t[dBm]"
                              }
                     data.append(_data)
+        print(len(data))
         buttons = []
         for host_cnt, host in enumerate(hostnames):
             prog_time = all_snap_statuses[host]['last_programmed']
