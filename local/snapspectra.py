@@ -109,7 +109,7 @@ def main():
                     bad_ants.append(antpol)
                     tmp_auto = np.full(1024, np.nan)
                 tmp_auto = np.ma.masked_invalid(10 * np.log10(np.real(tmp_auto)))
-                snapautos[host][loc_num] = tmp_auto.filled(-100)
+                snapautos[host][loc_num] = tmp_auto.filled(0)
 
             except KeyError:
                 print("Ant-pol with no autocorrelation", antpol)
@@ -167,11 +167,16 @@ def main():
                                 # if this loc num is not in lookup table initialize
                                 # empty list
                                 if _stat.snap_loc_num not in grp1.keys():
-                                    err = "loc_num from M&C not found in hera_corr_cm (host, location number): {}".format([_stat.hostname, _stat.snap_loc_num])
-                                    err += "\nAll hera_corr_cm location numbers for this host (host, known location numbers): {}".format([_stat.hostname, list(grp1.keys())])
-                                    raise ValueError(err)
+                                    print("loc_num from M&C not found in hera_corr_cm (host, location number): {}".format([_stat.hostname, _stat.snap_loc_num]))
+                                    print("filling with bad array full of 0")
+                                    snap_grp1 = snapautos.setdefault(_stat.hostname, {})
+                                    snap_grp1[_stat.snap_loc_num] = np.full(1024, 0)
+                                    # err = "loc_num from M&C not found in hera_corr_cm (host, location number): {}".format([_stat.hostname, _stat.snap_loc_num])
+                                    # err += "\nAll hera_corr_cm location numbers for this host (host, known location numbers): {}".format([_stat.hostname, list(grp1.keys())])
+                                    # raise ValueError(err)
                                 grp2 = grp1.setdefault(_stat.snap_loc_num, {})
                                 grp2["MC"] = name
+
                     else:
                         print("No MC snap information for antennna: " + name)
 
