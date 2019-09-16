@@ -208,7 +208,7 @@ def main():
                              }
                 except KeyError:
                     print("Given host, location pair: ({0}, {1})".format(host, loc_num))
-                    print("\nAll possible keys for host {0}: {}".format(host, list(snapautos[host].keys())))
+                    print("All possible keys for host {0}: {1}".format(host, list(snapautos[host].keys())))
                     raise
                 data.append(_data)
         buttons = []
