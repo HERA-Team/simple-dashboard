@@ -119,8 +119,8 @@ def main():
                 print("Type of item in dictionary: ", type(ant_status_from_snaps[antpol]["autocorrelation"]))
                 print("Value of item: ", tmp_auto)
                 raise
-            tmp_auto = np.ma.masked_invalid(10 * np.log10(np.real(tmp_auto)))
-            snapautos[host][loc_num] = tmp_auto.filled(-100)
+            # tmp_auto = np.ma.masked_invalid(10 * np.log10(np.real(tmp_auto)))
+            # snapautos[host][loc_num] = tmp_auto.filled(-100)
 
             hostname_lookup.setdefault(host, {})
             hostname_lookup[host].setdefault(loc_num, {})
@@ -199,12 +199,17 @@ def main():
 
                 name = '{loc}:{mcname}'.format(loc=loc_num,
                                                mcname=mc_name.replace(":", ""))
-                _data = {"x": freqs.tolist(),
-                         "y": snapautos[host][loc_num].tolist(),
-                         "name": name,
-                         "visible": visible,
-                         "hovertemplate": "%{x:.1f}\tMHz<br>%{y:.3f}\t[dBm]"
-                         }
+                try:
+                    _data = {"x": freqs.tolist(),
+                             "y": snapautos[host][loc_num].tolist(),
+                             "name": name,
+                             "visible": visible,
+                             "hovertemplate": "%{x:.1f}\tMHz<br>%{y:.3f}\t[dBm]"
+                             }
+                except KeyError:
+                    print("Given host, location pair: ({0}, {1})".format(host, loc_num))
+                    print("\nAll possible keys for host {0}: {}".format(host, list(snapautos[host].keys())))
+                    raise
                 data.append(_data)
         buttons = []
         for host_cnt, host in enumerate(hostnames):
