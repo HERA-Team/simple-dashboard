@@ -148,10 +148,19 @@ def main():
 
                                 # if this hostname is not in the lookup table yet
                                 # initialize an empty dict
+                                if _stat.hostname not in hostname_lookup.keys():
+                                    err = "host from M&C not found in hera_corr_cm: {}".format(_stat.hostname)
+                                    err += "\nAll hera_corr_cm hostnames: {}".format(hostnames)
+                                    err += "\nAll keys in lookup dict: {}".format(hostname_lookup.keys())
+                                    raise ValueError(err)
                                 grp1 = hostname_lookup.setdefault(_stat.hostname, {})
                                 # if this loc num is not in lookup table initialize
                                 # empty list
                                 grp2 = grp1.setdefault(_stat.snap_loc_num, {})
+                                if _stat.snap_loc_num not in grp1.keys():
+                                    err = "loc_num from M&C not found in hera_corr_cm (host, location number): {}".format([_stat.hostname, _stat.snap_loc_num])
+                                    err += "\nAll hera_corr_cm location numbers for this host (host, known location numbers): {}".format([_stat.hostname, list(grp2.keys())])
+                                    raise ValueError(err)
                                 grp2["MC"] = name
                     else:
                         print("No MC snap information for antennna: " + name)
