@@ -11,6 +11,7 @@ import os
 import sys
 import re
 import numpy as np
+import json
 import redis
 from hera_mc import mc, cm_sysutils
 from astropy.time import Time
@@ -83,13 +84,20 @@ def main():
         text = ''
         bad_ants = []
 
+        corr_map = redis_db.hgetall('corr:map')
+        ant_to_snap = json.loads(corr_map[b'ant_to_snap'])
+
         for antpol in ant_status_from_snaps:
             host = ant_status_from_snaps[antpol]['f_host']
-            if host == "None":
-                raise ValueError("No host name found in `hera_corr_cm.get_snap_status()`")
             loc_num = ant_status_from_snaps[antpol]['host_ant_id']
+
+            ant, pol = antpol.split(':')
+            if host == "None":
+                host = ant_to_snap[ant][pol]['host']
+                # raise ValueError("No host name found in `hera_corr_cm.get_snap_status()`")
             if loc_num == "None":
-                raise ValueError("No Location Number found in `hera_corr_cm.get_snap_status()`")
+                host = ant_to_snap[ant][pol]['channel']
+                # raise ValueError("No Location Number found in `hera_corr_cm.get_snap_status()`")
 
             snapautos.setdefault(host, {})
 
