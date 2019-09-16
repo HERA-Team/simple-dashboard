@@ -70,7 +70,6 @@ def main():
 
         hostname_lookup = {}
         snap_serial = {}
-        ant_loc_num = {}
 
         # all_snap_statuses = session.get_snap_status(most_recent=True)
         all_snap_statuses = corr_cm.get_f_status()
@@ -86,7 +85,12 @@ def main():
 
         for antpol in ant_status_from_snaps:
             host = ant_status_from_snaps[antpol]['f_host']
+            if host == "None":
+                raise ValueError("No host name found in `hera_corr_cm.get_snap_status()`")
             loc_num = ant_status_from_snaps[antpol]['host_ant_id']
+            if loc_num == "None":
+                raise ValueError("No Location Number found in `hera_corr_cm.get_snap_status()`")
+
             snapautos.setdefault(host, {})
 
             try:
@@ -131,7 +135,6 @@ def main():
             for _key in snap_info.keys():
                 # initialize a dict if they key does not exist already
                 snap_serial.setdefault(int(ant), {})
-                ant_loc_num.setdefault(int(ant), {})
 
                 for pol_key in snap_info[_key].keys():
                     name = "{ant:d}:{pol}".format(ant=ant, pol=pol_key)
@@ -144,7 +147,6 @@ def main():
 
                         for _stat in snap_stats:
                             if _stat.serial_number == snap_serial[ant][pol_key]:
-                                ant_loc_num[ant][pol_key] = _stat.snap_loc_num
 
                                 # if this hostname is not in the lookup table yet
                                 # initialize an empty dict
