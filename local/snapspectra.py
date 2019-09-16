@@ -96,7 +96,7 @@ def main():
                 host = ant_to_snap[ant][pol]['host']
                 # raise ValueError("No host name found in `hera_corr_cm.get_snap_status()`")
             if loc_num == "None":
-                host = ant_to_snap[ant][pol]['channel']
+                loc_num = ant_to_snap[ant][pol]['channel']
                 # raise ValueError("No Location Number found in `hera_corr_cm.get_snap_status()`")
 
             snapautos.setdefault(host, {})
