@@ -99,7 +99,7 @@ def main():
                     print("No Data for ", antpol)
                     text += antpol + "\t"
                     bad_ants.append(antpol)
-                    continue
+                    tmp_auto = np.full(1024, np.nan)
                 tmp_auto = np.ma.masked_invalid(10 * np.log10(np.real(tmp_auto)))
                 snapautos[host][loc_num] = tmp_auto.filled(-100)
 
@@ -187,9 +187,6 @@ def main():
                 visible = False
 
             for loc_num in hostname_lookup[host].keys():
-                snap_name = hostname_lookup[host][loc_num]['snap']
-                if snap_name in bad_ants:
-                    continue
                 mc_name = hostname_lookup[host][loc_num]['MC']
 
                 name = '{loc}:{mcname}'.format(loc=loc_num,
