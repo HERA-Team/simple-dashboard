@@ -83,30 +83,43 @@ def main():
         rows = []
         text = ''
         bad_ants = []
-        for ant_cnt, ant in enumerate(ants):
-            mc_ant_status = session.get_antenna_status(antenna_number=int(ant),
-                                                       most_recent=True)
-            for stat in mc_ant_status:
-                name = "{ant:d}:{pol}".format(ant=stat.antenna_number,
-                                              pol=stat.antenna_feed_pol)
-                try:
-                    tmp_auto = ant_status_from_snaps[name]["autocorrelation"]
-                    if tmp_auto == "None":
-                        print("No Data for ", name)
-                        text += name + "\t"
-                        bad_ants.append(name)
-                        continue
-                    tmp_auto = np.ma.masked_invalid(10 * np.log10(np.real(tmp_auto)))
-                    snapautos[name] = tmp_auto.filled(-100)
 
-                except KeyError:
-                    print("Ant-pol with no autocorrelation", name)
-                    raise
-                except TypeError:
-                    print("Received TypeError when taking log.")
-                    print("Type of item in dictionary: ", type(ant_status_from_snaps[name]["autocorrelation"]))
-                    print("Value of item: ", tmp_auto)
-                    raise
+        for antpol in ant_status_from_snaps:
+            host = ant_status_from_snaps[antpol]['f_host']
+            loc_num = ant_status_from_snaps[antpol]['host_ant_id']
+            snapautos.setdefault(host, {})
+
+            try:
+                tmp_auto = ant_status_from_snaps[antpol]["autocorrelation"]
+                if tmp_auto == "None":
+                    print("No Data for ", antpol)
+                    text += antpol + "\t"
+                    bad_ants.append(antpol)
+                    continue
+                tmp_auto = np.ma.masked_invalid(10 * np.log10(np.real(tmp_auto)))
+                snapautos[host][loc_num] = tmp_auto.filled(-100)
+
+            except KeyError:
+                print("Ant-pol with no autocorrelation", antpol)
+                raise
+            except TypeError:
+                print("Received TypeError when taking log.")
+                print("Type of item in dictionary: ", type(ant_status_from_snaps[antpol]["autocorrelation"]))
+                print("Value of item: ", tmp_auto)
+                raise
+            tmp_auto = np.ma.masked_invalid(10 * np.log10(np.real(tmp_auto)))
+            snapautos[host][loc_num] = tmp_auto.filled(-100)
+
+            hostname_lookup.setdefault(host, {})
+            hostname_lookup[host].setdefault(loc_num, {})
+            hostname_lookup[host][loc_num]['snap'] = antpol
+            hostname_lookup[host][loc_num]['MC'] = 'NC'
+        row = {}
+        row["text"] = text
+        rows.append(row)
+        table["rows"] = rows
+
+        for ant_cnt, ant in enumerate(ants):
             # Try to get the snap info. Output is a dictionary with 'e' and 'n' keys
             # connect to M&C to find all the hooked up Snap hostnames and corresponding ant-pols
             mc_name = 'HH{:d}'.format(ant)
@@ -138,49 +151,45 @@ def main():
                                 grp1 = hostname_lookup.setdefault(_stat.hostname, {})
                                 # if this loc num is not in lookup table initialize
                                 # empty list
-                                grp2 = grp1.setdefault(_stat.snap_loc_num, [])
-                                grp2.append(name)
+                                grp2 = grp1.setdefault(_stat.snap_loc_num, {})
+                                grp2["MC"] = name
                     else:
-                        print("No snap information for antennna: " + name)
-        row = {}
-        row["text"] = text
-        rows.append(row)
-        table["rows"] = rows
-        data = []
-        # create a mask to make things visible for only that hostname
-        # the mask is different for each host, but each mask is the total
-        # length of all data, 6 inputs per snap * number of snaps
-        host_masks = np.full((len(hostnames), len(hostnames) * 6), False,
-                             dtype='object')
+                        print("No MC snap information for antennna: " + name)
+
+        host_masks = []
+        for h1 in hostname_lookup.keys():
+            _mask = []
+            for h2 in hostname_lookup.keys():
+                _mask.extend([True if h2 == h1 else False
+                              for loc_num in hostname_lookup[h2]])
+            host_masks.append(_mask)
 
         # Generate frequency axis
         freqs = np.linspace(0, 250e6, 1024)
         freqs /= 1e6
-        mask_cnt = 0  #letting mask_cnt inca lets it match with indexing to append(_data)
+
+        data = []
         for host_cnt, host in enumerate(hostname_lookup.keys()):
-            #mask_cnt = host_cnt * 6
             if host_cnt == 0:
                 visible = True
             else:
                 visible = False
 
-            # host_title[host_cnt] = '{} Integration over {} seconds'.format(host, length)
-            #loc_num is the snap#, there is always 1 (one) per host bc a host is a snap
             for loc_num in hostname_lookup[host].keys():
-                for ant_cnt, ant_name in enumerate(hostname_lookup[host][loc_num]):
-                    if ant_name in bad_ants:
-                        continue
-                    host_masks[host_cnt, mask_cnt] = True
-                    mask_cnt += 1
+                snap_name = hostname_lookup[host][loc_num]['snap']
+                if snap_name in bad_ants:
+                    continue
+                mc_name = hostname_lookup[host][loc_num]['MC']
 
-                    name = 'ant{}'.format(ant_name.replace(":", ""))
-                    _data = {"x": freqs.tolist(),
-                             "y": snapautos[ant_name].tolist(),
-                             "name": name,
-                             "visible": visible,
-                             "hovertemplate": "%{x:.1f}\tMHz<br>%{y:.3f}\t[dBm]"
-                             }
-                    data.append(_data)
+                name = '{loc}:{mcname}'.format(loc=loc_num,
+                                               mcname=mc_name.replace(":", ""))
+                _data = {"x": freqs.tolist(),
+                         "y": snapautos[host][loc_num].tolist(),
+                         "name": name,
+                         "visible": visible,
+                         "hovertemplate": "%{x:.1f}\tMHz<br>%{y:.3f}\t[dBm]"
+                         }
+                data.append(_data)
         buttons = []
         for host_cnt, host in enumerate(hostnames):
             prog_time = all_snap_statuses[host]['last_programmed']
@@ -202,7 +211,7 @@ def main():
                                uptime=uptime
                                )
                      )
-            _button = {"args": [{"visible": host_masks[host_cnt].tolist()},
+            _button = {"args": [{"visible": host_masks[host_cnt]},
                                 {"title": '',
                                  "annotations": {}
                                  }
