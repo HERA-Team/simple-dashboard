@@ -285,7 +285,7 @@ def main():
                     eq_mask.extend([False] * 2)
                     visible = False
                 else:
-                    cbar_title = 'Median Coeff'
+                    cbar_title = 'Median\tCoeff'
                     amp_mask.extend([False] * 2)
                     pam_mask.extend([False] * 2)
                     adc_mask.extend([False] * 2)
@@ -457,7 +457,7 @@ def main():
                         eq_mask.extend([False] * 2)
                         visible = False
                     else:
-                        cbar_title = 'Median Coeff'
+                        cbar_title = 'Median\tCoeff'
                         amp_mask.extend([False] * 2)
                         pam_mask.extend([False] * 2)
                         adc_mask.extend([False] * 2)
