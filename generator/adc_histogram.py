@@ -87,8 +87,8 @@ def main():
                                                                 jd=timestamp.jd)
                     # spaces cause weird wrapping issues, replace them all with \t
                     text = text.replace(' ', '\t')
-                    _data = {"x": bins,
-                             "y": hist,
+                    _data = {"x": bins.tolist(),
+                             "y": hist.tolist(),
                              "name": name,
                              "text": text,
                              "hovertemplate": "%{x:.1}<br>%{y}<br>%{text}"
