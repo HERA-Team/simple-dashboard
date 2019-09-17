@@ -83,15 +83,15 @@ def main():
                                          sep=',')
                     hist = np.fromstring(stat.histogram.strip('[]'),
                                          sep=',')
-                    text = "observed at {iso} (JD {jd})".format(iso=timestamp.iso,
-                                                                jd=timestamp.jd)
+                    text = "observed at {iso}<br>(JD {jd})".format(iso=timestamp.iso,
+                                                                   jd=timestamp.jd)
                     # spaces cause weird wrapping issues, replace them all with \t
                     text = text.replace(' ', '\t')
                     _data = {"x": bins.tolist(),
                              "y": hist.tolist(),
                              "name": name,
                              "text": [text] * bins.size,
-                             "hovertemplate": "%{x:.1}<br>%{y}<br>%{text}"
+                             "hovertemplate": "(%{x:.1},\t%{y})<br>%{text}"
                              }
                     hists.append(_data)
 
