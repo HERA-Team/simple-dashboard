@@ -45,7 +45,6 @@ def main():
     parser.add_argument('--port', dest='port', type=int, default=6379,
                         help='Redis port to connect.')
     args = parser.parse_args()
-    r = redis.Redis(args.redishost, port=args.port)
 
     try:
         db = mc.connect_to_mc_db(args)
