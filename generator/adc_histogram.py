@@ -90,7 +90,7 @@ def main():
                     _data = {"x": bins.tolist(),
                              "y": hist.tolist(),
                              "name": name,
-                             "text": text,
+                             "text": [text] * bins.size,
                              "hovertemplate": "%{x:.1}<br>%{y}<br>%{text}"
                              }
                     hists.append(_data)
