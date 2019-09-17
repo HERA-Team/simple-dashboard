@@ -103,7 +103,7 @@ def main():
         table["title"] = "Ants with no Histogram"
         table["rows"] = []
         row = {}
-        row.text = ',\t'.join(bad_ants)
+        row['text'] = ',\t'.join(bad_ants)
         table['rows'].append(row)
 
         layout = {"xaxis": {"title": 'ADC value'},
