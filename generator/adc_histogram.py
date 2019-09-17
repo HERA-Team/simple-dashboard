@@ -97,7 +97,7 @@ def main():
 
         layout = {"xaxis": {"title": 'ADC value'},
                   "yaxis": {"title": 'Occurance'},
-                  "margin": {"l": 40, "b": 0, "r": 40, "t": 30},
+                  "margin": {"l": 40, "b": 30, "r": 40, "t": 30},
                   "hovermode": "closest",
                   "autosize": True,
                   "showlegend": True
