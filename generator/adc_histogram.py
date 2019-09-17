@@ -70,6 +70,7 @@ def main():
         ants = np.unique(ants).astype(int)
 
         hists = []
+        bad_ants = []
         for ant_cnt, ant in enumerate(ants):
             ant_status = session.get_antenna_status(most_recent=True,
                                                     antenna_number=int(ant))
@@ -94,6 +95,16 @@ def main():
                              "hovertemplate": "(%{x:.1},\t%{y})<br>%{text}"
                              }
                     hists.append(_data)
+                else:
+                    bad_ants.append('{ant}:{pol}'.format(ant=stat.antenna_number,
+                                                         pol=stat.antenna_feed_pol)
+                                    )
+        table = {}
+        table["title"] = "Ants with no Histogram"
+        table["rows"] = []
+        row = {}
+        row.text = ',\t'.join(bad_ants)
+        table['rows'].append(row)
 
         layout = {"xaxis": {"title": 'ADC value'},
                   "yaxis": {"title": 'Occurance'},
@@ -105,7 +116,7 @@ def main():
 
         plotname = "plotly-adc-hist"
 
-        html_template = env.get_template("plotly_base.html")
+        html_template = env.get_template("ploty_with_table.html")
         js_template = env.get_template("plotly_base.js")
 
         rendered_html = html_template.render(plotname=plotname,
@@ -114,7 +125,8 @@ def main():
                                              js_name="adchist",
                                              gen_time_unix_ms=now.unix * 1000,
                                              scriptname=os.path.basename(__file__),
-                                             hostname=computer_hostname)
+                                             hostname=computer_hostname,
+                                             table=table)
 
         rendered_js = js_template.render(data=hists,
                                          layout=layout,
