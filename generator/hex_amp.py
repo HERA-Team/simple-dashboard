@@ -285,7 +285,7 @@ def main():
                     eq_mask.extend([False] * 2)
                     visible = False
                 else:
-                    cbar_title = 'Median Coeff'
+                    cbar_title = 'Median\tCoeff'
                     amp_mask.extend([False] * 2)
                     pam_mask.extend([False] * 2)
                     adc_mask.extend([False] * 2)
@@ -457,7 +457,7 @@ def main():
                         eq_mask.extend([False] * 2)
                         visible = False
                     else:
-                        cbar_title = 'Median Coeff'
+                        cbar_title = 'Median\tCoeff'
                         amp_mask.extend([False] * 2)
                         pam_mask.extend([False] * 2)
                         adc_mask.extend([False] * 2)
@@ -565,27 +565,27 @@ def main():
         html_template = env.get_template("plotly_base.html")
         js_template = env.get_template("plotly_base.js")
 
-        rendered_hex_html = html_template.render(plotname=plotname,
-                                                 data_type="Auto correlations",
-                                                 plotstyle="height: 85vh",
-                                                 gen_date=now.iso,
-                                                 gen_time_unix_ms=now.unix * 1000,
-                                                 data_date=latest.iso,
-                                                 data_jd_date=latest.jd,
-                                                 js_name="node_amp",
-                                                 scriptname=os.path.basename(__file__),
-                                                 hostname=computer_hostname)
+        rendered_node_html = html_template.render(plotname=plotname,
+                                                  data_type="Auto correlations",
+                                                  plotstyle="height: 85vh",
+                                                  gen_date=now.iso,
+                                                  gen_time_unix_ms=now.unix * 1000,
+                                                  data_date=latest.iso,
+                                                  data_jd_date=latest.jd,
+                                                  js_name="node_amp",
+                                                  scriptname=os.path.basename(__file__),
+                                                  hostname=computer_hostname)
 
-        rendered_hex_js = js_template.render(data=data_node,
-                                             layout=layout_node,
-                                             updatemenus=updatemenus_node,
-                                             plotname=plotname)
+        rendered_node_js = js_template.render(data=data_node,
+                                              layout=layout_node,
+                                              updatemenus=updatemenus_node,
+                                              plotname=plotname)
 
         with open('node_amp.html', 'w') as h_file:
-            h_file.write(rendered_hex_html)
+            h_file.write(rendered_node_html)
 
         with open('node_amp.js', 'w') as js_file:
-            js_file.write(rendered_hex_js)
+            js_file.write(rendered_node_js)
 
 
 if __name__ == '__main__':
