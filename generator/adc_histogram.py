@@ -59,9 +59,6 @@ def main():
 
     with db.sessionmaker() as session:
         now = Time.now()
-        latest = Time(np.frombuffer(redis_db.get('auto:timestamp'),
-                      dtype=np.float64).item(), format='jd')
-        corr_cm = hera_corr_cm.HeraCorrCM(redishost=args.redishost)
 
         hsession = cm_sysutils.Handling(session)
         stations = hsession.get_all_fully_connected_at_date(at_date='now')
