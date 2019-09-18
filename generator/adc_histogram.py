@@ -107,12 +107,36 @@ def main():
         table['rows'].append(row)
 
         layout = {"xaxis": {"title": 'ADC value'},
-                  "yaxis": {"title": 'Occurance'},
+                  "yaxis": {"title": 'Occurance',
+                            "type": "linear"
+                            },
                   "margin": {"l": 40, "b": 30, "r": 40, "t": 30},
                   "hovermode": "closest",
                   "autosize": True,
                   "showlegend": True
                   }
+        buttons = []
+
+        log_buttons = {"args": [{},
+                                {"yaxis": {"type": "log"}}],
+                       "label": "Log",
+                       "method": "update",
+                       }
+        lin_buttons = {"args": [{},
+                                {"yaxis": {"type": "linear"}}],
+                       "label": "Linear",
+                       "method": "update"
+                       }
+
+        buttons.append(lin_buttons)
+        buttons.append(log_buttons)
+
+        updatemenus = [{"buttons": buttons,
+                        "showactive": True,
+                        "type": "buttons",
+                        "active": 0,
+                        }
+                       ]
 
         plotname = "plotly-adc-hist"
 
@@ -130,7 +154,8 @@ def main():
 
         rendered_js = js_template.render(data=hists,
                                          layout=layout,
-                                         plotname=plotname)
+                                         plotname=plotname,
+                                         updatemenus=updatemenus)
 
         with open('adchist.html', 'w') as h_file:
             h_file.write(rendered_html)
