@@ -188,11 +188,10 @@ def main():
 
                             _node_num = re.findall(r'N(\d+)', node_info[_key][pol_key])[0]
 
-                            start = Time.now() - TimeDelta(1, format='jd')
-                            stop = Time.now()
+                            # start = Time.now() - TimeDelta(1, format='jd')
+                            # stop = Time.now()
                             snap_stats = session.get_snap_status(nodeID=int(_node_num),
-                                                                 starttime=start,
-                                                                 stoptime=stop)
+                                                                 most_recent=True)
 
                             snap_found = False
                             for _stat in snap_stats:
