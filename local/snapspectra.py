@@ -141,7 +141,9 @@ def main():
         table_ants = {}
         table_ants["title"] = "Antennas with no mapping"
         rows = []
+
         bad_ants = []
+        bad_hosts = []
 
         for ant_cnt, ant in enumerate(ants):
             # ant_status = session.get_antenna_status(antenna_number=ant,
@@ -201,21 +203,20 @@ def main():
                                     # if this hostname is not in the lookup table yet
                                     # initialize an empty dict
                                     if _stat.hostname not in hostname_lookup.keys():
-                                        err = "host from M&C not found in hera_corr_cm: {}".format(_stat.hostname)
-                                        err += "\nAll hera_corr_cm hostnames: {}".format(hostnames)
-                                        err += "\nAll keys in lookup dict: {}".format(hostname_lookup.keys())
-                                        raise ValueError(err)
+                                        err = "host from M&C not found in corr_cm 'status:snaprf' : {}".format(_stat.hostname)
+                                        err += '\nThis host may not have data populated yet or is offline.'
+                                        err += '\nAll anteanns on this host will be full of 0.'
+                                        print(err)
+                                        bad_hosts.append(_stat.hostname)
                                     grp1 = hostname_lookup.setdefault(_stat.hostname, {})
                                     # if this loc num is not in lookup table initialize
                                     # empty list
                                     if ant_channel not in grp1.keys():
-                                        print("loc_num from M&C not found in hera_corr_cm (host, location number): {}".format([_stat.hostname, _stat.snap_loc_num]))
-                                        print("filling with bad array full of 0")
+                                        if _stat.hostname not in bad_hosts:
+                                            print("loc_num from M&C not found in hera_corr_cm `status:snaprf` (host, location number): {}".format([_stat.hostname, _stat.snap_loc_num]))
+                                            print("filling with bad array full of 0.")
                                         snap_grp1 = snapautos.setdefault(_stat.hostname, {})
                                         snap_grp1[ant_channel] = np.full(1024, 0)
-                                        # err = "loc_num from M&C not found in hera_corr_cm (host, location number): {}".format([_stat.hostname, _stat.snap_loc_num])
-                                        # err += "\nAll hera_corr_cm location numbers for this host (host, known location numbers): {}".format([_stat.hostname, list(grp1.keys())])
-                                        # raise ValueError(err)
                                     grp2 = grp1.setdefault(ant_channel, {})
                                     grp2['MC'] = name
                             if not snap_found:
@@ -273,20 +274,33 @@ def main():
             temp = all_snap_statuses[host]['temp']
             uptime = all_snap_statuses[host]['uptime']
             pps = all_snap_statuses[host]['pps_count']
-
-            label = ('{host}<br>programmed:\t{start}'
-                     '<br>spectra\trecorded:\t{obs}<br>'
-                     'temp:\t{temp:.0f}\tC\t'
-                     'pps\tcount:\t{pps}\tCycles\t\t\t'
-                     'uptime:\t{uptime}'
-                     ''.format(host=host,
-                               start=prog_time.isoformat(' '),
-                               obs=timestamp.isoformat(' '),
-                               temp=temp,
-                               pps=pps,
-                               uptime=uptime
-                               )
-                     )
+            if host in bad_hosts:
+                label = ('{host}<br>programmed:\t{start}'
+                         '<br>spectra\trecorded:\tNO DATA OBSERVED<br>'
+                         'temp:\t{temp:.0f}\tC\t'
+                         'pps\tcount:\t{pps}\tCycles\t\t\t'
+                         'uptime:\t{uptime}'
+                         ''.format(host=host,
+                                   start=prog_time.isoformat(' '),
+                                   temp=temp,
+                                   pps=pps,
+                                   uptime=uptime
+                                   )
+                         )
+            else:
+                label = ('{host}<br>programmed:\t{start}'
+                         '<br>spectra\trecorded:\t{obs}<br>'
+                         'temp:\t{temp:.0f}\tC\t'
+                         'pps\tcount:\t{pps}\tCycles\t\t\t'
+                         'uptime:\t{uptime}'
+                         ''.format(host=host,
+                                   start=prog_time.isoformat(' '),
+                                   obs=timestamp.isoformat(' '),
+                                   temp=temp,
+                                   pps=pps,
+                                   uptime=uptime
+                                   )
+                         )
             _button = {"args": [{"visible": host_masks[host_cnt]},
                                 {"title": '',
                                  "annotations": {}
