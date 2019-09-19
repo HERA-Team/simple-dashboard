@@ -11,11 +11,16 @@ import os
 import sys
 import re
 import numpy as np
+import json
 import redis
 from hera_mc import mc, cm_sysutils
-from astropy.time import Time
+from astropy.time import Time, TimeDelta
 import hera_corr_cm
 from jinja2 import Environment, FileSystemLoader
+
+
+def is_list(value):
+    return isinstance(value, list)
 
 
 def main():
@@ -28,6 +33,8 @@ def main():
 
     env = Environment(loader=FileSystemLoader(template_dir),
                       trim_blocks=True)
+    # this filter is used to see if there is more than one table
+    env.filters['islist'] = is_list
 
     if sys.version_info[0] < 3:
         # py2
@@ -69,8 +76,6 @@ def main():
         ants = np.unique(ants).astype(int)
 
         hostname_lookup = {}
-        snap_serial = {}
-        ant_loc_num = {}
 
         # all_snap_statuses = session.get_snap_status(most_recent=True)
         all_snap_statuses = corr_cm.get_f_status()
@@ -78,124 +83,230 @@ def main():
         snapautos = {}
 
         ant_status_from_snaps = corr_cm.get_ant_status()
+        all_snaprf_stats = corr_cm.get_snaprf_status()
+
+        table_snap = {}
+        table_snap["title"] = "Snap hookups with No Data"
+        rows = []
+        bad_snaps = []
+
+        # corr_map = redis_db.hgetall('corr:map')
+        # ant_to_snap = json.loads(corr_map[b'ant_to_snap'])
+
+        for snap_chan in all_snaprf_stats:
+            host, loc_num = snap_chan.split(":")
+            loc_num = int(loc_num)
+            # host = ant_status_from_snaps[antpol]['f_host']
+            # loc_num = ant_status_from_snaps[antpol]['host_ant_id']
+
+            # ant, pol = antpol.split(':')
+            # if host == "None":
+            #   host = ant_to_snap[ant][pol]['host']
+            #   raise ValueError("No host name found in `hera_corr_cm.get_snap_status()`")
+            # if loc_num == "None":
+            #     loc_num = ant_to_snap[ant][pol]['channel']
+            #     raise ValueError("No Location Number found in `hera_corr_cm.get_snap_status()`")
+
+            # initialize this key if not already in the dict
+            auto_group = snapautos.setdefault(host, {})
+
+            try:
+                tmp_auto = all_snaprf_stats[snap_chan]["autocorrelation"]
+                if tmp_auto == "None":
+                    print("No Data for {} port {}".format(host, loc_num))
+                    bad_snaps.append(snap_chan)
+                    tmp_auto = np.full(1024, np.nan)
+                tmp_auto = np.ma.masked_invalid(10 * np.log10(np.real(tmp_auto)))
+                auto_group[loc_num] = tmp_auto.filled(0)
+
+            except KeyError:
+                print("Snap connection with no autocorrelation", snap_chan)
+                raise
+            except TypeError:
+                print("Received TypeError when taking log.")
+                print("Type of item in dictionary: ", type(all_snaprf_stats[snap_chan]["autocorrelation"]))
+                print("Value of item: ", tmp_auto)
+                raise
+            # tmp_auto = np.ma.masked_invalid(10 * np.log10(np.real(tmp_auto)))
+            # snapautos[host][loc_num] = tmp_auto.filled(-100)
+
+            hostname_lookup.setdefault(host, {})
+            hostname_lookup[host].setdefault(loc_num, {})
+            hostname_lookup[host][loc_num]['MC'] = 'NC'
+        row = {}
+        row["text"] = '\t'.join(bad_snaps)
+        rows.append(row)
+        table_snap["rows"] = rows
+
+        table_ants = {}
+        table_ants["title"] = "Antennas with no mapping"
+        rows = []
+
+        bad_ants = []
+        bad_hosts = []
 
         for ant_cnt, ant in enumerate(ants):
-            mc_ant_status = session.get_antenna_status(antenna_number=int(ant),
-                                                       most_recent=True)
-            for stat in mc_ant_status:
-                name = "{ant:d}:{pol}".format(ant=stat.antenna_number,
-                                              pol=stat.antenna_feed_pol)
-                try:
-                    tmp_auto = ant_status_from_snaps[name]["autocorrelation"]
-                    tmp_auto = np.ma.masked_invalid(10 * np.log10(np.real(tmp_auto)))
-                    snapautos[name] = tmp_auto.filled(-100)
+            # ant_status = session.get_antenna_status(antenna_number=ant,
+            #                                         most_recent=True)
 
-                except KeyError:
-                    print("Ant-pol with no autocorrelation", name)
-                    raise
-            # Try to get the snap info. Output is a dictionary with 'e' and 'n' keys
-            # connect to M&C to find all the hooked up Snap hostnames and corresponding ant-pols
-            mc_name = 'HH{:d}'.format(ant)
-            snap_info = hsession.get_part_at_station_from_type(mc_name,
-                                                               'now', 'snap')
-            node_info = hsession.get_part_at_station_from_type(mc_name,
-                                                               'now', 'node')
+            # get the status for both polarizations for this antenna
+            ant_status = {key: ant_status_from_snaps[key]
+                          for key in ant_status_from_snaps
+                          if ant == int(key.split(':')[0])}
 
-            for _key in snap_info.keys():
-                # initialize a dict if they key does not exist already
-                snap_serial.setdefault(int(ant), {})
-                ant_loc_num.setdefault(int(ant), {})
+            # check if the antenna status from M&C has the host and
+            # channel number, if it does not we have to do some gymnastics
+            for antkey in ant_status:
+                pol_key = antkey.split(":")[1]
+                stat = ant_status[antkey]
+                name = "{ant:d}:{pol}".format(ant=ant,
+                                              pol=pol_key)
+                # check that key is in the dictionary, is not None or the string "None"
+                if ('f_host' in stat and 'host_ant_id' in stat
+                        and stat['f_host'] is not None
+                        and stat['host_ant_id'] is not None
+                        and stat['f_host'] != "None"
+                        and stat['host_ant_id'] != "None"):
+                    hostname = stat['f_host']
+                    loc_num = stat['host_ant_id']
+                    hostname_lookup[hostname][loc_num]['MC'] = name
+                else:
+                    # Try to get the snap info from M&C. Output is a dictionary with 'e' and 'n' keys
+                    # connect to M&C to find all the hooked up Snap hostnames and corresponding ant-pols
+                    mc_name = 'HH{:d}'.format(ant)
+                    # these two may not be used, but it is easier to grab them now
+                    snap_info = hsession.get_part_at_station_from_type(mc_name,
+                                                                       'now', 'snap',
+                                                                       include_ports=True)
+                    node_info = hsession.get_part_at_station_from_type(mc_name,
+                                                                       'now', 'node')
+                    for _key in snap_info.keys():
+                        # initialize a dict if they key does not exist already
 
-                for pol_key in snap_info[_key].keys():
-                    name = "{ant:d}:{pol}".format(ant=ant, pol=pol_key)
-                    if snap_info[_key][pol_key] is not None:
-                        snap_serial[ant][pol_key] = snap_info[_key][pol_key]
-                        _node_num = re.findall(r'N(\d+)', node_info[_key][pol_key])[0]
+                        if snap_info[_key][pol_key] is not None:
+                            serial_with_ports = snap_info[_key][pol_key]
+                            snap_serial = serial_with_ports.split('>')[1].split('<')[0]
+                            ant_channel = int(serial_with_ports.split('>')[0][1:]) // 2
 
-                        snap_stats = session.get_snap_status(nodeID=int(_node_num),
-                                                             most_recent=True)
+                            _node_num = re.findall(r'N(\d+)', node_info[_key][pol_key])[0]
 
-                        for _stat in snap_stats:
-                            if _stat.serial_number == snap_serial[ant][pol_key]:
-                                ant_loc_num[ant][pol_key] = _stat.snap_loc_num
+                            # start = Time.now() - TimeDelta(1, format='jd')
+                            # stop = Time.now()
+                            snap_stats = session.get_snap_status(nodeID=int(_node_num),
+                                                                 most_recent=True)
 
-                                # if this hostname is not in the lookup table yet
-                                # initialize an empty dict
-                                grp1 = hostname_lookup.setdefault(_stat.hostname, {})
-                                # if this loc num is not in lookup table initialize
-                                # empty list
-                                grp2 = grp1.setdefault(_stat.snap_loc_num, [])
-                                grp2.append(name)
-                    else:
-                        print("No snap information for antennna: " + name)
-        data = []
-        # create a mask to make things visible for only that hostname
-        # the mask is different for each host, but each mask is the total
-        # length of all data, 8 because loc_nums go 0-3 each with 'e' and 'n' pols
-        host_masks = np.full((len(hostnames), len(hostnames) * 8), 'false',
-                             dtype='object')
-        host_title = np.zeros((len(hostnames)), dtype='object')
+                            snap_found = False
+                            for _stat in snap_stats:
+                                if _stat.serial_number == snap_serial:
+                                    snap_found = True
+
+                                    # if this hostname is not in the lookup table yet
+                                    # initialize an empty dict
+                                    if _stat.hostname not in hostname_lookup.keys():
+                                        err = "host from M&C not found in corr_cm 'status:snaprf' : {}".format(_stat.hostname)
+                                        err += '\nThis host may not have data populated yet or is offline.'
+                                        err += '\nAll anteanns on this host will be full of 0.'
+                                        print(err)
+                                        bad_hosts.append(_stat.hostname)
+                                    grp1 = hostname_lookup.setdefault(_stat.hostname, {})
+                                    # if this loc num is not in lookup table initialize
+                                    # empty list
+                                    if ant_channel not in grp1.keys():
+                                        if _stat.hostname not in bad_hosts:
+                                            print("loc_num from M&C not found in hera_corr_cm `status:snaprf` (host, location number): {}".format([_stat.hostname, _stat.snap_loc_num]))
+                                            print("filling with bad array full of 0.")
+                                        else:
+                                            _name = "{host}:{loc}".format(host=_stat.hostname, loc=ant_channel)
+                                            if _name not in table_snap["rows"][0]["text"]:
+                                                table_snap["rows"][0]["text"] += _name + '\t'
+                                        snap_grp1 = snapautos.setdefault(_stat.hostname, {})
+                                        snap_grp1[ant_channel] = np.full(1024, 0)
+                                    grp2 = grp1.setdefault(ant_channel, {})
+                                    grp2['MC'] = name
+                            if not snap_found:
+                                print("No MC snap information for antennna: " + name)
+                                bad_ants.append(name)
+
+                        else:
+                            print("No MC snap information for antennna: " + name)
+                            bad_ants.append(name)
+        row = {}
+        row["text"] = '\t'.join(bad_ants)
+        rows.append(row)
+        table_ants["rows"] = rows
+
+        host_masks = []
+        for h1 in sorted(hostname_lookup.keys()):
+            _mask = []
+            for h2 in sorted(hostname_lookup.keys()):
+                _mask.extend([True if h2 == h1 else False
+                              for loc_num in hostname_lookup[h2]])
+            host_masks.append(_mask)
 
         # Generate frequency axis
-        # this is taken directly from autospectra.py
-        # NCHANS = int(2048 // 4 * 2)
-        # NCHANS_F = 8192
-        # NCHAN_SUM = 6
-        # frange = np.linspace(0, 250e6, NCHANS_F + 1)[1536:1536 + (8192 // 4 * 3)]
-        # average over channels
-        # freqs = frange.reshape(NCHANS, NCHAN_SUM).sum(axis=1) / NCHAN_SUM
         freqs = np.linspace(0, 250e6, 1024)
         freqs /= 1e6
 
-        for host_cnt, host in enumerate(hostname_lookup.keys()):
-            mask_cnt = host_cnt * 8
+        data = []
+        for host_cnt, host in enumerate(sorted(hostname_lookup.keys())):
             if host_cnt == 0:
-                visible = 'true'
+                visible = True
             else:
-                visible = 'false'
-
-            # host_title[host_cnt] = '{} Integration over {} seconds'.format(host, length)
+                visible = False
 
             for loc_num in hostname_lookup[host].keys():
-                for ant_cnt, ant_name in enumerate(hostname_lookup[host][loc_num]):
-                    # this 8 and 2 business is because the mask is raveled
-                    # and needs to account for the 8 different feed pols connected to each snap
-                    # the loc_num helps to track the antenna
-                    host_masks[host_cnt, mask_cnt] = 'true'
-                    mask_cnt += 1
+                mc_name = hostname_lookup[host][loc_num]['MC']
 
-                    name = 'ant{}'.format(ant_name.replace(":", ""))
-                    _data = {"x": freqs,
-                             "y": snapautos[ant_name],
+                name = '{loc}:{mcname}'.format(loc=loc_num,
+                                               mcname=mc_name.replace(":", ""))
+                try:
+                    _data = {"x": freqs.tolist(),
+                             "y": snapautos[host][loc_num].tolist(),
                              "name": name,
                              "visible": visible,
-                             "hovertemplate": ('%{{x:.3f}}\tMHz<br>${{y:.3f}}'
-                                               '\t[dBm]<extra>{name}</extra>')
+                             "hovertemplate": "%{x:.1f}\tMHz<br>%{y:.3f}\t[dBm]"
                              }
-                    data.append(_data)
+                except KeyError:
+                    print("Given host, location pair: ({0}, {1})".format(host, loc_num))
+                    print("All possible keys for host {0}: {1}".format(host, list(snapautos[host].keys())))
+                    raise
+                data.append(_data)
         buttons = []
-        for host_cnt, host in enumerate(hostnames):
+        for host_cnt, host in enumerate(sorted(hostname_lookup.keys())):
             prog_time = all_snap_statuses[host]['last_programmed']
             timestamp = all_snap_statuses[host]['timestamp']
             temp = all_snap_statuses[host]['temp']
             uptime = all_snap_statuses[host]['uptime']
             pps = all_snap_statuses[host]['pps_count']
-
-            label = ('{host}<br>programmed:\t{start}'
-                     '<br>spectra\trecorded:\t{obs}<br>'
-                     'temp:\t{temp:.0f}\tC\t'
-                     'pps\tcount:\t{pps}\tCycles\t\t\t'
-                     'uptime:\t{uptime}'
-                     ''.format(host=host,
-                               start=prog_time.isoformat(' '),
-                               obs=timestamp.isoformat(' '),
-                               temp=temp,
-                               pps=pps,
-                               uptime=uptime
-                               )
-                     )
+            if host in bad_hosts:
+                label = ('{host}<br>programmed:\t{start}'
+                         '<br>spectra\trecorded:\tNO DATA OBSERVED<br>'
+                         'temp:\t{temp:.0f}\tC\t'
+                         'pps\tcount:\t{pps}\tCycles\t\t\t'
+                         'uptime:\t{uptime}'
+                         ''.format(host=host,
+                                   start=prog_time.isoformat(' '),
+                                   temp=temp,
+                                   pps=pps,
+                                   uptime=uptime
+                                   )
+                         )
+            else:
+                label = ('{host}<br>programmed:\t{start}'
+                         '<br>spectra\trecorded:\t{obs}<br>'
+                         'temp:\t{temp:.0f}\tC\t'
+                         'pps\tcount:\t{pps}\tCycles\t\t\t'
+                         'uptime:\t{uptime}'
+                         ''.format(host=host,
+                                   start=prog_time.isoformat(' '),
+                                   obs=timestamp.isoformat(' '),
+                                   temp=temp,
+                                   pps=pps,
+                                   uptime=uptime
+                                   )
+                         )
             _button = {"args": [{"visible": host_masks[host_cnt]},
-                                {"title": host_title[host_cnt],
+                                {"title": '',
                                  "annotations": {}
                                  }
                                 ],
@@ -229,7 +340,7 @@ def main():
                   }
 
         plotname = "plotly-snap"
-        html_template = env.get_template("plotly_base.html")
+        html_template = env.get_template("refresh_with_table.html")
         js_template = env.get_template("plotly_base.js")
 
         rendered_html = html_template.render(plotname=plotname,
@@ -238,7 +349,8 @@ def main():
                                              js_name='snapspectra',
                                              gen_time_unix_ms=Time.now().unix * 1000,
                                              scriptname=os.path.basename(__file__),
-                                             hostname=computer_hostname
+                                             hostname=computer_hostname,
+                                             table=[table_snap, table_ants]
                                              )
         rendered_js = js_template.render(data=data,
                                          layout=layout,
