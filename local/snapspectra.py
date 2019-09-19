@@ -82,7 +82,7 @@ def main():
         hostnames = list(set(all_snap_statuses.keys()))
         snapautos = {}
 
-        # ant_status_from_snaps = corr_cm.get_ant_status()
+        ant_status_from_snaps = corr_cm.get_ant_status()
         all_snaprf_stats = corr_cm.get_snaprf_status()
 
         table_snap = {}
@@ -144,30 +144,39 @@ def main():
         bad_ants = []
 
         for ant_cnt, ant in enumerate(ants):
-            ant_status = session.get_antenna_status(antenna_number=ant,
-                                                    most_recent=True)
-            # Try to get the snap info. Output is a dictionary with 'e' and 'n' keys
-            # connect to M&C to find all the hooked up Snap hostnames and corresponding ant-pols
-            mc_name = 'HH{:d}'.format(ant)
-            # these two may not be used, but it is easier to grab them now
-            snap_info = hsession.get_part_at_station_from_type(mc_name,
-                                                               'now', 'snap',
-                                                               include_ports=True)
-            node_info = hsession.get_part_at_station_from_type(mc_name,
-                                                               'now', 'node')
+            # ant_status = session.get_antenna_status(antenna_number=ant,
+            #                                         most_recent=True)
+
+            # get the status for both polarizations for this antenna
+            ant_status = [ant_status_from_snaps[key]
+                          for key in ant_status_from_snaps
+                          if ant == int(key.split(':')[0])]
 
             # check if the antenna status from M&C has the host and
             # channel number, if it does not we have to do some gymnastics
-            for stat_cnt, stat in enumerate(ant_status):
-                pol_key = stat.antenna_feed_pol
-                name = "{ant:d}:{pol}".format(ant=stat.antenna_number,
+            for stat in ant_status:
+                pol_key = stat['antenna_feed_pol']
+                name = "{ant:d}:{pol}".format(ant=stat['antenna_number'],
                                               pol=pol_key)
-                if (stat.snap_hostname is not None
-                        and stat.snap_channel_number is not None):
-                    hostname = stat.snap_hostname
-                    loc_num = stat.snap_channel_number
+                # check that key is in the dictionary, is not None or the string "None"
+                if ('snap_hostname' in stat and 'snap_channel_number' in stat
+                        and stat['snap_hostname'] is not None
+                        and stat['snap_channel_number'] is not None
+                        and stat['snap_hostname'] != "None"
+                        and stat['snap_channel_number'] != "None"):
+                    hostname = stat['snap_hostname']
+                    loc_num = stat['snap_channel_number']
                     hostname_lookup[hostname][loc_num]['MC'] = name
                 else:
+                    # Try to get the snap info from M&C. Output is a dictionary with 'e' and 'n' keys
+                    # connect to M&C to find all the hooked up Snap hostnames and corresponding ant-pols
+                    mc_name = 'HH{:d}'.format(ant)
+                    # these two may not be used, but it is easier to grab them now
+                    snap_info = hsession.get_part_at_station_from_type(mc_name,
+                                                                       'now', 'snap',
+                                                                       include_ports=True)
+                    node_info = hsession.get_part_at_station_from_type(mc_name,
+                                                                       'now', 'node')
                     for _key in snap_info.keys():
                         # initialize a dict if they key does not exist already
 
@@ -181,8 +190,8 @@ def main():
                             start = Time.now() - TimeDelta(1, format='jd')
                             stop = Time.now()
                             snap_stats = session.get_snap_status(nodeID=int(_node_num),
-                                                                 start_time=start,
-                                                                 stop_time=stop)
+                                                                 starttime=start,
+                                                                 stoptime=stop)
 
                             snap_found = False
                             for _stat in snap_stats:
