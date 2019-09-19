@@ -14,7 +14,7 @@ import numpy as np
 import json
 import redis
 from hera_mc import mc, cm_sysutils
-from astropy.time import Time
+from astropy.time import Time, TimeDelta
 import hera_corr_cm
 from jinja2 import Environment, FileSystemLoader
 
@@ -82,46 +82,49 @@ def main():
         hostnames = list(set(all_snap_statuses.keys()))
         snapautos = {}
 
-        ant_status_from_snaps = corr_cm.get_ant_status()
-        table = {}
-        table["title"] = "Antennas with No Data"
+        # ant_status_from_snaps = corr_cm.get_ant_status()
+        all_snaprf_stats = corr_cm.get_snaprf_status()
+
+        table_snap = {}
+        table_snap["title"] = "Snap hookups with No Data"
         rows = []
-        text = ''
-        bad_ants = []
+        bad_snaps = []
 
-        corr_map = redis_db.hgetall('corr:map')
-        ant_to_snap = json.loads(corr_map[b'ant_to_snap'])
+        # corr_map = redis_db.hgetall('corr:map')
+        # ant_to_snap = json.loads(corr_map[b'ant_to_snap'])
 
-        for antpol in ant_status_from_snaps:
-            host = ant_status_from_snaps[antpol]['f_host']
-            loc_num = ant_status_from_snaps[antpol]['host_ant_id']
+        for snap_chan in all_snaprf_stats:
+            host, loc_num = snap_chan.split(":")
+            loc_num = int(loc_num)
+            # host = ant_status_from_snaps[antpol]['f_host']
+            # loc_num = ant_status_from_snaps[antpol]['host_ant_id']
 
-            ant, pol = antpol.split(':')
-            if host == "None":
-                host = ant_to_snap[ant][pol]['host']
-                # raise ValueError("No host name found in `hera_corr_cm.get_snap_status()`")
-            if loc_num == "None":
-                loc_num = ant_to_snap[ant][pol]['channel']
-                # raise ValueError("No Location Number found in `hera_corr_cm.get_snap_status()`")
+            # ant, pol = antpol.split(':')
+            # if host == "None":
+            #   host = ant_to_snap[ant][pol]['host']
+            #   raise ValueError("No host name found in `hera_corr_cm.get_snap_status()`")
+            # if loc_num == "None":
+            #     loc_num = ant_to_snap[ant][pol]['channel']
+            #     raise ValueError("No Location Number found in `hera_corr_cm.get_snap_status()`")
 
-            snapautos.setdefault(host, {})
+            # initialize this key if not already in the dict
+            auto_group = snapautos.setdefault(host, {})
 
             try:
-                tmp_auto = ant_status_from_snaps[antpol]["autocorrelation"]
+                tmp_auto = all_snaprf_stats[snap_chan]["autocorrelation"]
                 if tmp_auto == "None":
-                    print("No Data for ", antpol)
-                    text += antpol + "\t"
-                    bad_ants.append(antpol)
+                    print("No Data for {} port {}".format(host, loc_num))
+                    bad_snaps.append(snap_chan)
                     tmp_auto = np.full(1024, np.nan)
                 tmp_auto = np.ma.masked_invalid(10 * np.log10(np.real(tmp_auto)))
-                snapautos[host][loc_num] = tmp_auto.filled(0)
+                auto_group[loc_num] = tmp_auto.filled(0)
 
             except KeyError:
-                print("Ant-pol with no autocorrelation", antpol)
+                print("Snap connection with no autocorrelation", snap_chan)
                 raise
             except TypeError:
                 print("Received TypeError when taking log.")
-                print("Type of item in dictionary: ", type(ant_status_from_snaps[antpol]["autocorrelation"]))
+                print("Type of item in dictionary: ", type(all_snaprf_stats[snap_chan]["autocorrelation"]))
                 print("Value of item: ", tmp_auto)
                 raise
             # tmp_auto = np.ma.masked_invalid(10 * np.log10(np.real(tmp_auto)))
@@ -129,12 +132,16 @@ def main():
 
             hostname_lookup.setdefault(host, {})
             hostname_lookup[host].setdefault(loc_num, {})
-            hostname_lookup[host][loc_num]['snap'] = antpol
             hostname_lookup[host][loc_num]['MC'] = 'NC'
         row = {}
-        row["text"] = text
+        row["text"] = '\t'.join(bad_snaps)
         rows.append(row)
-        table["rows"] = rows
+        table_snap["rows"] = rows
+
+        table_ants = {}
+        table_ants["title"] = "Antennas with no mapping"
+        rows = []
+        bad_ants = []
 
         for ant_cnt, ant in enumerate(ants):
             ant_status = session.get_antenna_status(antenna_number=ant,
@@ -171,11 +178,16 @@ def main():
 
                             _node_num = re.findall(r'N(\d+)', node_info[_key][pol_key])[0]
 
+                            start = Time.now() - TimeDelta(1, format='jd')
+                            stop = Time.now()
                             snap_stats = session.get_snap_status(nodeID=int(_node_num),
-                                                                 most_recent=True)
+                                                                 start_time=start,
+                                                                 stop_time=stop)
 
+                            snap_found = False
                             for _stat in snap_stats:
                                 if _stat.serial_number == snap_serial:
+                                    snap_found = True
 
                                     # if this hostname is not in the lookup table yet
                                     # initialize an empty dict
@@ -197,14 +209,22 @@ def main():
                                         # raise ValueError(err)
                                     grp2 = grp1.setdefault(ant_channel, {})
                                     grp2['MC'] = name
-
-                            else:
+                            if not snap_found:
                                 print("No MC snap information for antennna: " + name)
+                                bad_ants.append(name)
+
+                        else:
+                            print("No MC snap information for antennna: " + name)
+                            bad_ants.append(name)
+        row = {}
+        row["text"] = '\t'.join(bad_ants)
+        rows.append(row)
+        table_ants["rows"] = rows
 
         host_masks = []
-        for h1 in hostname_lookup.keys():
+        for h1 in sorted(hostname_lookup.keys()):
             _mask = []
-            for h2 in hostname_lookup.keys():
+            for h2 in sorted(hostname_lookup.keys()):
                 _mask.extend([True if h2 == h1 else False
                               for loc_num in hostname_lookup[h2]])
             host_masks.append(_mask)
@@ -214,7 +234,7 @@ def main():
         freqs /= 1e6
 
         data = []
-        for host_cnt, host in enumerate(hostname_lookup.keys()):
+        for host_cnt, host in enumerate(sorted(hostname_lookup.keys())):
             if host_cnt == 0:
                 visible = True
             else:
@@ -303,7 +323,7 @@ def main():
                                              gen_time_unix_ms=Time.now().unix * 1000,
                                              scriptname=os.path.basename(__file__),
                                              hostname=computer_hostname,
-                                             table=table
+                                             tables=[table_snap, table_ants]
                                              )
         rendered_js = js_template.render(data=data,
                                          layout=layout,
