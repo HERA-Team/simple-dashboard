@@ -148,24 +148,25 @@ def main():
             #                                         most_recent=True)
 
             # get the status for both polarizations for this antenna
-            ant_status = [ant_status_from_snaps[key]
+            ant_status = {key: ant_status_from_snaps[key]
                           for key in ant_status_from_snaps
-                          if ant == int(key.split(':')[0])]
+                          if ant == int(key.split(':')[0])}
 
             # check if the antenna status from M&C has the host and
             # channel number, if it does not we have to do some gymnastics
-            for stat in ant_status:
-                pol_key = stat['antenna_feed_pol']
-                name = "{ant:d}:{pol}".format(ant=stat['antenna_number'],
+            for antkey in ant_status:
+                pol_key = antkey.split(":")[1]
+                stat = ant_status[antkey]
+                name = "{ant:d}:{pol}".format(ant=ant,
                                               pol=pol_key)
                 # check that key is in the dictionary, is not None or the string "None"
-                if ('snap_hostname' in stat and 'snap_channel_number' in stat
-                        and stat['snap_hostname'] is not None
-                        and stat['snap_channel_number'] is not None
-                        and stat['snap_hostname'] != "None"
-                        and stat['snap_channel_number'] != "None"):
-                    hostname = stat['snap_hostname']
-                    loc_num = stat['snap_channel_number']
+                if ('f_host' in stat and 'host_ant_id' in stat
+                        and stat['f_host'] is not None
+                        and stat['host_ant_id'] is not None
+                        and stat['f_host'] != "None"
+                        and stat['host_ant_id'] != "None"):
+                    hostname = stat['f_host']
+                    loc_num = stat['host_ant_id']
                     hostname_lookup[hostname][loc_num]['MC'] = name
                 else:
                     # Try to get the snap info from M&C. Output is a dictionary with 'e' and 'n' keys
