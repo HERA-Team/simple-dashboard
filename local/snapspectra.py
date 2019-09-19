@@ -215,6 +215,10 @@ def main():
                                         if _stat.hostname not in bad_hosts:
                                             print("loc_num from M&C not found in hera_corr_cm `status:snaprf` (host, location number): {}".format([_stat.hostname, _stat.snap_loc_num]))
                                             print("filling with bad array full of 0.")
+                                        else:
+                                            _name = "{host}:{loc}".format(host=_stat.hostname, loc=ant_channel)
+                                            if _name not in table_snap["rows"][0]["text"]:
+                                                table_snap["rows"][0]["text"] += _name + '\t'
                                         snap_grp1 = snapautos.setdefault(_stat.hostname, {})
                                         snap_grp1[ant_channel] = np.full(1024, 0)
                                     grp2 = grp1.setdefault(ant_channel, {})
