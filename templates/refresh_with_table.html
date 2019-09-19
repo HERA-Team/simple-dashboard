@@ -2,9 +2,27 @@
 
 
 {% block postbody %}
+{% if table|islist %}
+  {% for tab in table %}
+  <h2> {{ tab.title }} </h2>
+  <div class="table-responsive">
+  <table class="table table-striped" style="float: left">
+    <tbody>
+      {% if tab.rows|length > 0 %}
+      {% for row in tab.rows %}
+      <tr>
+            <td>{{ row.text }}</td>
+      </tr>
+      {% endfor %}
+      {% endif %}
+    </tbody>
+  </table>
+  </div>
+  {% endfor %}
+{% else %}
   <h2> {{ table.title }} </h2>
   <div class="table-responsive">
-  <table class="table table-striped">
+  <table class="table table-striped" style="float: left">
     <tbody>
       {% if table.rows|length > 0 %}
       {% for row in table.rows %}
@@ -16,4 +34,5 @@
     </tbody>
   </table>
   </div>
+{% endif %}
 {% endblock %}
