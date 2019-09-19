@@ -268,7 +268,7 @@ def main():
                     raise
                 data.append(_data)
         buttons = []
-        for host_cnt, host in enumerate(hostname_lookup.keys()):
+        for host_cnt, host in enumerate(sorted(hostname_lookup.keys())):
             prog_time = all_snap_statuses[host]['last_programmed']
             timestamp = all_snap_statuses[host]['timestamp']
             temp = all_snap_statuses[host]['temp']
