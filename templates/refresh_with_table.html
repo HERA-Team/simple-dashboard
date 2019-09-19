@@ -5,7 +5,7 @@
 {% if table|islist %}
   {% for tab in table %}
   <h2> {{ tab.title }} </h2>
-  <div class="table-responsive">
+  <div class="table-responsive col-md-6">
   <table class="table table-striped" style="float: left">
     <tbody>
       {% if tab.rows|length > 0 %}
