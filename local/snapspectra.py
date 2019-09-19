@@ -19,6 +19,10 @@ import hera_corr_cm
 from jinja2 import Environment, FileSystemLoader
 
 
+def is_list(value):
+    return isinstance(value, list)
+
+
 def main():
     # templates are stored relative to the script dir
     # stored one level up, find the parent directory
@@ -29,6 +33,8 @@ def main():
 
     env = Environment(loader=FileSystemLoader(template_dir),
                       trim_blocks=True)
+    # this filter is used to see if there is more than one table
+    env.filters['islist'] = is_list
 
     if sys.version_info[0] < 3:
         # py2
