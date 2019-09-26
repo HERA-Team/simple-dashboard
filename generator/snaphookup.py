@@ -54,8 +54,7 @@ def main():
     redis_db = redis.Redis(args.redishost, port=args.port)
     corr_map = redis_db.hgetall('corr:map')
 
-    update_time = Time(float(corr_map[b'update_time']), format='gps')
-    print(update_time)
+    update_time = Time(float(corr_map[b'update_time']), format='unix')
     all_tables = []
 
     # make a table of the antenna to snap mapping
