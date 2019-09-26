@@ -79,7 +79,6 @@ def main():
 
         # all_snap_statuses = session.get_snap_status(most_recent=True)
         all_snap_statuses = corr_cm.get_f_status()
-        hostnames = list(set(all_snap_statuses.keys()))
         snapautos = {}
 
         ant_status_from_snaps = corr_cm.get_ant_status()
@@ -90,22 +89,9 @@ def main():
         rows = []
         bad_snaps = []
 
-        # corr_map = redis_db.hgetall('corr:map')
-        # ant_to_snap = json.loads(corr_map[b'ant_to_snap'])
-
         for snap_chan in all_snaprf_stats:
             host, loc_num = snap_chan.split(":")
             loc_num = int(loc_num)
-            # host = ant_status_from_snaps[antpol]['f_host']
-            # loc_num = ant_status_from_snaps[antpol]['host_ant_id']
-
-            # ant, pol = antpol.split(':')
-            # if host == "None":
-            #   host = ant_to_snap[ant][pol]['host']
-            #   raise ValueError("No host name found in `hera_corr_cm.get_snap_status()`")
-            # if loc_num == "None":
-            #     loc_num = ant_to_snap[ant][pol]['channel']
-            #     raise ValueError("No Location Number found in `hera_corr_cm.get_snap_status()`")
 
             # initialize this key if not already in the dict
             auto_group = snapautos.setdefault(host, {})
@@ -127,8 +113,6 @@ def main():
                 print("Type of item in dictionary: ", type(all_snaprf_stats[snap_chan]["autocorrelation"]))
                 print("Value of item: ", tmp_auto)
                 raise
-            # tmp_auto = np.ma.masked_invalid(10 * np.log10(np.real(tmp_auto)))
-            # snapautos[host][loc_num] = tmp_auto.filled(-100)
 
             hostname_lookup.setdefault(host, {})
             hostname_lookup[host].setdefault(loc_num, {})
@@ -146,8 +130,6 @@ def main():
         bad_hosts = []
 
         for ant_cnt, ant in enumerate(ants):
-            # ant_status = session.get_antenna_status(antenna_number=ant,
-            #                                         most_recent=True)
 
             # get the status for both polarizations for this antenna
             ant_status = {key: ant_status_from_snaps[key]
