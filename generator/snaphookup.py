@@ -54,21 +54,30 @@ def main():
     redis_db = redis.Redis(args.redishost, port=args.port)
     corr_map = redis_db.hgetall('corr:map')
 
-    update_time = Time(float(corr_map[b'update_time']), format='jd')
+    update_time = Time(float(corr_map[b'update_time']), format='gps')
+    print(update_time)
     all_tables = []
 
     # make a table of the antenna to snap mapping
     table_a_to_s = {}
     table_a_to_s["title"] = "Antenna -> SNAP mappings"
     rows_a = []
-    ant_to_snap = json.loads(corr_map['ant_to_snap'])
-    for ant, pol in sorted(ant_to_snap.iteritems()):
-        for p, vals in pol.iteritems():
+    ant_to_snap = json.loads(corr_map[b'ant_to_snap'])
+    for ant in sorted(ant_to_snap):
+        pol = ant_to_snap[ant]
+        for p in pol:
+            vals = pol[p]
             row = {}
+            host = vals['host']
+            chan = vals['channel']
+            if isinstance(host, bytes):
+                host = host.decode('utf-8')
+            if isinstance(chan, bytes):
+                chan = chan.decode('utf-8')
             row["text"] = ("{ant}:{pol} -> {host}:{chan}"
                            .format(ant=ant, pol=p,
-                                   host=vals['host'],
-                                   chan=vals['channel'])
+                                   host=host,
+                                   chan=chan)
                            )
             rows_a.append(row)
     table_a_to_s["rows"] = rows_a
@@ -79,11 +88,17 @@ def main():
     table_s_to_a["title"] = "SNAP -> Antenna mappings"
     rows_s = []
 
-    snap_to_ant = json.loads(corr_map['snap_to_ant'])
-    for snap, ant in sorted(snap_to_ant.iteritems()):
+    snap_to_ant = json.loads(corr_map[b'snap_to_ant'])
+    for snap in sorted(snap_to_ant):
+        ant = snap_to_ant[snap]
         for i in range(6):
             if ant[i] is None:
                 ant[i] = "n/c"
+            if isinstance(ant[i], bytes):
+                ant[i] = ant[i].decode('utf-8')
+
+        if isinstance(snap, bytes):
+            snap = snap.decode('utf-8')
         row = {}
         row["text"] = ("{snap} -> {ants}"
                        .format(snap=snap,
@@ -100,9 +115,14 @@ def main():
 
     snap_to_ant_i = redis_db.hgetall("corr:snap_ants")
     rows_ant_ind = []
-    for snap, ant in sorted(snap_to_ant_i.iteritems()):
+    for snap in sorted(snap_to_ant_i):
+        ant = snap_to_ant_i[snap]
         row = {}
-        row["text"] = "{snap} -> {ant}".format(snap=snap, ant=ant)
+        if isinstance(snap, bytes):
+            snap = snap.decode('utf-8')
+        if isinstance(ant, bytes):
+            ant = ant.decode('utf-8')
+        row["text"] = "{snap} -> {ant}".format(snap=snap, ant=str(ant))
         rows_ant_ind.append(row)
 
     table_ant_ind["rows"] = rows_ant_ind
@@ -114,8 +134,13 @@ def main():
     rows_xeng = []
 
     xeng_to_chan_i = redis_db.hgetall("corr:xeng_chans")
-    for xeng, chans in sorted(xeng_to_chan_i.iteritems()):
+    for xeng in sorted(xeng_to_chan_i):
+        chans = xeng_to_chan_i[xeng]
         row = {}
+        if isinstance(xeng, bytes):
+            xeng = xeng.decode('utf-8')
+        if isinstance(chans, bytes):
+            chans = chans.decode('utf-8')
         row["text"] = ("{xeng} -> {chans}...".format(xeng=xeng,
                                                      chans=chans[0:5])
                        )
