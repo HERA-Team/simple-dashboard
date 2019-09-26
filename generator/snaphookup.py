@@ -127,7 +127,7 @@ def main():
 
     rendered_html = html_template.render(tables=all_tables,
                                          data_type="Hookup information",
-                                         data_date=update_time.ios,
+                                         data_date=update_time.iso,
                                          data_jd_date=update_time.jd,
                                          gen_date=Time.now().iso,
                                          gen_time_unix_ms=Time.now().unix * 1000,
