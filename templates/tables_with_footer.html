@@ -5,15 +5,14 @@
 
     {% for table in tables %}
     <h2> {{ table.title }} </h2>
-    <div class="table-responsive">
-    <table class="table table-striped">
+    <div class="table-responsive col-md-{{ colsize or 6 }}">
+    <table class="table table-striped" style="float: left">
       <thead>
-      <tr>
       {% for head in table.headers %}
       <th>{{ head }}</th>
       {% endfor %}
-      </thead><tbody>
-      </tr>
+      </thead>
+      <tbody>
         {% if table.rows|length > 0 %}
         {% for row in table.rows %}
         <tr>
@@ -48,5 +47,7 @@
         Executing host: {{ hostname }}
       </small></small></p>
       {% endif %}
+    {% if js_name is defined %}
     <script src="{{js_name}}.js"></script>
+    {% endif %}
 {% endblock %}
