@@ -99,7 +99,7 @@ def main():
     table_ant_ind["title"] = "SNAP -> Antenna indices"
 
     snap_to_ant_i = redis_db.hgetall("corr:snap_ants")
-    rows_ant_ind = {}
+    rows_ant_ind = []
     for snap, ant in sorted(snap_to_ant_i.iteritems()):
         row = {}
         row["text"] = "{snap} -> {ant}".format(snap=snap, ant=ant)
