@@ -4,7 +4,7 @@
 # Licensed under the 2-clause BSD license.
 
 """
-Generate a simple dashboard page for the HERA snaphookups
+Generate a simple dashboard page for the HERA snaphookups.
 
 Adapted from http://hera.today/snaphookup.html
 """
@@ -13,7 +13,6 @@ from __future__ import absolute_import, division, print_function
 
 import os
 import sys
-import re
 import redis
 import json
 import argparse
@@ -137,3 +136,7 @@ def main():
 
     with open('snaphookup.html', 'w') as h_file:
         h_file.write(rendered_html)
+
+
+if __name__ == "__main__":
+    main()
