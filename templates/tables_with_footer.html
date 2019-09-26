@@ -1,0 +1,53 @@
+{% extends "base_footer.html" %}
+
+{% block body %}
+{% block prebody %}{% endblock %}
+
+    {% for table in tables %}
+    <h2> {{ table.title }} </h2>
+    <div class="table-responsive col-md-{{ colsize or 6 }}">
+    <table class="table table-striped" style="float: left">
+      <thead>
+      {% for head in table.headers %}
+      <th>{{ head }}</th>
+      {% endfor %}
+      </thead>
+      <tbody>
+        {% if table.rows|length > 0 %}
+        {% for row in table.rows %}
+        <tr>
+           <td>{{ row.text }}</td>
+        </tr>
+        {% endfor %}
+        {% endif %}
+
+      </tbody>
+    </table>
+    </div>
+    {% endfor %}
+
+    {% block postbody %}{% endblock %}
+
+{% endblock %}
+
+{% block footer %}
+      {% if data_type is defined %}
+      <p class="text-muted text-center"><small><small>
+        {{ data_type }} from on {{data_date}} (JD: {{ data_jd_date }})<br>
+        Last updated: <span id="age">???</span> ago at {{ gen_date }}<br>
+        Script name: {{ scriptname }}
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        Executing host: {{ hostname }}
+      </small></small></p>
+      {% else %}
+      <p class="text-muted text-center"><small><small>
+        Last updated: <span id="age">???</span> ago at {{ gen_date }}<br>
+        Script name: {{ scriptname }}
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+        Executing host: {{ hostname }}
+      </small></small></p>
+      {% endif %}
+    {% if js_name is defined %}
+    <script src="{{js_name}}.js"></script>
+    {% endif %}
+{% endblock %}
