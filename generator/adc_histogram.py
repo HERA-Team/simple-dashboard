@@ -84,6 +84,10 @@ def main():
                                          sep=',')
                     hist = np.fromstring(stat.histogram.strip('[]'),
                                          sep=',')
+                    eq_coeffs = np.fromstring(stat.eq_coeffs.strip('[]'),
+                                              sep=',')
+                    hist /= np.medina(eq_coeffs)
+
                     text = "observed at {iso}<br>(JD {jd})".format(iso=timestamp.iso,
                                                                    jd=timestamp.jd)
                     # spaces cause weird wrapping issues, replace them all with \t
