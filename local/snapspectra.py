@@ -98,6 +98,8 @@ def main():
 
             try:
                 tmp_auto = all_snaprf_stats[snap_chan]["autocorrelation"]
+                eq_coeffs = all_snaprf_stats[snap_chan]["eq_coeffs"]
+                tmp_auto /= eq_coeffs
                 if tmp_auto == "None":
                     print("No Data for {} port {}".format(host, loc_num))
                     bad_snaps.append(snap_chan)
