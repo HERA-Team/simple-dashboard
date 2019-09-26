@@ -4,7 +4,7 @@
 {% block prebody %}{% endblock %}
 
     {% for table in tables %}
-    <h2> {{ table.title }} </h2
+    <h2> {{ table.title }} </h2>
     <div class="table-responsive">
     <table class="table table-striped">
       <thead>
@@ -19,6 +19,7 @@
         <tr>
            <td>{{ row.text }}</td>
         </tr>
+        {% endfor %}
         {% endif %}
 
       </tbody>
