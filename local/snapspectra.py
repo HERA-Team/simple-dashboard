@@ -97,8 +97,8 @@ def main():
             auto_group = snapautos.setdefault(host, {})
 
             try:
-                tmp_auto = all_snaprf_stats[snap_chan]["autocorrelation"]
-                eq_coeffs = all_snaprf_stats[snap_chan]["eq_coeffs"]
+                tmp_auto = np.array(all_snaprf_stats[snap_chan]["autocorrelation"])
+                eq_coeffs = np.array(all_snaprf_stats[snap_chan]["eq_coeffs"])
                 tmp_auto /= eq_coeffs
                 if tmp_auto == "None":
                     print("No Data for {} port {}".format(host, loc_num))
