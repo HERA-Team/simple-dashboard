@@ -313,7 +313,7 @@ def main():
                             },
                   "yaxis": {"title": 'Power [dBm]',
                             "showticklabels": True,
-                            "range": [-20, 20]
+                            "range": [-35, 10]
                             },
                   "hoverlabel": {"align": "left"},
                   "margin": {"l": 40, "b": 30,
