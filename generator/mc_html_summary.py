@@ -93,12 +93,13 @@ def main():
     is_recording = result[0]
     last_update = Time(result[1], scale='utc', format='gps')
     on_off_row = row(label='Correlator is')
+    # retro palette from https://venngage.com/blog/color-blind-friendly-palette/
     if is_recording:
         on_off_row.text = "ON"
-        on_off_row.color = 'green'
+        on_off_row.color = '#63ACBE'
     else:
         on_off_row.text = "OFF"
-        on_off_row.color = 'red'
+        on_off_row.color = '#EE442f'
     on_off_row.text += "     (last change: {})".format(last_update.iso)
     table.append(on_off_row)
 
