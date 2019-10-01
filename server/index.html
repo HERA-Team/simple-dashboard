@@ -103,7 +103,8 @@ setInterval(reloadradiosky, 30000);
                 <li><a href="http://enterprise.sese.asu.edu:8484/d/Eg-zPcnZk/hera-weather?orgId=1&var-weather_var=All&from=now-7d&to=now">Weather</a></li>
                 <li><a href="http://enterprise.sese.asu.edu:8484/d/Vk00efMZz/rtp_status?orgId=1">Compute and Processing</a></li>
                 <li><a href="http://enterprise.sese.asu.edu:8484/d/B04wvfSZk/mandc-internals?orgId=1">Monitoring Daemons</a></li>
-                <li><a href="http://heranow.reionization.org/librarian/">Librarian logs</a>
+                <li><a href="http://heranow.reionization.org/librarian/">Librarian logs</a></li>
+                <li><a href="http://heranow.reionization.org/snapspectra.html">SNAP Spectra</a></li>
   	      </ul>
         </li>
         <li class="dropdown">
@@ -124,7 +125,8 @@ setInterval(reloadradiosky, 30000);
     <div class="librarian-time-bar">
       Local Time: <span class="date" data-timezone="Africa/Johannesburg">Jan 1</span><br>
       Sidereal time: <span class="clock_sidereal" data-timezone="Africa/Johannesburg">00:00:00</span><br>
-      Brexit: <span id="days">0</span> days  <span id="hours">0</span> hrs <span id="minutes">0</span>mins <span id="seconds">0</span>
+      Brexit: <span id="days">0</span> days  <span id="hours">0</span> hrs <span id="minutes">0</span>mins <span id="seconds">0</span><br>
+      Python 2 Retirement: <span id="pydays">0</span> days  <span id="pyhours">0</span> hrs <span id="pyminutes">0</span>mins <span id="pyseconds">0</span>
      </div></div>
 
 
@@ -208,5 +210,49 @@ setInterval(reloadradiosky, 30000);
 
   })(document, 1572562800, (Date.now()) / 1000);
 </script>
+
+
+<script>
+  (function (d, DEADLINE, serverTime) {
+    var timeDelta = serverTime - (Date.now() + 3600000) / 1000,
+      interval;
+
+    var UI = {
+      days: d.getElementById('pydays'),
+      hours: d.getElementById('pyhours'),
+      minutes: d.getElementById('pyminutes'),
+      seconds: d.getElementById('pyseconds')
+    };
+
+    function getTimeRemaining() {
+      var dt = DEADLINE - (Date.now() + 3600000) / 1000 - timeDelta;
+      return {
+        total: dt,
+        days: Math.floor(dt / (60 * 60 * 24)),
+        hours: Math.floor((dt / (60 * 60)) % 24),
+        minutes: Math.floor((dt / 60) % 60),
+        seconds: Math.floor(dt % 60)
+      };
+    }
+
+    function updateClock() {
+      var t = getTimeRemaining();
+      if (t.total < 0) {
+        clearInterval(interval);
+        return;
+      }
+      UI.days.innerHTML = t.days;
+      UI.hours.innerHTML = ('0' + t.hours).slice(-2);
+      UI.minutes.innerHTML = ('0' + t.minutes).slice(-2);
+      UI.seconds.innerHTML = ('0' + t.seconds).slice(-2);
+    }
+
+    d.documentElement.className = 'js';
+    interval = setInterval(updateClock, 1000);
+    updateClock();
+
+  })(document, 1577836800, (Date.now()) / 1000);
+</script>
+
 
 </html>
