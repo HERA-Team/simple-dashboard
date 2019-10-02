@@ -252,7 +252,7 @@ def main():
                              "y": snapautos[host][loc_num].tolist(),
                              "name": name,
                              "visible": visible,
-                             "hovertemplate": "%{x:.1f}\tMHz<br>%{y:.3f}\t[dBm]"
+                             "hovertemplate": "%{x:.1f}\tMHz<br>%{y:.3f}\t[dB]"
                              }
                 except KeyError:
                     print("Given host, location pair: ({0}, {1})".format(host, loc_num))
@@ -315,7 +315,7 @@ def main():
                             "dtick": 10,
                             "range": [40, 250]
                             },
-                  "yaxis": {"title": 'Power [dBm]',
+                  "yaxis": {"title": 'Power [dB]',
                             "showticklabels": True,
                             "range": [-35, 10]
                             },
