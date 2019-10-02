@@ -84,9 +84,12 @@ def main():
                                          sep=',')
                     hist = np.fromstring(stat.histogram.strip('[]'),
                                          sep=',')
-                    eq_coeffs = np.fromstring(stat.eq_coeffs.strip('[]'),
-                                              sep=',')
-                    hist /= np.medina(eq_coeffs)
+                    if stat.eq_coeffs is not None:
+                        eq_coeffs = np.fromstring(stat.eq_coeffs.strip('[]'),
+                                                  sep=',')
+                    else:
+                        eq_coeffs = np.ones_like(hist)
+                    hist /= np.median(eq_coeffs)
 
                     text = "observed at {iso}<br>(JD {jd})".format(iso=timestamp.iso,
                                                                    jd=timestamp.jd)
