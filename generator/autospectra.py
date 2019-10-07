@@ -92,8 +92,27 @@ def main():
             linename = 'ant%d%s' % (i, pol)
             d = r.get('auto:%d%s' % (i, pol))
             if d is not None:
+
                 n_signals += 1
                 auto = np.frombuffer(d, dtype=np.float32)[0:NCHANS].copy()
+
+                eq_coeffs = r.hget(b'eq:ant:{ant}:{pol}'.format(ant=i, pol=pol),
+                                   'values')
+                if eq_coeffs is not None:
+                    eq_coeffs = np.fromstring(eq_coeffs.decode('utf-8').strip('[]'),
+                                              sep=',')
+                    if eq_coeffs.size == 0:
+                        eq_coeffs = np.ones_like(auto)
+                else:
+                    eq_coeffs = np.ones_like(auto)
+
+                # divide out the equalization coefficients
+                # eq_coeffs are stored as a length 1024 array but only a
+                # single number is used. Taking the median to not deal with
+                # a size mismatch
+                eq_coeffs = np.median(eq_coeffs)
+                auto /= eq_coeffs
+
                 auto[auto < 10 ** -2.5] = 10 ** -2.5
                 auto = 10 * np.log10(auto)
                 _auto = {"x": frange_mhz.tolist(),
