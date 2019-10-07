@@ -9,7 +9,6 @@ from __future__ import absolute_import, division, print_function
 
 import os
 import sys
-import re
 import redis
 import numpy as np
 from hera_mc import mc, cm_sysutils

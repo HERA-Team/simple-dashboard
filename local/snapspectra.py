@@ -11,10 +11,9 @@ import os
 import sys
 import re
 import numpy as np
-import json
 import redis
 from hera_mc import mc, cm_sysutils
-from astropy.time import Time, TimeDelta
+from astropy.time import Time
 import hera_corr_cm
 from jinja2 import Environment, FileSystemLoader
 
