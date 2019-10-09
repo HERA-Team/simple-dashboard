@@ -105,13 +105,20 @@ def main():
                     got_time = True
             linename = 'ant%d%s' % (i, pol)
 
-            match = re.search(r'heraNode(?P<node>\d+)Snap',
-                              ant_to_snap[str(i)][pol]['host'])
-            if match is not None:
-                _node = int(match.group('node'))
-                nodes.append(_node)
-                node_map[linename] = _node
-            else:
+            try:
+                hostname = ant_to_snap[str(i)][pol]['host']
+                match = re.search(r'heraNode(?P<node>\d+)Snap',
+                                  hostname)
+                if match is not None:
+                    _node = int(match.group('node'))
+                    nodes.append(_node)
+                    node_map[linename] = _node
+                else:
+                    print("No Node mapping for antennna: " + linename)
+                    bad_ants.append(linename)
+                    node_map[linename] = -1
+                    nodes.append(-1)
+            except(KeyError):
                 print("No Node mapping for antennna: " + linename)
                 bad_ants.append(linename)
                 node_map[linename] = -1
