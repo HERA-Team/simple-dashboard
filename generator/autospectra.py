@@ -93,7 +93,7 @@ def main():
     autospectra = []
 
     table_ants = {}
-    table_ants["title"] = "Antennas with no mapping"
+    table_ants["title"] = "Antennas with no Node mapping"
     rows = []
     bad_ants = []
     for i in ants:
