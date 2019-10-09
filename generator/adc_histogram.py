@@ -20,6 +20,7 @@ from jinja2 import Environment, FileSystemLoader
 def is_list(value):
     return isinstance(value, list)
 
+
 # Two redis instances run on this server.
 # port 6379 is the hera-digi mirror
 # port 6380 is the paper1 mirror
