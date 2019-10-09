@@ -11,10 +11,9 @@ import os
 import sys
 import re
 import numpy as np
-import json
 import redis
 from hera_mc import mc, cm_sysutils
-from astropy.time import Time, TimeDelta
+from astropy.time import Time
 import hera_corr_cm
 from jinja2 import Environment, FileSystemLoader
 
@@ -79,7 +78,6 @@ def main():
 
         # all_snap_statuses = session.get_snap_status(most_recent=True)
         all_snap_statuses = corr_cm.get_f_status()
-        hostnames = list(set(all_snap_statuses.keys()))
         snapautos = {}
 
         ant_status_from_snaps = corr_cm.get_ant_status()
@@ -90,32 +88,25 @@ def main():
         rows = []
         bad_snaps = []
 
-        # corr_map = redis_db.hgetall('corr:map')
-        # ant_to_snap = json.loads(corr_map[b'ant_to_snap'])
-
         for snap_chan in all_snaprf_stats:
             host, loc_num = snap_chan.split(":")
             loc_num = int(loc_num)
-            # host = ant_status_from_snaps[antpol]['f_host']
-            # loc_num = ant_status_from_snaps[antpol]['host_ant_id']
-
-            # ant, pol = antpol.split(':')
-            # if host == "None":
-            #   host = ant_to_snap[ant][pol]['host']
-            #   raise ValueError("No host name found in `hera_corr_cm.get_snap_status()`")
-            # if loc_num == "None":
-            #     loc_num = ant_to_snap[ant][pol]['channel']
-            #     raise ValueError("No Location Number found in `hera_corr_cm.get_snap_status()`")
 
             # initialize this key if not already in the dict
             auto_group = snapautos.setdefault(host, {})
 
             try:
-                tmp_auto = all_snaprf_stats[snap_chan]["autocorrelation"]
-                if tmp_auto == "None":
+                tmp_auto = np.array(all_snaprf_stats[snap_chan]["autocorrelation"])
+                if np.all(tmp_auto == "None"):
                     print("No Data for {} port {}".format(host, loc_num))
                     bad_snaps.append(snap_chan)
                     tmp_auto = np.full(1024, np.nan)
+
+                eq_coeffs = np.array(all_snaprf_stats[snap_chan]["eq_coeffs"])
+                if np.all(eq_coeffs == "None"):
+                    eq_coeffs = np.full_like(tmp_auto, 1.0)
+
+                tmp_auto /= eq_coeffs
                 tmp_auto = np.ma.masked_invalid(10 * np.log10(np.real(tmp_auto)))
                 auto_group[loc_num] = tmp_auto.filled(0)
 
@@ -127,8 +118,6 @@ def main():
                 print("Type of item in dictionary: ", type(all_snaprf_stats[snap_chan]["autocorrelation"]))
                 print("Value of item: ", tmp_auto)
                 raise
-            # tmp_auto = np.ma.masked_invalid(10 * np.log10(np.real(tmp_auto)))
-            # snapautos[host][loc_num] = tmp_auto.filled(-100)
 
             hostname_lookup.setdefault(host, {})
             hostname_lookup[host].setdefault(loc_num, {})
@@ -146,8 +135,6 @@ def main():
         bad_hosts = []
 
         for ant_cnt, ant in enumerate(ants):
-            # ant_status = session.get_antenna_status(antenna_number=ant,
-            #                                         most_recent=True)
 
             # get the status for both polarizations for this antenna
             ant_status = {key: ant_status_from_snaps[key]
@@ -178,8 +165,6 @@ def main():
                     snap_info = hsession.get_part_at_station_from_type(mc_name,
                                                                        'now', 'snap',
                                                                        include_ports=True)
-                    node_info = hsession.get_part_at_station_from_type(mc_name,
-                                                                       'now', 'node')
                     for _key in snap_info.keys():
                         # initialize a dict if they key does not exist already
 
@@ -188,44 +173,46 @@ def main():
                             snap_serial = serial_with_ports.split('>')[1].split('<')[0]
                             ant_channel = int(serial_with_ports.split('>')[0][1:]) // 2
 
-                            _node_num = re.findall(r'N(\d+)', node_info[_key][pol_key])[0]
+                            hostname = session.get_snap_hostname_from_serial(snap_serial)
 
-                            # start = Time.now() - TimeDelta(1, format='jd')
-                            # stop = Time.now()
-                            snap_stats = session.get_snap_status(nodeID=int(_node_num),
-                                                                 most_recent=True)
+                            if hostname is None:
+                                node_info = hsession.get_part_at_station_from_type(mc_name,
+                                                                                   'now', 'node')
+                                _node_num = re.findall(r'N(\d+)', node_info[_key][pol_key])[0]
 
-                            snap_found = False
-                            for _stat in snap_stats:
-                                if _stat.serial_number == snap_serial:
-                                    snap_found = True
+                                snap_stats = session.get_snap_status(nodeID=int(_node_num),
+                                                                     most_recent=True)
 
-                                    # if this hostname is not in the lookup table yet
-                                    # initialize an empty dict
-                                    if _stat.hostname not in hostname_lookup.keys():
-                                        err = "host from M&C not found in corr_cm 'status:snaprf' : {}".format(_stat.hostname)
-                                        err += '\nThis host may not have data populated yet or is offline.'
-                                        err += '\nAll anteanns on this host will be full of 0.'
-                                        print(err)
-                                        bad_hosts.append(_stat.hostname)
-                                    grp1 = hostname_lookup.setdefault(_stat.hostname, {})
-                                    # if this loc num is not in lookup table initialize
-                                    # empty list
-                                    if ant_channel not in grp1.keys():
-                                        if _stat.hostname not in bad_hosts:
-                                            print("loc_num from M&C not found in hera_corr_cm `status:snaprf` (host, location number): {}".format([_stat.hostname, _stat.snap_loc_num]))
-                                            print("filling with bad array full of 0.")
-                                        else:
-                                            _name = "{host}:{loc}".format(host=_stat.hostname, loc=ant_channel)
-                                            if _name not in table_snap["rows"][0]["text"]:
-                                                table_snap["rows"][0]["text"] += _name + '\t'
-                                        snap_grp1 = snapautos.setdefault(_stat.hostname, {})
-                                        snap_grp1[ant_channel] = np.full(1024, 0)
-                                    grp2 = grp1.setdefault(ant_channel, {})
-                                    grp2['MC'] = name
-                            if not snap_found:
+                                for _stat in snap_stats:
+                                    if _stat.serial_number == snap_serial:
+                                        hostname = _stat.hostname
+
+                            # if hostname is still None then we don't have a known hookup
+                            if hostname is None:
                                 print("No MC snap information for antennna: " + name)
                                 bad_ants.append(name)
+                            else:
+                                if hostname not in hostname_lookup.keys():
+                                    err = "host from M&C not found in corr_cm 'status:snaprf' : {}".format(hostname)
+                                    err += '\nThis host may not have data populated yet or is offline.'
+                                    err += '\nAll anteanns on this host will be full of 0.'
+                                    print(err)
+                                    bad_hosts.append(hostname)
+                                grp1 = hostname_lookup.setdefault(hostname, {})
+                                # if this loc num is not in lookup table initialize
+                                # empty list
+                                if ant_channel not in grp1.keys():
+                                    if hostname not in bad_hosts:
+                                        print("loc_num from M&C not found in hera_corr_cm `status:snaprf` (host, location number): {}".format([hostname, ant_channel]))
+                                        print("filling with bad array full of 0.")
+                                    else:
+                                        _name = "{host}:{loc}".format(host=hostname, loc=ant_channel)
+                                        if _name not in table_snap["rows"][0]["text"]:
+                                            table_snap["rows"][0]["text"] += _name + '\t'
+                                    snap_grp1 = snapautos.setdefault(hostname, {})
+                                    snap_grp1[ant_channel] = np.full(1024, 0)
+                                grp2 = grp1.setdefault(ant_channel, {})
+                                grp2['MC'] = name
 
                         else:
                             print("No MC snap information for antennna: " + name)
@@ -264,7 +251,7 @@ def main():
                              "y": snapautos[host][loc_num].tolist(),
                              "name": name,
                              "visible": visible,
-                             "hovertemplate": "%{x:.1f}\tMHz<br>%{y:.3f}\t[dBm]"
+                             "hovertemplate": "%{x:.1f}\tMHz<br>%{y:.3f}\t[dB]"
                              }
                 except KeyError:
                     print("Given host, location pair: ({0}, {1})".format(host, loc_num))
@@ -327,9 +314,9 @@ def main():
                             "dtick": 10,
                             "range": [40, 250]
                             },
-                  "yaxis": {"title": 'Power [dBm]',
+                  "yaxis": {"title": 'Power [dB]',
                             "showticklabels": True,
-                            "range": [-20, 20]
+                            "range": [-35, 10]
                             },
                   "hoverlabel": {"align": "left"},
                   "margin": {"l": 40, "b": 30,

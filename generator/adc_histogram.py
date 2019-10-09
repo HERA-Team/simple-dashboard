@@ -9,7 +9,6 @@ from __future__ import absolute_import, division, print_function
 
 import os
 import sys
-import re
 import redis
 import numpy as np
 from hera_mc import mc, cm_sysutils
@@ -84,6 +83,13 @@ def main():
                                          sep=',')
                     hist = np.fromstring(stat.histogram.strip('[]'),
                                          sep=',')
+                    if stat.eq_coeffs is not None:
+                        eq_coeffs = np.fromstring(stat.eq_coeffs.strip('[]'),
+                                                  sep=',')
+                    else:
+                        eq_coeffs = np.ones_like(hist)
+                    hist /= np.median(eq_coeffs)
+
                     text = "observed at {iso}<br>(JD {jd})".format(iso=timestamp.iso,
                                                                    jd=timestamp.jd)
                     # spaces cause weird wrapping issues, replace them all with \t
