@@ -316,7 +316,7 @@ def main():
                             },
                   "yaxis": {"title": 'Power [dB]',
                             "showticklabels": True,
-                            "range": [-35, 10]
+                            # "range": [-35, 10]
                             },
                   "hoverlabel": {"align": "left"},
                   "margin": {"l": 40, "b": 30,
