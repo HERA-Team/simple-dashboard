@@ -120,7 +120,7 @@ def main():
                                                   sep=',')
                     else:
                         eq_coeffs = np.ones_like(hist)
-                    hist /= np.median(eq_coeffs)
+                    hist /= np.median(eq_coeffs)**2
 
                     text = "observed at {iso}<br>(JD {jd})".format(iso=timestamp.iso,
                                                                    jd=timestamp.jd)

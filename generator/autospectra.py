@@ -130,8 +130,10 @@ def main():
                 n_signals += 1
                 auto = np.frombuffer(d, dtype=np.float32)[0:NCHANS].copy()
 
-                eq_coeffs = r.hget(b'eq:ant:{ant}:{pol}'.format(ant=i, pol=pol),
-                                   'values')
+                eq_coeffs = r.hget(
+                    bytes('eq:ant:{ant}:{pol}'.format(ant=i, pol=pol).encode()),
+                    'values'
+                )
                 if eq_coeffs is not None:
                     eq_coeffs = np.fromstring(eq_coeffs.decode('utf-8').strip('[]'),
                                               sep=',')
@@ -145,9 +147,9 @@ def main():
                 # single number is used. Taking the median to not deal with
                 # a size mismatch
                 eq_coeffs = np.median(eq_coeffs)
-                auto /= eq_coeffs
+                auto /= eq_coeffs**2
 
-                auto[auto < 10 ** -2.5] = 10 ** -2.5
+                auto[auto < 10 ** -5.0] = 10 ** -5.0
                 auto = 10 * np.log10(auto)
                 _auto = {"x": frange_mhz.tolist(),
                          "y": auto.tolist(),
