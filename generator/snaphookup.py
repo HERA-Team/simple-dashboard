@@ -62,7 +62,8 @@ def main():
     table_a_to_s["title"] = "Antenna -> SNAP mappings"
     rows_a = []
     ant_to_snap = json.loads(corr_map[b'ant_to_snap'])
-    for ant in sorted(ant_to_snap):
+    for ant in sorted(map(int, ant_to_snap)):
+        ant = str(ant)
         pol = ant_to_snap[ant]
         for p in pol:
             vals = pol[p]
@@ -133,7 +134,8 @@ def main():
     rows_xeng = []
 
     xeng_to_chan_i = redis_db.hgetall("corr:xeng_chans")
-    for xeng in sorted(xeng_to_chan_i):
+    for xeng in sorted(map(int, xeng_to_chan_i)):
+        xeng = bytes(str(xeng).encode())
         chans = xeng_to_chan_i[xeng]
         row = {}
         if isinstance(xeng, bytes):
