@@ -106,7 +106,7 @@ def main():
                 if np.all(eq_coeffs == "None"):
                     eq_coeffs = np.full_like(tmp_auto, 1.0)
 
-                tmp_auto /= eq_coeffs
+                tmp_auto /= eq_coeffs**2
                 tmp_auto = np.ma.masked_invalid(10 * np.log10(np.real(tmp_auto)))
                 auto_group[loc_num] = tmp_auto.filled(0)
 
@@ -316,7 +316,7 @@ def main():
                             },
                   "yaxis": {"title": 'Power [dB]',
                             "showticklabels": True,
-                            "range": [-35, 10]
+                            # "range": [-35, 10]
                             },
                   "hoverlabel": {"align": "left"},
                   "margin": {"l": 40, "b": 30,
