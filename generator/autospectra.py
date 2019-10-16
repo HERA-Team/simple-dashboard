@@ -100,10 +100,14 @@ def main():
         for pol in ['e', 'n']:
             # get the timestamp from redis for the first ant-pol
             if not got_time:
-                t_plot_jd = float(r.hget('visdata://%d/%d/%s%s' % (i, i, pol, pol), 'time'))
+                t_plot_jd = float(r.hget('visdata://{i:d}/{j:d}/{i_pol:s}{j_pol:s}'
+                                         .format(i=i, j=i, i_pol=pol, j_pol=pol),
+                                         'time'
+                                         )
+                                  )
                 if t_plot_jd is not None:
                     got_time = True
-            linename = 'ant%d%s' % (i, pol)
+            linename = 'ant{ant:d}{pol:s}'.format(ant=i, pol=pol)
 
             try:
                 hostname = ant_to_snap[str(i)][pol]['host']
@@ -124,7 +128,7 @@ def main():
                 node_map[linename] = -1
                 nodes.append(-1)
 
-            d = r.get('auto:%d%s' % (i, pol))
+            d = r.get('auto:{ant:d}{pol:s}'.format(ant=i, pol=pol))
             if d is not None:
 
                 n_signals += 1
@@ -242,7 +246,7 @@ def main():
                                      updatemenus=updatemenus,
                                      plotname=plotname)
 
-    print('Got %d signals' % n_signals)
+    print('Got {n_sig:d} signals'.format(n_sig=n_signals))
     with open('spectra.html', 'w') as h_file:
         h_file.write(rendered_html)
     with open('spectra.js', 'w') as js_file:
