@@ -97,8 +97,17 @@ def main():
                 # try to find the associated node
                 # get the first key in the dict to index easier
                 _key = list(node_info.keys())[0]
-                if node_info[_key][stat.antenna_feed_pol] is not None:
-                    _node_num = re.findall(r'N(\d+)', node_info[_key]['e'])[0]
+                pol_key = [key for key in node_info[_key].keys()
+                           if stat.antenna_feed_pol.upper() in key]
+                if pol_key:
+                    # 'E' should be in one of the keys, extract the 0th entry
+                    pol_key = pol_key[0]
+                else:
+                    # a hacky solution for a key that should work
+                    pol_key = 'E<ground'
+
+                if node_info[_key][pol_key] is not None:
+                    _node_num = re.findall(r'N(\d+)', node_info[_key][pol_key])[0]
                 else:
                     print("No Node mapping for antennna: " + name)
                     _node_num = -1

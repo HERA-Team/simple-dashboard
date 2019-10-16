@@ -149,16 +149,24 @@ def main():
                                                                'now', 'snap')
             # get the first key in the dict to index easier
             _key = list(snap_info.keys())[0]
-            if snap_info[_key]['e'] is not None:
-                snap_serial[ant_cnt] = snap_info[_key]['e']
+            pol_key = [key for key in snap_info[_key].keys()
+                       if 'E' in key]
+            if pol_key:
+                # 'E' should be in one of the keys, extract the 0th entry
+                pol_key = pol_key[0]
+            else:
+                # a hacky solution for a key that should work
+                pol_key = 'E<ground'
+            if snap_info[_key][pol_key] is not None:
+                snap_serial[ant_cnt] = snap_info[_key][pol_key]
 
             # Try to get the pam info. Output is a dictionary with 'e' and 'n' keys
             pam_info = hsession.get_part_at_station_from_type(mc_name,
                                                               'now', 'post-amp')
             # get the first key in the dict to index easier
             _key = list(pam_info.keys())[0]
-            if pam_info[_key]['e'] is not None:
-                _pam_num = re.findall(r'PAM(\d+)', pam_info[_key]['e'])[0]
+            if pam_info[_key][pol_key] is not None:
+                _pam_num = re.findall(r'PAM(\d+)', pam_info[_key][pol_key])[0]
                 pam_ind[ant_cnt] = np.int(_pam_num)
             else:
                 pam_ind[ant_cnt] = -1
@@ -168,8 +176,8 @@ def main():
                                                                'now', 'node')
             # get the first key in the dict to index easier
             _key = list(node_info.keys())[0]
-            if node_info[_key]['e'] is not None:
-                _node_num = re.findall(r'N(\d+)', node_info[_key]['e'])[0]
+            if node_info[_key][pol_key] is not None:
+                _node_num = re.findall(r'N(\d+)', node_info[_key][pol_key])[0]
                 node_ind[ant_cnt] = np.int(_node_num)
 
                 snap_status = session.get_snap_status(most_recent=True,
