@@ -483,6 +483,7 @@ def main():
         tables.append(do_raid_status(session, cutoff))
 
         rendered_html = html_template.render(plotname=plotnames,
+                                             title="Librarian",
                                              plotstyle="height: 220",
                                              colsize=colsize,
                                              gen_date=now.iso,
