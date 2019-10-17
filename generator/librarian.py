@@ -468,8 +468,9 @@ def main():
             js_file.write('\n\n')
 
         data = do_compare_file_types(session, cutoff)
-        layout["yaxis"]["title"] = 'Files in <br><b>temporary staging area<\b>'
+        layout["yaxis"]["title"] = 'Files in <br><b>temporary staging</b>'
         layout["yaxis"]["zeroline"] = True
+        layout["margin"]["l"] = 60
         if data is not None:
             rendered_js = js_template.render(plotname="file-compare",
                                              data=data,
