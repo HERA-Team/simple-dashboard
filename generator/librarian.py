@@ -243,6 +243,7 @@ def do_compare_file_types(session, cutoff):
     # This will only execute on qmaster
     # Count the number of raw files staged at /mnt/sn1 that are like zen.(\d+).(\d+).uvh5
     # Compare with the number of processed files that match zen.(\d+).(\d+).HH.uvh5
+    # only compare files that have a JD newer than the oldest raw file
     if sys.version_info[0] < 3:
         # py2
         computer_hostname = os.uname()[1]
@@ -268,6 +269,12 @@ def do_compare_file_types(session, cutoff):
     processed_names = [f for f in os.listdir(data_dir)
                        if re.search(processed_regex, f)]
 
+    raw_jd = Time([float(re.findall(raw_regex, f)[0]) for f in raw_names],
+                  format='jd')
+    proc_jd = Time([float(re.findall(processed_regex, f)[0])
+                    for f in processed_names],
+                   format='jd')
+
     # try to find the times they were created
     raw_times = Time([creation_date(os.path.join(data_dir, n))
                       for n in raw_names],
@@ -276,16 +283,19 @@ def do_compare_file_types(session, cutoff):
     hh_times = Time([creation_date(os.path.join(data_dir, n))
                      for n in processed_names],
                     format='unix')
+    # Only consider processed files if their JD is equal to or newer than
+    # the oldest raw file
+    hh_times = hh_times[proc_jd >= raw_jd.min()]
 
     n_files_raw = []
     n_files_processed = []
     for _t in time_array:
-        n_files_raw.append(sum([_t >= raw_times]))
-        n_files_processed.append(sum([_t >= hh_times]))
+        n_files_raw.append(int(sum(list(_t >= raw_times))))
+        n_files_processed.append(int(sum(list(_t >= hh_times))))
 
     __data = {"x": time_array.isot.tolist(),
               "y": n_files_raw,
-              "name": "Number of raw files".replace(' ', '\t'),
+              "name": "Raw files".replace(' ', '\t'),
               "type": "scatter"
               }
 
@@ -293,7 +303,7 @@ def do_compare_file_types(session, cutoff):
 
     __data = {"x": time_array.isot.tolist(),
               "y": n_files_processed,
-              "name": "Number of processed files".replace(' ', '\t'),
+              "name": "Processed files".replace(' ', '\t'),
               "type": "scatter"
               }
 
@@ -458,7 +468,7 @@ def main():
             js_file.write('\n\n')
 
         data = do_compare_file_types(session, cutoff)
-        layout["yaxis"]["title"] = 'Number of Files'
+        layout["yaxis"]["title"] = 'Files in temporary staging area'
         layout["yaxis"]["zeroline"] = True
         if data is not None:
             rendered_js = js_template.render(plotname="file-compare",
