@@ -9,10 +9,11 @@ from __future__ import absolute_import, division, print_function
 
 import os
 import sys
+import re
 from astropy.time import Time, TimeDelta
 from html import escape
 from hera_mc import mc
-from hera_mc.librarian import LibRAIDErrors, LibRAIDStatus, LibRemoteStatus, LibServerStatus, LibStatus
+from hera_mc.librarian import LibRAIDErrors, LibRAIDStatus, LibRemoteStatus, LibServerStatus, LibStatus, LibFiles
 from jinja2 import Environment, FileSystemLoader
 
 
@@ -203,6 +204,19 @@ def do_ping_times(session, cutoff):
     return _data
 
 
+def creation_date(path_to_file):
+    """
+    Try to get the date that a file was created.
+
+    Falling back to when it was
+    last modified if that isn't possible.
+    See http://stackoverflow.com/a/39501288/1709587 for explanation.
+    Modified to remove the non-linux sections of the code found on link.
+    """
+    stat = os.stat(path_to_file)
+    return stat.st_mtime
+
+
 def do_num_files(session, cutoff):
     _data = []
     data = (session.query(LibStatus.time, LibStatus.num_files)
@@ -216,11 +230,62 @@ def do_num_files(session, cutoff):
         time_array = []
     __data = {"x": time_array,
               "y": [t[1] for t in data],
-              "name": "Number of files".replace(' ', '\t'),
+              "name": "Total Number of files".replace(' ', '\t'),
               "type": "scatter"
               }
 
     _data.append(__data)
+
+    # This will only execute on qmaster
+    # Count the number of raw files staged at /mnt/sn1 that are like zen.(\d+).(\d+).uvh5
+    # Compare with the number of processed files that match zen.(\d+).(\d+).HH.uvh5
+    if sys.version_info[0] < 3:
+        # py2
+        computer_hostname = os.uname()[1]
+    else:
+        # py3
+        computer_hostname = os.uname().nodename
+    if computer_hostname == 'qmaster':
+
+        raw_regex = r'zen.(\d+.\d+).uvh5'
+        processed_regex = r'zen.(\d+.\d+).HH.uvh5'
+        data_dir = '/mnt/sn1/'
+        raw_names = [f for f in os.listdir(data_dir)
+                     if re.search(raw_regex, f)]
+
+        processed_names = [f for f in os.listdir(data_dir)
+                           if re.search(processed_regex, f)]
+
+        # try to find the times they were created
+        raw_times = Time([creation_date(os.path.join(data_dir, n))
+                          for n in raw_names],
+                         format='unix')
+
+        hh_times = Time([creation_date(os.path.join(data_dir, n))
+                         for n in processed_names],
+                        format='unix')
+
+        n_files_raw = []
+        n_files_processed = []
+        for _t in time_array:
+            n_files_raw.append(sum(_t >= rt) for rt in raw_times)
+            n_files_processed.append(sum(_t >= ht) for ht in hh_times)
+
+        __data = {"x": time_array,
+                  "y": n_files_raw,
+                  "name": "Number of raw files".replace(' ', '\t'),
+                  "type": "scatter"
+                  }
+
+        _data.append(__data)
+
+        __data = {"x": time_array,
+                  "y": n_files_processed,
+                  "name": "Number of processed files".replace(' ', '\t'),
+                  "type": "scatter"
+                  }
+
+        _data.append(__data)
 
     return _data
 
