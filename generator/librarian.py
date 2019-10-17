@@ -280,8 +280,8 @@ def do_compare_file_types(session, cutoff):
     n_files_raw = []
     n_files_processed = []
     for _t in time_array:
-        n_files_raw.append(sum([_t >= rt for rt in raw_times]))
-        n_files_processed.append(sum([_t >= ht for ht in hh_times]))
+        n_files_raw.append(sum([_t >= raw_times]))
+        n_files_processed.append(sum([_t >= hh_times]))
 
     __data = {"x": time_array,
               "y": n_files_raw,
@@ -460,12 +460,13 @@ def main():
         data = do_compare_file_types(session, cutoff)
         layout["yaxis"]["title"] = 'Number of Files'
         layout["yaxis"]["zeroline"] = True
-        rendered_js = js_template.render(plotname="file-compare",
-                                         data=data,
-                                         layout=layout)
-        with open('librarian.js', 'a') as js_file:
-            js_file.write(rendered_js)
-            js_file.write('\n\n')
+        if data is not None:
+            rendered_js = js_template.render(plotname="file-compare",
+                                             data=data,
+                                             layout=layout)
+            with open('librarian.js', 'a') as js_file:
+                js_file.write(rendered_js)
+                js_file.write('\n\n')
 
         tables = []
         tables.append(do_raid_errors(session, cutoff))
