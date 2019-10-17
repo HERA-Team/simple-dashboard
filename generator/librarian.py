@@ -236,6 +236,10 @@ def do_num_files(session, cutoff):
 
     _data.append(__data)
 
+    return _data
+
+
+def do_compare_file_types(session, cutoff):
     # This will only execute on qmaster
     # Count the number of raw files staged at /mnt/sn1 that are like zen.(\d+).(\d+).uvh5
     # Compare with the number of processed files that match zen.(\d+).(\d+).HH.uvh5
@@ -245,47 +249,55 @@ def do_num_files(session, cutoff):
     else:
         # py3
         computer_hostname = os.uname().nodename
-    if computer_hostname == 'qmaster':
+    if computer_hostname != 'qmaster':
+        return
 
-        raw_regex = r'zen.(\d+.\d+).uvh5'
-        processed_regex = r'zen.(\d+.\d+).HH.uvh5'
-        data_dir = '/mnt/sn1/'
-        raw_names = [f for f in os.listdir(data_dir)
-                     if re.search(raw_regex, f)]
+    data = (session.query(LibStatus.time, LibStatus.num_files)
+            .filter(LibStatus.time > cutoff.gps)
+            .order_by(LibStatus.time)
+            .all())
+    time_array = Time([t[0] for t in data], format='gps')
 
-        processed_names = [f for f in os.listdir(data_dir)
-                           if re.search(processed_regex, f)]
+    _data = []
+    raw_regex = r'zen.(\d+.\d+).uvh5'
+    processed_regex = r'zen.(\d+.\d+).HH.uvh5'
+    data_dir = '/mnt/sn1/'
+    raw_names = [f for f in os.listdir(data_dir)
+                 if re.search(raw_regex, f)]
 
-        # try to find the times they were created
-        raw_times = Time([creation_date(os.path.join(data_dir, n))
-                          for n in raw_names],
-                         format='unix')
+    processed_names = [f for f in os.listdir(data_dir)
+                       if re.search(processed_regex, f)]
 
-        hh_times = Time([creation_date(os.path.join(data_dir, n))
-                         for n in processed_names],
-                        format='unix')
+    # try to find the times they were created
+    raw_times = Time([creation_date(os.path.join(data_dir, n))
+                      for n in raw_names],
+                     format='unix')
 
-        n_files_raw = []
-        n_files_processed = []
-        for _t in time_array:
-            n_files_raw.append(sum(_t >= rt) for rt in raw_times)
-            n_files_processed.append(sum(_t >= ht) for ht in hh_times)
+    hh_times = Time([creation_date(os.path.join(data_dir, n))
+                     for n in processed_names],
+                    format='unix')
 
-        __data = {"x": time_array,
-                  "y": n_files_raw,
-                  "name": "Number of raw files".replace(' ', '\t'),
-                  "type": "scatter"
-                  }
+    n_files_raw = []
+    n_files_processed = []
+    for _t in time_array:
+        n_files_raw.append(sum([_t >= rt for rt in raw_times]))
+        n_files_processed.append(sum([_t >= ht for ht in hh_times]))
 
-        _data.append(__data)
+    __data = {"x": time_array,
+              "y": n_files_raw,
+              "name": "Number of raw files".replace(' ', '\t'),
+              "type": "scatter"
+              }
 
-        __data = {"x": time_array,
-                  "y": n_files_processed,
-                  "name": "Number of processed files".replace(' ', '\t'),
-                  "type": "scatter"
-                  }
+    _data.append(__data)
 
-        _data.append(__data)
+    __data = {"x": time_array,
+              "y": n_files_processed,
+              "name": "Number of processed files".replace(' ', '\t'),
+              "type": "scatter"
+              }
+
+    _data.append(__data)
 
     return _data
 
@@ -367,7 +379,9 @@ def main():
     time_axis_range = [cutoff.isot, now.isot]
     plotnames = [["server-loads", "upload-ages"],
                  ["disk-space", "bandwidths"],
-                 ["num-files", "ping-times"]]
+                 ["num-files", "ping-times"],
+                 ["file-compare"]
+                 ]
 
     layout = {"xaxis": {"range": time_axis_range},
               "yaxis": {"title": 'Load % per CPU'},
@@ -437,6 +451,16 @@ def main():
         layout["yaxis"]["rangemode"] = 'tozero'
         layout["yaxis"]["zeroline"] = True
         rendered_js = js_template.render(plotname="ping-times",
+                                         data=data,
+                                         layout=layout)
+        with open('librarian.js', 'a') as js_file:
+            js_file.write(rendered_js)
+            js_file.write('\n\n')
+
+        data = do_compare_file_types(session, cutoff)
+        layout["yaxis"]["title"] = 'Number of Files'
+        layout["yaxis"]["zeroline"] = True
+        rendered_js = js_template.render(plotname="file-compare",
                                          data=data,
                                          layout=layout)
         with open('librarian.js', 'a') as js_file:
