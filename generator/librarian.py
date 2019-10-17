@@ -283,7 +283,7 @@ def do_compare_file_types(session, cutoff):
         n_files_raw.append(sum([_t >= raw_times]))
         n_files_processed.append(sum([_t >= hh_times]))
 
-    __data = {"x": time_array,
+    __data = {"x": time_array.isot.tolist(),
               "y": n_files_raw,
               "name": "Number of raw files".replace(' ', '\t'),
               "type": "scatter"
@@ -291,7 +291,7 @@ def do_compare_file_types(session, cutoff):
 
     _data.append(__data)
 
-    __data = {"x": time_array,
+    __data = {"x": time_array.isot.tolist(),
               "y": n_files_processed,
               "name": "Number of processed files".replace(' ', '\t'),
               "type": "scatter"
