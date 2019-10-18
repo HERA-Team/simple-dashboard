@@ -10,6 +10,7 @@ from __future__ import absolute_import, division, print_function
 import os
 import sys
 import re
+import numpy as np
 from astropy.time import Time, TimeDelta
 from html import escape
 from hera_mc import mc
@@ -239,7 +240,7 @@ def do_num_files(session, cutoff):
     return _data
 
 
-def do_compare_file_types(session, cutoff):
+def do_compare_file_types(TIME_WINDOW):
     # This will only execute on qmaster
     # Count the number of raw files staged at /mnt/sn1 that are like zen.(\d+).(\d+).uvh5
     # Compare with the number of processed files that match zen.(\d+).(\d+).HH.uvh5
@@ -252,13 +253,8 @@ def do_compare_file_types(session, cutoff):
         computer_hostname = os.uname().nodename
     if computer_hostname != 'qmaster':
         return
-
-    data = (session.query(LibStatus.time, LibStatus.num_files)
-            .filter(LibStatus.time > cutoff.gps)
-            .order_by(LibStatus.time)
-            .all())
-    time_array = Time([t[0] for t in data], format='gps')
-
+    timesteps = np.linspace(-1 * TIME_WINDOW, 0, 24 * 14 * 6, endpoint=True)
+    time_array = Time.now() + TimeDelta(timesteps, format='jd')
     _data = []
     raw_regex = r'zen.(\d+.\d+).uvh5'
     processed_regex = r'zen.(\d+.\d+).HH.uvh5'
@@ -467,7 +463,7 @@ def main():
             js_file.write(rendered_js)
             js_file.write('\n\n')
 
-        data = do_compare_file_types(session, cutoff)
+        data = do_compare_file_types(TIME_WINDOW)
         layout["yaxis"]["title"] = 'Files in <br><b>temporary staging</b>'
         layout["yaxis"]["zeroline"] = True
         layout["margin"]["l"] = 60
