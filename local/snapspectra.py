@@ -167,7 +167,7 @@ def main():
                                                                        include_ports=True)
                     for _key in snap_info.keys():
                         # initialize a dict if they key does not exist already
-
+                        pol_key = pol_key.upper() + "<ground"
                         if snap_info[_key][pol_key] is not None:
                             serial_with_ports = snap_info[_key][pol_key]
                             snap_serial = serial_with_ports.split('>')[1].split('<')[0]
@@ -294,7 +294,7 @@ def main():
                          )
             _button = {"args": [{"visible": host_masks[host_cnt]},
                                 {"title": '',
-                                 "annotations": {}
+                                 # "annotations": {}
                                  }
                                 ],
                        "label": label,
@@ -324,6 +324,18 @@ def main():
                   "autosize": True,
                   "showlegend": True,
                   "hovermode": 'closest',
+                  "annotations": [{"x": 1.12,
+                                   "y": 1.05,
+                                   "align": "right",
+                                   "valign": "top",
+                                   "text": 'ADC Port # : Antpol',
+                                   "showarrow": False,
+                                   "xref": "paper",
+                                   "yref": "paper",
+                                   "xanchor": "center",
+                                   "yanchor": "top"
+                                   }
+                                  ]
                   }
 
         plotname = "plotly-snap"
