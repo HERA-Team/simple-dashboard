@@ -108,7 +108,7 @@ def main():
 
                 tmp_auto /= eq_coeffs**2
                 tmp_auto = np.ma.masked_invalid(10 * np.log10(np.real(tmp_auto)))
-                auto_group[loc_num] = tmp_auto.filled(0)
+                auto_group[loc_num] = tmp_auto.filled(-50)
 
             except KeyError:
                 print("Snap connection with no autocorrelation", snap_chan)
