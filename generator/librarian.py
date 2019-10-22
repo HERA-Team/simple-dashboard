@@ -259,11 +259,23 @@ def do_compare_file_types(TIME_WINDOW):
     raw_regex = r'zen.(\d+.\d+).uvh5'
     processed_regex = r'zen.(\d+.\d+).HH.uvh5'
     data_dir = '/mnt/sn1/'
-    raw_names = [f for f in os.listdir(data_dir)
-                 if re.search(raw_regex, f)]
+    try:
+        raw_names = [f for f in os.listdir(data_dir)
+                     if re.search(raw_regex, f)]
+    except OSError as err:
+        print("Experienced OSError while "
+              "attempting to find files: {err}".format(err)
+              )
+        return
 
-    processed_names = [f for f in os.listdir(data_dir)
-                       if re.search(processed_regex, f)]
+    try:
+        processed_names = [f for f in os.listdir(data_dir)
+                           if re.search(processed_regex, f)]
+    except OSError as err:
+        print("Experienced OSError while "
+              "attempting to find files: {err}".format(err)
+              )
+        return
 
     raw_jd = Time([float(re.findall(raw_regex, f)[0]) for f in raw_names],
                   format='jd')
@@ -464,10 +476,10 @@ def main():
             js_file.write('\n\n')
 
         data = do_compare_file_types(TIME_WINDOW)
-        layout["yaxis"]["title"] = 'Files in <br><b>temporary staging</b>'
-        layout["yaxis"]["zeroline"] = True
-        layout["margin"]["l"] = 60
         if data is not None:
+            layout["yaxis"]["title"] = 'Files in <br><b>temporary staging</b>'
+            layout["yaxis"]["zeroline"] = True
+            layout["margin"]["l"] = 60
             rendered_js = js_template.render(plotname="file-compare",
                                              data=data,
                                              layout=layout)
