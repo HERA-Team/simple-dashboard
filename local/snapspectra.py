@@ -241,7 +241,7 @@ def main():
             else:
                 visible = False
 
-            for loc_num in hostname_lookup[host].keys():
+            for loc_num in sorted(hostname_lookup[host].keys()):
                 mc_name = hostname_lookup[host][loc_num]['MC']
 
                 name = '{loc}:{mcname}'.format(loc=loc_num,
