@@ -108,7 +108,7 @@ def main():
 
                 tmp_auto /= eq_coeffs**2
                 tmp_auto = np.ma.masked_invalid(10 * np.log10(np.real(tmp_auto)))
-                auto_group[loc_num] = tmp_auto.filled(0)
+                auto_group[loc_num] = tmp_auto.filled(-50)
 
             except KeyError:
                 print("Snap connection with no autocorrelation", snap_chan)
@@ -167,7 +167,7 @@ def main():
                                                                        include_ports=True)
                     for _key in snap_info.keys():
                         # initialize a dict if they key does not exist already
-
+                        pol_key = pol_key.upper() + "<ground"
                         if snap_info[_key][pol_key] is not None:
                             serial_with_ports = snap_info[_key][pol_key]
                             snap_serial = serial_with_ports.split('>')[1].split('<')[0]
@@ -241,7 +241,7 @@ def main():
             else:
                 visible = False
 
-            for loc_num in hostname_lookup[host].keys():
+            for loc_num in sorted(hostname_lookup[host].keys()):
                 mc_name = hostname_lookup[host][loc_num]['MC']
 
                 name = '{loc}:{mcname}'.format(loc=loc_num,
@@ -294,7 +294,7 @@ def main():
                          )
             _button = {"args": [{"visible": host_masks[host_cnt]},
                                 {"title": '',
-                                 "annotations": {}
+                                 # "annotations": {}
                                  }
                                 ],
                        "label": label,
@@ -324,6 +324,18 @@ def main():
                   "autosize": True,
                   "showlegend": True,
                   "hovermode": 'closest',
+                  "annotations": [{"x": 1.05,
+                                   "y": 1.03,
+                                   "align": "right",
+                                   "valign": "top",
+                                   "text": 'ADC Port # : Antpol',
+                                   "showarrow": False,
+                                   "xref": "paper",
+                                   "yref": "paper",
+                                   "xanchor": "center",
+                                   "yanchor": "top"
+                                   }
+                                  ]
                   }
 
         plotname = "plotly-snap"

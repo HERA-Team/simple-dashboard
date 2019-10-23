@@ -9,10 +9,12 @@ from __future__ import absolute_import, division, print_function
 
 import os
 import sys
+import re
+import numpy as np
 from astropy.time import Time, TimeDelta
 from html import escape
 from hera_mc import mc
-from hera_mc.librarian import LibRAIDErrors, LibRAIDStatus, LibRemoteStatus, LibServerStatus, LibStatus
+from hera_mc.librarian import LibRAIDErrors, LibRAIDStatus, LibRemoteStatus, LibServerStatus, LibStatus, LibFiles
 from jinja2 import Environment, FileSystemLoader
 
 
@@ -203,6 +205,19 @@ def do_ping_times(session, cutoff):
     return _data
 
 
+def creation_date(path_to_file):
+    """
+    Try to get the date that a file was created.
+
+    Falling back to when it was
+    last modified if that isn't possible.
+    See http://stackoverflow.com/a/39501288/1709587 for explanation.
+    Modified to remove the non-linux sections of the code found on link.
+    """
+    stat = os.stat(path_to_file)
+    return stat.st_mtime
+
+
 def do_num_files(session, cutoff):
     _data = []
     data = (session.query(LibStatus.time, LibStatus.num_files)
@@ -216,7 +231,87 @@ def do_num_files(session, cutoff):
         time_array = []
     __data = {"x": time_array,
               "y": [t[1] for t in data],
-              "name": "Number of files".replace(' ', '\t'),
+              "name": "Total Number of files".replace(' ', '\t'),
+              "type": "scatter"
+              }
+
+    _data.append(__data)
+
+    return _data
+
+
+def do_compare_file_types(TIME_WINDOW):
+    # This will only execute on qmaster
+    # Count the number of raw files staged at /mnt/sn1 that are like zen.(\d+).(\d+).uvh5
+    # Compare with the number of processed files that match zen.(\d+).(\d+).HH.uvh5
+    # only compare files that have a JD newer than the oldest raw file
+    if sys.version_info[0] < 3:
+        # py2
+        computer_hostname = os.uname()[1]
+    else:
+        # py3
+        computer_hostname = os.uname().nodename
+    if computer_hostname != 'qmaster':
+        return
+    timesteps = np.linspace(-1 * TIME_WINDOW, 0, 24 * 14 * 6, endpoint=True)
+    time_array = Time.now() + TimeDelta(timesteps, format='jd')
+    _data = []
+    raw_regex = r'zen.(\d+.\d+).uvh5'
+    processed_regex = r'zen.(\d+.\d+).HH.uvh5'
+    data_dir = '/mnt/sn1/'
+    try:
+        raw_names = [f for f in os.listdir(data_dir)
+                     if re.search(raw_regex, f)]
+    except OSError as err:
+        print("Experienced OSError while "
+              "attempting to find files: {err}".format(err)
+              )
+        return
+
+    try:
+        processed_names = [f for f in os.listdir(data_dir)
+                           if re.search(processed_regex, f)]
+    except OSError as err:
+        print("Experienced OSError while "
+              "attempting to find files: {err}".format(err)
+              )
+        return
+
+    raw_jd = Time([float(re.findall(raw_regex, f)[0]) for f in raw_names],
+                  format='jd')
+    proc_jd = Time([float(re.findall(processed_regex, f)[0])
+                    for f in processed_names],
+                   format='jd')
+
+    # try to find the times they were created
+    raw_times = Time([creation_date(os.path.join(data_dir, n))
+                      for n in raw_names],
+                     format='unix')
+
+    hh_times = Time([creation_date(os.path.join(data_dir, n))
+                     for n in processed_names],
+                    format='unix')
+    # Only consider processed files if their JD is equal to or newer than
+    # the oldest raw file
+    hh_times = hh_times[proc_jd >= raw_jd.min()]
+
+    n_files_raw = []
+    n_files_processed = []
+    for _t in time_array:
+        n_files_raw.append(int(sum(list(_t >= raw_times))))
+        n_files_processed.append(int(sum(list(_t >= hh_times))))
+
+    __data = {"x": time_array.isot.tolist(),
+              "y": n_files_raw,
+              "name": "Raw files".replace(' ', '\t'),
+              "type": "scatter"
+              }
+
+    _data.append(__data)
+
+    __data = {"x": time_array.isot.tolist(),
+              "y": n_files_processed,
+              "name": "Processed files".replace(' ', '\t'),
               "type": "scatter"
               }
 
@@ -302,7 +397,9 @@ def main():
     time_axis_range = [cutoff.isot, now.isot]
     plotnames = [["server-loads", "upload-ages"],
                  ["disk-space", "bandwidths"],
-                 ["num-files", "ping-times"]]
+                 ["num-files", "ping-times"],
+                 ["file-compare"]
+                 ]
 
     layout = {"xaxis": {"range": time_axis_range},
               "yaxis": {"title": 'Load % per CPU'},
@@ -378,11 +475,24 @@ def main():
             js_file.write(rendered_js)
             js_file.write('\n\n')
 
+        data = do_compare_file_types(TIME_WINDOW)
+        if data is not None:
+            layout["yaxis"]["title"] = 'Files in <br><b>temporary staging</b>'
+            layout["yaxis"]["zeroline"] = True
+            layout["margin"]["l"] = 60
+            rendered_js = js_template.render(plotname="file-compare",
+                                             data=data,
+                                             layout=layout)
+            with open('librarian.js', 'a') as js_file:
+                js_file.write(rendered_js)
+                js_file.write('\n\n')
+
         tables = []
         tables.append(do_raid_errors(session, cutoff))
         tables.append(do_raid_status(session, cutoff))
 
         rendered_html = html_template.render(plotname=plotnames,
+                                             title="Librarian",
                                              plotstyle="height: 220",
                                              colsize=colsize,
                                              gen_date=now.iso,
