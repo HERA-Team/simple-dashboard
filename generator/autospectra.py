@@ -180,7 +180,7 @@ def main():
     buttons = []
     _button = {"args": [{"visible": [True for s in autospectra]},
                         {"title": '',
-                         "annotations": {}
+                         # "annotations": {}
                          }
                         ],
                "label": "All\tAnts",
@@ -195,11 +195,11 @@ def main():
 
         _button = {"args": [{"visible": node_mask[node_cnt]},
                             {"title": '',
-                             "annotations": {}
+                             # "annotations": {}
                              }
                             ],
                    "label": label,
-                   "method": "restyle"
+                   "method": "update"
                    }
         buttons.append(_button)
 
@@ -226,6 +226,19 @@ def main():
               }
     plotname = "plotly-autos"
 
+    caption = ('<big>The Autocorrelations from the correlator (in dB) versus frequency '
+               'with equalization coefficients divided out.'
+               '<br>Some antennas may not have '
+               'a known node mapping and are listed below the image.</big>'
+               '<br><br>Plot can be downselected to display individual nodes '
+               'or show the entire array.'
+               '<br>Double click on an entry in the legend to select only that '
+               'entry, double click again to restore all plots.'
+               '<br>Single click an entry in the legend to un-plot it, '
+               'single click again to restore it to the plot.'
+
+               )
+
     html_template = env.get_template("refresh_with_table.html")
     js_template = env.get_template("plotly_base.js")
 
@@ -239,7 +252,8 @@ def main():
                                          gen_time_unix_ms=Time.now().unix * 1000,
                                          scriptname=os.path.basename(__file__),
                                          hostname=computer_hostname,
-                                         table=table_ants)
+                                         table=table_ants,
+                                         caption=caption)
 
     rendered_js = js_template.render(data=autospectra,
                                      layout=layout,
