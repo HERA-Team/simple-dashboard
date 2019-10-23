@@ -10,6 +10,7 @@
     <div class="container">
       {# Want to be able to support a list of names as input #}
       {# if not a list assume a single string as a name #}
+
       {% if plotname is iterable and plotname is not string %}
       {% for namelist in plotname %}
 
@@ -35,15 +36,22 @@
       {% endif %}
 
       {% block postbody %}{% endblock %}
+
+      {% if caption is defined %}
+      <div >
+        <p class='text-center'>{{ caption }}</p>
+      </div>
+
+      {% endif %}
     </div>
 
 {% endblock %}
 
 {% block footer %}
       {% if data_type is defined %}
-      <p class="text-muted text-center"><small><small>
-        {{ data_type }} observed on {{data_date}} (JD: {{ data_jd_date }})<br>
-        Last updated: <span id="age">???</span> ago at {{ gen_date }}<br>
+      <p class="text-muted text-center">
+        <b>{{ data_type }} observed on {{data_date}} (JD: {{ data_jd_date }})</b><br>
+        <small><small>Last updated: <span id="age">???</span> ago at {{ gen_date }}<br>
         Script name: {{ scriptname }}
         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
         Executing host: {{ hostname }}
