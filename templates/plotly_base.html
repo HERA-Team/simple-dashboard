@@ -39,7 +39,9 @@
 
       {% if caption is defined %}
       <div >
-        <p class='text-center'>{{ caption }}</p>
+        <p class='text-center'>
+          {{ caption }}
+        </p>
       </div>
 
       {% endif %}
@@ -50,7 +52,7 @@
 {% block footer %}
       {% if data_type is defined %}
       <p class="text-muted text-center">
-        <b>{{ data_type }} observed on {{data_date}} (JD: {{ data_jd_date }})</b><br>
+        <b>{{ data_type }} observed <span id="data_age">???</span> ago ({{data_date_iso}} JD: {{ data_jd_date }})</b><br>
         <small><small>Last updated: <span id="age">???</span> ago at {{ gen_date }}<br>
         Script name: {{ scriptname }}
         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
@@ -65,4 +67,26 @@
       </small></small></p>
       {% endif %}
     <script src="{{js_name}}.js"></script>
+{% endblock %}
+
+{% block script %}
+{% if data_type is defined %}
+<script type='text/javascript'>
+let data_age = 0.001 * (Date.now() - {{data_date_unix_ms}});
+let data_text = "?";
+if (data_age < 300) {
+  data_text = data_age.toFixed(0) + " seconds";
+} else if (data_age < 10800) { // 3 hours
+  data_text = (data_age / 60).toFixed(0) + " minutes";
+} else if (data_age < 172800) { // 48 hours
+  data_text = (data_age / 3600).toFixed(0) + " hours";
+} else {
+  data_text = (data_age / 86400).toFixed(1) + " days";
+}
+document.getElementById("data_age").textContent = data_text;
+if (data_age > 1800) {
+    document.getElementById("data_age").style.color = 'red';
+}
+</script>
+{% endif %}
 {% endblock %}
