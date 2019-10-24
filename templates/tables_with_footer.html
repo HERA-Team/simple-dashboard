@@ -4,8 +4,8 @@
 {% block prebody %}{% endblock %}
 
     {% for table in tables %}
-    <h2> {{ table.title }} </h2>
     <div class="table-responsive col-md-{{ colsize or 6 }}">
+      <h2> {{ table.title }} </h2>
     <table class="table table-striped" style="float: left">
       <thead>
       {% for head in table.headers %}
