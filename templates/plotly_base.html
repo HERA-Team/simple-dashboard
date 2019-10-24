@@ -20,10 +20,10 @@
         {% if namelist is iterable and namelist is not string %}
         {% for name in namelist %}
 
-        <div id="{{ name }}" class="col-md-{{ colsize or 6 }}", style="{{ plotstyle or 'height: 85vh'}}"></div>
+        <div id="{{ name }}" class="col-md-{{ colsize or 6 }}" style="{{ plotstyle or 'height: 85vh'}}; max-height: 950px"></div>
         {% endfor %}
         {% else %}
-        <div id="{{ namelist }}" class="col-md-{{ colsize or 12 }}", style="{{ plotstyle or 'height: 85vh'}}"></div>
+        <div id="{{ namelist }}" class="col-md-{{ colsize or 12 }}" style="{{ plotstyle or 'height: 85vh'}}; max-height: 950px"></div>
         {% endif %}
 
       </div>
