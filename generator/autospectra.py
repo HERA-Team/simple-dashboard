@@ -210,13 +210,21 @@ def main():
                     "showactive": True,
                     "active": 0,
                     "type": "dropdown",
-                    "x": .55,
-                    "y": 1.1,
+                    "x": .535,
+                    "y": 1.03,
                     }
                    ]
 
     layout = {"xaxis": {"title": "Frequency [MHz]"},
               "yaxis": {"title": "Power [dB]"},
+              "title": {"text": "Autocorrelations",
+                        "xref": 'paper',
+                        "x": 0.5,
+                        "yref": 'paper',
+                        "y": 1.5,
+                        "font": {"size": 24,
+                                 }
+                        },
               "autosize": True,
               "showlegend": True,
               "legend": {"x": 1,
@@ -224,23 +232,25 @@ def main():
               "margin": {"l": 40,
                          "b": 30,
                          "r": 40,
-                         "t": 30},
+                         "t": 75},
               "hovermode": "closest",
               }
     plotname = "plotly-autos"
 
-    caption = ('<big>The Autocorrelations from the correlator (in dB) versus frequency '
-               'with equalization coefficients divided out.\n\t\t  '
-               '<br>Some antennas may not have '
-               'a known node mapping and are listed below the image.\n\t\t  '
-               '<br>Plot can be downselected to display individual nodes '
-               'or show the entire array.</big>\n\t\t  '
-               '<br><br>Double click on an entry in the legend to select only that '
-               'entry, double click again to restore all plots.\n\t\t  '
-               '<br>Single click an entry in the legend to un-plot it, '
-               'single click again to restore it to the plot.'
+    caption = {}
+    caption["text"] = ('The Autocorrelations from the correlator (in dB) versus frequency '
+                       'with equalization coefficients divided out.\n '
+                       '<br><br>Some antennas may not have '
+                       'a known node mapping and are listed below the image.\n  '
+                       '<br><br>Plot can be downselected to display individual nodes '
+                       'or show the entire array.\n '
+                       '<br><br>Double click on an entry in the legend to select only that '
+                       'entry, double click again to restore all plots.\n  '
+                       '<br><br>Single click an entry in the legend to un-plot it, '
+                       'single click again to restore it to the plot.'
 
-               )
+                       )
+    caption["title"] = "Autocorrelations Help"
 
     html_template = env.get_template("refresh_with_table.html")
     js_template = env.get_template("plotly_base.js")
