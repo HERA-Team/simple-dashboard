@@ -4,8 +4,8 @@
 {% block postbody %}
 {% if table|islist %}
   {% for tab in table %}
-  <h2> {{ tab.title }} </h2>
   <div class="table-responsive col-md-6">
+    <h2> {{ tab.title }} </h2>
   <table class="table table-striped" style="float: left">
     <tbody>
       {% if tab.rows|length > 0 %}
@@ -20,8 +20,8 @@
   </div>
   {% endfor %}
 {% else %}
-  <h2> {{ table.title }} </h2>
   <div class="table-responsive">
+    <h2> {{ table.title }} </h2>
   <table class="table table-striped" style="float: left">
     <tbody>
       {% if table.rows|length > 0 %}
