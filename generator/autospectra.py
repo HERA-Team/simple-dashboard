@@ -86,9 +86,12 @@ def main():
     got_time = False
     n_signals = 0
 
-    t_plot_jd = np.frombuffer(r['auto:timestamp'], dtype=np.float64)[0]
-    t_plot_iso = Time(t_plot_jd, format='jd').iso
-    got_time = True
+    try:
+        t_plot_jd = np.frombuffer(r['auto:timestamp'], dtype=np.float64)[0]
+        t_plot = Time(t_plot_jd, format='jd')
+        got_time = True
+    except:
+        pass
     # grab data from redis and format it according to plotly's javascript api
     autospectra = []
 
@@ -227,13 +230,13 @@ def main():
     plotname = "plotly-autos"
 
     caption = ('<big>The Autocorrelations from the correlator (in dB) versus frequency '
-               'with equalization coefficients divided out.'
+               'with equalization coefficients divided out.\n\t\t  '
                '<br>Some antennas may not have '
-               'a known node mapping and are listed below the image.</big>'
-               '<br><br>Plot can be downselected to display individual nodes '
-               'or show the entire array.'
-               '<br>Double click on an entry in the legend to select only that '
-               'entry, double click again to restore all plots.'
+               'a known node mapping and are listed below the image.\n\t\t  '
+               '<br>Plot can be downselected to display individual nodes '
+               'or show the entire array.</big>\n\t\t  '
+               '<br><br>Double click on an entry in the legend to select only that '
+               'entry, double click again to restore all plots.\n\t\t  '
                '<br>Single click an entry in the legend to un-plot it, '
                'single click again to restore it to the plot.'
 
@@ -246,8 +249,9 @@ def main():
                                          data_type="Auto correlations",
                                          plotstyle="height: 85vh",
                                          gen_date=Time.now().iso,
-                                         data_date=t_plot_iso,
-                                         data_jd_date=t_plot_jd,
+                                         data_date_iso=t_plot.iso,
+                                         data_jd_date=t_plot.jd,
+                                         data_date_unix_ms=t_plot.unix * 1000,
                                          js_name="spectra",
                                          gen_time_unix_ms=Time.now().unix * 1000,
                                          scriptname=os.path.basename(__file__),
