@@ -338,6 +338,31 @@ def main():
                                   ]
                   }
 
+        caption = {}
+        caption["title"] = "Snap Spectra Help"
+        caption["text"] = ("Autocorrelations (in dB) calculated by each Snap "
+                           "with equalization coefficients divided out. "
+                           "Calculation is independent of the corrlator. "
+                           "<br>"
+                           "Data is organized by the ADC Port number from "
+                           "each Snap. "
+                           "A mapping dictionary is used to look up the "
+                           "associated ant-pol for each ADC Port. "
+                           "Some ADC Ports may not have a known ant-pol "
+                           "mapping and are labeled below the plot."
+                           "<br>Some Snap ports my not have data and are "
+                           "labeled in a table below the plot."
+                           "<br>The node selection button contains a lot "
+                           "of information described here."
+                           "<br><h4>Button Label Information</h4>"
+                           "<ul>"
+                           "<li>Snap hostname</li>"
+                           "<li>Last time the Snap was programmed</li>"
+                           "<li>Last time data was recorded from this Snap</li>"
+                           "<li>Last known temperature in C | PPS count | Uptime</li>"
+                           "</ul>"
+                           )
+
         plotname = "plotly-snap"
         html_template = env.get_template("refresh_with_table.html")
         js_template = env.get_template("plotly_base.js")
