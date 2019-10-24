@@ -34,6 +34,7 @@
     </footer>
 
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.3/jquery.min.js"></script>
+    {% block script %}{% endblock %}
     <script type='text/javascript'>
     var report_age = 0.001 * (Date.now() - {{gen_time_unix_ms}});
     var age_text = "?";
