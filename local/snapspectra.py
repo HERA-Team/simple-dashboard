@@ -374,7 +374,8 @@ def main():
                                              gen_time_unix_ms=Time.now().unix * 1000,
                                              scriptname=os.path.basename(__file__),
                                              hostname=computer_hostname,
-                                             table=[table_snap, table_ants]
+                                             table=[table_snap, table_ants],
+                                             caption=caption
                                              )
         rendered_js = js_template.render(data=data,
                                          layout=layout,
