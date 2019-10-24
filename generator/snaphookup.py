@@ -159,7 +159,8 @@ def main():
                                          gen_date=Time.now().iso,
                                          gen_time_unix_ms=Time.now().unix * 1000,
                                          scriptname=os.path.basename(__file__),
-                                         hostname=computer_hostname)
+                                         hostname=computer_hostname,
+                                         colsize=6)
 
     with open('snaphookup.html', 'w') as h_file:
         h_file.write(rendered_html)
