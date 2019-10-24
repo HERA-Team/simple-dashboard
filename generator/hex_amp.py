@@ -180,11 +180,16 @@ def main():
                 _node_num = re.findall(r'N(\d+)', node_info[_key][pol_key])[0]
                 node_ind[ant_cnt] = np.int(_node_num)
 
-                snap_status = session.get_snap_status(most_recent=True,
-                                                      nodeID=np.int(_node_num))
-                for _status in snap_status:
-                    if _status.serial_number == snap_serial[ant_cnt]:
-                        hostname[ant_cnt] = _status.hostname
+                _hostname = session.get_snap_hostname_from_serial(snap_serial[ant_cnt])
+
+                if _hostname is not None:
+                    hostname[ant_cnt] = _hostname
+                else:
+                    snap_status = session.get_snap_status(most_recent=True,
+                                                          nodeID=np.int(_node_num))
+                    for _status in snap_status:
+                        if _status.serial_number == snap_serial[ant_cnt]:
+                            hostname[ant_cnt] = _status.hostname
             else:
                 node_ind[ant_cnt] = -1
 
@@ -436,12 +441,50 @@ def main():
 
         layout_hex = {"xaxis": {"title": "East-West Position [m]"},
                       "yaxis": {"title": "North-South Position [m]"},
+                      "title": {"text": "Per Antpol Stats vs Hex position",
+                                "font": {"size": 24,
+                                         }
+                                },
                       "hoverlabel": {"align": "left"},
-                      "margin": {"t": 10},
+                      "margin": {"t": 40},
                       "autosize": True,
                       "showlegend": False,
                       "hovermode": "closest"
                       }
+        caption = {}
+        caption["title"] = "Stats vs Hex pos Help"
+        caption["text"] = ("This plot shows various statistics and measurements "
+                           "per ant-pol versus its position in the array."
+                           "<br><br><h4>Available plotting options</h4>"
+                           "<ul>"
+                           "<li>Auto Corr - Median Auto Correlation (in db) "
+                           "from the correlator with equalization coefficients "
+                           "divided out</li>"
+                           "<li>Pam Power - Latest Pam Power (in db) recorded in M&C</li>"
+                           "<li>ADC Power - Latest ADC Power (in db) recorded in M&C</li>"
+                           "<li>ADC RMS - Latest linear ADC RMS recorded in M&C</li>"
+                           "<li>EQ Coeffs - Latest Median Equalization Coefficient recorded in M&C</li>"
+                           "</ul>"
+                           "Any antpol showing with an orange color means "
+                           "no data is avaible for the currenty plot selection."
+                           "<h4>Hover label Formatting</h4>"
+                           "<ul>"
+                           "<li>Antenna Name from M&C<br>(e.g. HH0n = Hera Hex Antenna 0 Polarization N)</li>"
+                           "<li>Snap hostname from M&C<br>(e.g. heraNode0Snap0)</li>"
+                           "<li>PAM Number</li>"
+                           "<li>Median Auto Correlation power in dB</li>"
+                           "<li>PAM power in dB</li>"
+                           "<li>ADC power in dB</li>"
+                           "<li>Linear ADC RMS</li>"
+                           "<li>Median Equalization Coefficient</li>"
+                           "<li>Time ago in hours the M&C Antenna Status was updated. "
+                           "This time stamp applies to all data for this antenna "
+                           "except the Auto Correlation.</li>"
+                           "</ul>"
+                           "In any hover label entry 'No Data' means "
+                           "information not currrently available in M&C."
+
+                           )
 
         # Render all the power vs position files
         plotname = "plotly-hex"
@@ -458,7 +501,9 @@ def main():
                                                  js_name="hex_amp",
                                                  gen_time_unix_ms=now.unix * 1000,
                                                  scriptname=os.path.basename(__file__),
-                                                 hostname=computer_hostname)
+                                                 hostname=computer_hostname,
+                                                 caption=caption
+                                                 )
 
         rendered_hex_js = js_template.render(data=data_hex,
                                              layout=layout_hex,
@@ -653,12 +698,51 @@ def main():
                        "yaxis": {"showticklabels": False,
                                  "showgrid": False,
                                  "zeroline": False},
+                       "title": {"text": "Per Antpol Stats vs Node #",
+                                 "font": {"size": 24,
+                                          }
+                                 },
                        "hoverlabel": {"align": "left"},
-                       "margin": {"t": 10},
+                       "margin": {"t": 40},
                        "autosize": True,
                        "showlegend": False,
                        "hovermode": "closest"
                        }
+
+        caption_node = {}
+        caption_node["title"] = "Stats vs Node Help"
+        caption_node["text"] = ("This plot shows various statistics and measurements "
+                                "per ant-pol versus the node number to which it is connected."
+                                "<br><br><h4>Available plotting options</h4>"
+                                "<ul>"
+                                "<li>Auto Corr - Median Auto Correlation (in db) "
+                                "from the correlator with equalization coefficients "
+                                "divided out</li>"
+                                "<li>Pam Power - Latest Pam Power (in db) recorded in M&C</li>"
+                                "<li>ADC Power - Latest ADC Power (in db) recorded in M&C</li>"
+                                "<li>ADC RMS - Latest linear ADC RMS recorded in M&C</li>"
+                                "<li>EQ Coeffs - Latest Median Equalization Coefficient recorded in M&C</li>"
+                                "</ul>"
+                                "Any antpol showing with an orange color means "
+                                "no data is avaible for the currenty plot selection."
+                                "<h4>Hover label Formatting</h4>"
+                                "<ul>"
+                                "<li>Antenna Name from M&C<br>(e.g. HH0n = Hera Hex Antenna 0 Polarization N)</li>"
+                                "<li>Snap hostname from M&C<br>(e.g. heraNode0Snap0)</li>"
+                                "<li>PAM Number</li>"
+                                "<li>Median Auto Correlation power in dB</li>"
+                                "<li>PAM power in dB</li>"
+                                "<li>ADC power in dB</li>"
+                                "<li>Linear ADC RMS</li>"
+                                "<li>Median Equalization Coefficient</li>"
+                                "<li>Time ago in hours the M&C Antenna Status was updated. "
+                                "This time stamp applies to all data for this antenna "
+                                "except the Auto Correlation.</li>"
+                                "</ul>"
+                                "In any hover label entry 'No Data' means "
+                                "information not currrently available in M&C."
+
+                                )
 
         # Render all the power vs ndde files
         plotname = "plotly-node"
@@ -675,7 +759,8 @@ def main():
                                                   data_date_unix_ms=latest.unix * 1000,
                                                   js_name="node_amp",
                                                   scriptname=os.path.basename(__file__),
-                                                  hostname=computer_hostname)
+                                                  hostname=computer_hostname,
+                                                  caption=caption_node)
 
         rendered_node_js = js_template.render(data=data_node,
                                               layout=layout_node,
