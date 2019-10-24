@@ -185,10 +185,10 @@ def main():
                             "rangemode": "tozero"
                             },
                   "title": {"text": "placeholder",
-                            "font": {"size": 24}
+                            "font": {"size": 18}
                             },
                   "height": 200,
-                  "margin": {"t": 70,
+                  "margin": {"t": 30,
                              "r": 10,
                              "b": 10,
                              "l": 40},
@@ -217,7 +217,7 @@ def main():
 
             for pname in ['load', 'disk', 'mem', 'bandwidth', 'timediff']:
                 layout['yaxis']['title'] = yaxis_titles[pname]
-                layout['title']['text'] = titles[pname]
+                layout['title']['text'] = server_type + ' ' + titles[pname]
                 _name = server_type + '-' + pname
                 rendered_js = js_template.render(plotname=_name,
                                                  data=data_dict[pname],
