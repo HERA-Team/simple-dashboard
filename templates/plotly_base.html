@@ -4,6 +4,26 @@
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 {% block subhead %}{% endblock %}
 {% endblock %}
+
+
+{% block caption %}
+{% if caption is defined %}
+<div class="sidebar-header" style="text-align:center;">
+  {% if caption.title is defined %}
+    <h3>{{ caption["title"] }}</h3>
+  {% else %}
+      <h3>Page Help</h3>
+   {% endif %}
+  </div>
+  <div class="sidebar-body" style="margin-left: 1.5em; margin-right: 1.5em;">
+    <p>
+      {{ caption["text"] }}
+    </p>
+  </div>
+{% endif %}
+{% endblock %}
+
+
 {% block body %}
 {% block prebody %}{% endblock %}
 
@@ -31,22 +51,11 @@
       {% else %}
 
       <div class="row">
-        <div id="{{ plotname }}" class="col-md-{{ colsize or 12 }}", style="{{ plotstyle or 'height: 85vh'}}"></div>
+        <div id="{{ plotname }}" class="col-md-{{ colsize or 12 }}" style="{{ plotstyle or 'height: 85vh'}}; max-height: 950px"></div>
       </div>
       {% endif %}
 
       {% block postbody %}{% endblock %}
-
-      {% if caption is defined %}
-      <div >
-        <p class='text-center'>
-          {{ caption }}
-        </p>
-      </div>
-
-      {% endif %}
-    </div>
-
 {% endblock %}
 
 {% block footer %}
