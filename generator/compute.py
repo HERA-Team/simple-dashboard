@@ -145,6 +145,23 @@ def main():
     cutoff = now - TimeDelta(TIME_WINDOW, format='jd')
     time_axis_range = [cutoff.isot, now.isot]
 
+    caption = {}
+
+    caption["text"] = ('An overview of many computer statisics.'
+                       '<br><br>Left hand column has information about the onsite Librarian computers.'
+                       '<br><br>Right hand column has information about onsite RTP computers.'
+                       '<br><br><h4>Rows Identify Statistic type</h4>'
+                       '<ul>'
+                       '<li>Load % per computer</li>'
+                       '<li>Local Disk usage in %</li>'
+                       '<li>Local Memory usage in %</li>'
+                       '<li>Network I/O rate (MB/s)</li>'
+                       '<li>M&C time diff (s)</li>'
+                       '</ul>'
+                       )
+
+    caption["title"] = "Compute Help"
+
     html_template = env.get_template("plotly_base.html")
     rendered_html = html_template.render(plotname=plotnames,
                                          plotstyle="height: 220",
@@ -153,7 +170,8 @@ def main():
                                          gen_time_unix_ms=now.unix * 1000,
                                          js_name='compute',
                                          hostname=computer_hostname,
-                                         scriptname=os.path.basename(__file__)
+                                         scriptname=os.path.basename(__file__),
+                                         caption=caption
                                          )
     with open('compute.html', 'w') as h_file:
         h_file.write(rendered_html)
@@ -166,9 +184,14 @@ def main():
                   "yaxis": {"title": 'placeholder',
                             "rangemode": "tozero"
                             },
+                  "title": {"text": "placeholder",
+                            "font": {"size": 24}
+                            },
                   "height": 200,
-                  "margin": {"t": 2, "r": 10,
-                             "b": 2, "l": 40},
+                  "margin": {"t": 70,
+                             "r": 10,
+                             "b": 10,
+                             "l": 40},
                   "legend": {"orientation": "h",
                              "x": 0.15,
                              "y": -0.15
@@ -176,17 +199,25 @@ def main():
                   "showlegend": True,
                   "hovermode": "closest"
                   }
-        titles = {"load": "Load % per CPU",
-                  "disk": "Local disk usage (%)",
-                  "mem": "Memory usage (%)",
-                  "bandwidth": "Network I/O (MB/s)",
-                  "timediff": "M&C time diff. (s)"
+        yaxis_titles = {"load": "Load % per CPU",
+                        "disk": "Local disk usage (%)",
+                        "mem": "Memory usage (%)",
+                        "bandwidth": "Network I/O (MB/s)",
+                        "timediff": "M&C time diff. (s)"
+                        }
+
+        titles = {"load": "CPU Load",
+                  "disk": "Disk Usage",
+                  "mem": "Memory Usage",
+                  "bandwidth": "Network I/O",
+                  "timediff": "M&C time diff. "
                   }
         for server_type, data_dict in zip(['lib', 'rtp'], [lib_data, rtp_data]):
             js_template = env.get_template('plotly_base.js')
 
             for pname in ['load', 'disk', 'mem', 'bandwidth', 'timediff']:
-                layout['yaxis']['title'] = titles[pname]
+                layout['yaxis']['title'] = yaxis_titles[pname]
+                layout['title']['text'] = titles[pname]
                 _name = server_type + '-' + pname
                 rendered_js = js_template.render(plotname=_name,
                                                  data=data_dict[pname],
