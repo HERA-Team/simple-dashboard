@@ -527,7 +527,7 @@ def main():
             "The files in temporary storage counts the number of raw files at /mnt/sn1 "
             "on qmaster and compares that to the number of processed files whose "
             "JDs are >= oldest raw file.<br>It is a hacky proxy for 'DID RTP RUN?' "
-            "<br>Assuming RTP runs successfully on all files from an obsrevation, "
+            "<br>Assuming RTP runs successfully on all files from an observation, "
             "both lines should report the same number of files."
             "<br><br>"
             "The final two tables give some recent RAID errors and status reports."
