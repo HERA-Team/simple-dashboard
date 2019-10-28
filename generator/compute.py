@@ -188,7 +188,7 @@ def main():
                             "font": {"size": 18}
                             },
                   "height": 200,
-                  "margin": {"t": 30,
+                  "margin": {"t": 25,
                              "r": 10,
                              "b": 10,
                              "l": 40},
