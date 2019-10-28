@@ -312,11 +312,9 @@ def main():
                             "showticklabels": True,
                             "tick0": 0,
                             "dtick": 10,
-                            "range": [40, 250]
                             },
                   "yaxis": {"title": 'Power [dB]',
                             "showticklabels": True,
-                            # "range": [-35, 10]
                             },
                   "hoverlabel": {"align": "left"},
                   "margin": {"l": 40, "b": 30,
