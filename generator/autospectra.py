@@ -75,9 +75,9 @@ def main():
     node_map = {}
     nodes = []
     # Generate frequency axis
-    NCHANS = int(2048 // 4 * 3)
+    NCHANS = int(8192 // 4 * 3)
     NCHANS_F = 8192
-    NCHAN_SUM = 4
+    NCHAN_SUM = 1
     frange = np.linspace(0, 250e6, NCHANS_F + 1)[1536:1536 + (8192 // 4 * 3)]
     # average over channels
     frange = frange.reshape(NCHANS, NCHAN_SUM).sum(axis=1) / NCHAN_SUM
