@@ -103,7 +103,7 @@ def main():
                  ["fc-agg_std", "fc-max_std"],
                  ["oc-ant_phs_std_max", "oc-chisq_tot_avg"]]
     colsize = 6
-    TIME_WINDOW = 7  # days
+    TIME_WINDOW = 14  # days
     now = Time.now()
     cutoff = now - TimeDelta(TIME_WINDOW, format='jd')
     time_axis_range = [cutoff.isot, now.isot]
