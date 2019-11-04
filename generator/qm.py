@@ -121,7 +121,7 @@ def main():
             <table class="table table-striped" style="border:1px solid black; border-top; 1px solid black;">
             <tbody>
               <tr>
-                <td style="border-left:1px solid black;">Ant Metrics Number of Excluded Ants
+                <td style="border-left:1px solid black;">Ant Metrics Number of Excluded Ant-pols
                 <td style="border-left:1px solid black;">Ant Metrics Mean Vij Ampltiude</td>
               </tr>
               <tr>
