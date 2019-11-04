@@ -108,6 +108,38 @@ def main():
     cutoff = now - TimeDelta(TIME_WINDOW, format='jd')
     time_axis_range = [cutoff.isot, now.isot]
 
+    caption = {}
+    caption["title"] = "Daily Quality Metrics"
+
+    caption["text"] = (
+        "An overview of the Daily Quality metrics run on data from RTP. "
+        "A plot with no data indicates that particular metric was not run, "
+        "or the data could not be found."
+        "<br><br>"
+        "Currenly Only the Ant Metrics are run on data during RTP."
+        """<div class="table-responsive">
+            <table class="table table-striped" style="border:1px solid black; border-top; 1px solid black;">
+            <tbody>
+              <tr>
+                <td style="border-left:1px solid black;">Ant Metrics Number of Excluded Ants
+                <td style="border-left:1px solid black;">Ant Metrics Mean Vij Ampltiude</td>
+              </tr>
+              <tr>
+                <td style="border-left:1px solid black;">Ant Metrics red Corr Mean Ampltidue
+                <td style="border-left:1px solid black;">Ant Metrics Mean Vij Cross Pol Ampltidue</td></tr>
+              <tr>
+                <td style="border-left:1px solid black;">Frist Cal Agg Std
+                <td style="border-left:1px solid black;">First Cal Max Stde</td></tr>
+              <tr>
+                <td style="border-left:1px solid black;">Ominical Phase Std Max
+                <td style="border-left:1px solid black;">Omnical Chi-square Total Average</td></tr>
+            </tbody>
+            </table>
+         </div>
+        """
+    )
+
+
     html_template = env.get_template("plotly_base.html")
     rendered_html = html_template.render(plotname=plotnames,
                                          plotstyle="height: 220",
@@ -127,6 +159,7 @@ def main():
 
         layout = {"xaxis": {"range": time_axis_range},
                   "yaxis": {"title": 'placeholder'},
+                  "title": {"text": 'placeholder'},
                   "height": 200,
                   "margin": {"t": 2, "r": 10,
                              "b": 2, "l": 40},
@@ -146,7 +179,8 @@ def main():
                              cutoff=cutoff
                              )
 
-        layout["yaxis"]["title"] = 'AM count(xants)'
+        layout["yaxis"]["title"] = 'Count'
+        layout["title"]["text"] = "Ant Metrics # of Xants"
         rendered_js = js_template.render(plotname='am-xants',
                                          data=data,
                                          layout=layout)
@@ -162,7 +196,8 @@ def main():
                              yname='Data',
                              cutoff=cutoff
                              )
-        layout["yaxis"]["title"] = 'AM avg(meanVij)'
+        layout["yaxis"]["title"] = 'Average Amplitude'
+        layout["title"]["text"] = "Ant Metrics MeanVij"
         rendered_js = js_template.render(plotname='am-meanVij',
                                          data=data,
                                          layout=layout)
@@ -178,7 +213,8 @@ def main():
                              yname='Data',
                              cutoff=cutoff
                              )
-        layout["yaxis"]["title"] = 'AM avg(redCorr)'
+        layout["yaxis"]["title"] = 'Average Amplitude'
+        layout["title"]["text"] = "Ant Metrics redCorr"
         rendered_js = js_template.render(plotname='am-redCorr',
                                          data=data,
                                          layout=layout)
@@ -194,7 +230,8 @@ def main():
                              yname='Data',
                              cutoff=cutoff
                              )
-        layout["yaxis"]["title"] = 'AM avg(meanVijXPol)'
+        layout["yaxis"]["title"] = 'Average Amplitude'
+        layout["title"]["text"] = "Ant Metrics MeanVij CrossPol"
         rendered_js = js_template.render(plotname='am-meanVijXpol',
                                          data=data,
                                          layout=layout)
@@ -207,7 +244,8 @@ def main():
                                   'firstcal_metrics_agg_std',
                                   cutoff=cutoff
                                   )
-        layout["yaxis"]["title"] = 'FC agg_std'
+        layout["yaxis"]["title"] = 'std'
+        layout["title"]["text"] = "FirstCal Metrics Agg Std"
         rendered_js = js_template.render(plotname='fc-agg_std',
                                          data=data,
                                          layout=layout)
@@ -221,6 +259,7 @@ def main():
                                   cutoff=cutoff
                                   )
         layout["yaxis"]["title"] = 'FC max_std'
+        layout["title"]["text"] = "FirstCal Metrics Max Std"
         rendered_js = js_template.render(plotname='fc-max_std',
                                          data=data,
                                          layout=layout)
@@ -235,6 +274,7 @@ def main():
                                   cutoff=cutoff
                                   )
         layout["yaxis"]["title"] = 'OC ant_phs_std_max'
+        layout["title"]["text"] = "OmniCal Metrics Ant Phase Std max"
         rendered_js = js_template.render(plotname='oc-ant_phs_std_max',
                                          data=data,
                                          layout=layout)
@@ -249,6 +289,7 @@ def main():
                                   cutoff=cutoff
                                   )
         layout["yaxis"]["title"] = 'OC chisq_tot_avg'
+        layout["title"]["text"] = "OmniCal Metrics Chi-square total avg"
         rendered_js = js_template.render(plotname='oc-chisq_tot_avg',
                                          data=data,
                                          layout=layout)
