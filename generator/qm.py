@@ -162,7 +162,7 @@ def main():
                   "title": {"text": 'placeholder'},
                   "height": 200,
                   "margin": {"t": 30, "r": 10,
-                             "b": 2, "l": 40},
+                             "b": 20, "l": 40},
                   "legend": {"orientation": "h",
                              "x": 0.15,
                              "y": -0.15},
