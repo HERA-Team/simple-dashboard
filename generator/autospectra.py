@@ -74,10 +74,22 @@ def main():
     ant_to_snap = json.loads(corr_map[b'ant_to_snap'])
     node_map = {}
     nodes = []
+    # want to be smart against the length of the autos, they sometimes change
+    # depending on the mode of the array
+    for i in ants:
+        for pol in ['e', 'n']:
+            d = r.get('auto:{ant:d}{pol:s}'.format(ant=i, pol=pol))
+            if d is not None:
+                auto = np.frombuffer(d, dtype=np.float32).copy()
+                break
+    auto_size = auto.size
     # Generate frequency axis
+    # Some times we have 6144 length inputs, others 1536, this should
+    # set the length to match whatever the auto we got was
     NCHANS = int(8192 // 4 * 3)
     NCHANS_F = 8192
-    NCHAN_SUM = 1
+    NCHAN_SUM = NCHANS // auto_size
+    NCHANS = auto_size
     frange = np.linspace(0, 250e6, NCHANS_F + 1)[1536:1536 + (8192 // 4 * 3)]
     # average over channels
     frange = frange.reshape(NCHANS, NCHAN_SUM).sum(axis=1) / NCHAN_SUM
