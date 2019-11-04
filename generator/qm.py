@@ -116,7 +116,7 @@ def main():
         "A plot with no data indicates that particular metric was not run, "
         "or the data could not be found."
         "<br><br>"
-        "Currenly Only the Ant Metrics are run on data during RTP."
+        "Currenly only the Ant Metrics are run on data during RTP."
         """<div class="table-responsive">
             <table class="table table-striped" style="border:1px solid black; border-top; 1px solid black;">
             <tbody>
@@ -166,7 +166,7 @@ def main():
                   "legend": {"orientation": "h",
                              "x": 0.15,
                              "y": -0.15},
-                  "showlegend": True,
+                  "showlegend": False,
                   "hovermode": "closest"
                   }
 
