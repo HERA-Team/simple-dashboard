@@ -139,7 +139,6 @@ def main():
         """
     )
 
-
     html_template = env.get_template("plotly_base.html")
     rendered_html = html_template.render(plotname=plotnames,
                                          plotstyle="height: 220",
@@ -148,7 +147,8 @@ def main():
                                          gen_time_unix_ms=now.unix * 1000,
                                          js_name='qm',
                                          hostname=computer_hostname,
-                                         scriptname=os.path.basename(__file__)
+                                         scriptname=os.path.basename(__file__),
+                                         caption=caption
                                          )
     with open('qm.html', 'w') as h_file:
         h_file.write(rendered_html)
@@ -161,7 +161,7 @@ def main():
                   "yaxis": {"title": 'placeholder'},
                   "title": {"text": 'placeholder'},
                   "height": 200,
-                  "margin": {"t": 2, "r": 10,
+                  "margin": {"t": 30, "r": 10,
                              "b": 2, "l": 40},
                   "legend": {"orientation": "h",
                              "x": 0.15,
