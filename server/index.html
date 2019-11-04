@@ -80,22 +80,18 @@ function reloadradiosky() {
 frameHolder.src = frameHolder.src;
 }
 setInterval(reloadradiosky, 30000);
-
-
 </script>
-
-
 
    </head>
    <body>
-       <nav class="navbar navbar-default">
-         <div class="container-fluid">
+   <nav class="navbar navbar-default">
+   <div class="container-fluid" style="vertical-align: midde;">
    	<div class="navbar-header">
    	  <a class="navbar-brand" href="/">HERA Dashboard</a>
    	</div>
     <ul class="nav navbar-nav">
       <li class="dropdown">
-        <a href="#" class="dropdown-toggle" data-toggle="dropdown">Detailed HERA now pages
+        <a href="#" class="btn btn-secondary dropdown-toggle" data-toggle="dropdown">Detailed HERA now pages
   		      <b class="caret"></b></a>
         <ul class="dropdown-menu">
               <li><a href="http://heranow.reionization.org/librarian/">Librarian logs</a></li>
@@ -107,11 +103,11 @@ setInterval(reloadradiosky, 30000);
       </li>
 
        <li>
-         <a href=http://enterprise.sese.asu.edu:8484/d/f3tDVE7Zk/dashboards>Grafana Dashboards</a>
+         <a  class="btn btn-secondary" href=http://enterprise.sese.asu.edu:8484/d/f3tDVE7Zk/dashboards>Grafana Dashboards</a>
        </li>
 
       <li class="dropdown">
-         <a href="#" class="dropdown-toggle" data-toggle="dropdown">Make a Report
+         <a href="#" class="btn btn-secondary dropdown-toggle" data-toggle="dropdown">Make a Report
 		       <b class="caret"></b></a>
           <ul class="dropdown-menu">
              <li><a href="https://github.com/HERA-Team/HERA_Commissioning/issues/new?assignees=&labels=Daily&template=daily-log.md&title=Observing+report+2458XXX">New Daily Log Entry</a></li>
@@ -119,7 +115,7 @@ setInterval(reloadradiosky, 30000);
            </ul>
       </li>
       <li class="dropdown">
-        <a href="#" class="dropdown-toggle" data-toggle="dropdown">Hookup Listings
+        <a href="#" class="btn btn-secondary d dropdown-toggle" data-toggle="dropdown">Hookup Listings
    		     <b class="caret"></b></a>
         <ul class="dropdown-menu">
           <li><a href="http://heranow.reionization.org/hookup.html">Cable Hookup Listing</a></li>
@@ -128,15 +124,17 @@ setInterval(reloadradiosky, 30000);
       </li>
 
       <li>
-        <a href="http://hera.pbworks.com/w/page/117456570/Commissioning">Help</a>
+        <a class="btn btn-secondary " href="http://hera.pbworks.com/w/page/117456570/Commissioning">Help</a>
       </li>
     </ul>
     <div class="librarian-time-bar">
       Local Time: <span class="date" data-timezone="Africa/Johannesburg">Jan 1</span><br>
       Sidereal time: <span class="clock_sidereal" data-timezone="Africa/Johannesburg">00:00:00</span><br>
+      Current Julian Date: <span id="julian_date">000</span><br>
       Brexit: <span id="days">0</span> days  <span id="hours">0</span> hrs <span id="minutes">0</span>mins <span id="seconds">0</span><br>
       Python 2 Retirement: <span id="pydays">0</span> days  <span id="pyhours">0</span> hrs <span id="pyminutes">0</span>mins <span id="pyseconds">0</span>
-     </div></div>
+     </div>
+   </div>
 
 
     </nav>
@@ -218,6 +216,41 @@ setInterval(reloadradiosky, 30000);
     updateClock();
 
   })(document, 1580346060, (Date.now()) / 1000);
+</script>
+
+<!-- calculate the current JD -->
+<script>
+  (function (d, serverTime) {
+    var timeDelta = serverTime - (Date.now() + 3600000) / 1000,
+      interval;
+
+    var UI = {
+      days: d.getElementById('julian_date'),
+    };
+
+    function getTimeRemaining() {
+      var dt = (Date.now() + 3600000) / 1000 - timeDelta;
+      return {
+        total: dt,
+        days: Math.floor(dt / (60 * 60 * 24) + 2440587.5),
+      };
+    }
+
+    function updateClock() {
+      var t = getTimeRemaining();
+      if (t.total < 0) {
+        clearInterval(interval);
+        return;
+      }
+
+      UI.days.innerHTML = t.days;
+    }
+
+    d.documentElement.className = 'js';
+    interval = setInterval(updateClock, 1000);
+    updateClock();
+
+  })(document, (Date.now()) / 1000);
 </script>
 
 
