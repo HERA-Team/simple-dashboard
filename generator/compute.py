@@ -147,18 +147,41 @@ def main():
 
     caption = {}
 
-    caption["text"] = ('An overview of many computer statisics.'
-                       '<br><br>Left hand column has information about the onsite Librarian computers.'
-                       '<br><br>Right hand column has information about onsite RTP computers.'
-                       '<br><br><h4>Rows Identify Statistic type</h4>'
-                       '<ul>'
-                       '<li>Load % per computer</li>'
-                       '<li>Local Disk usage in %</li>'
-                       '<li>Local Memory usage in %</li>'
-                       '<li>Network I/O rate (MB/s)</li>'
-                       '<li>M&C time diff (s)</li>'
-                       '</ul>'
-                       )
+    caption["text"] = (
+        'An overview of many computer statisics.'
+        '<br><br><h4>Statstic types type</h4>'
+        """<div class="table-responsive">
+            <table class="table table-striped" style="border:1px solid black; border-top; 1px solid black;">
+            <thead>
+            <tr>
+              <td style="border-left:1px solid black;">Librarian Related Computers
+              <td style="border-left:1px solid black;">RTP Related Computers</td>
+            </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td style="border-left:1px solid black;">Load % per Computer
+                <td style="border-left:1px solid black;">Load % per Computer</td>
+              </tr>
+              <tr>
+                <td style="border-left:1px solid black;">Local Disk Usage %
+                <td style="border-left:1px solid black;">Local Disk Usage %</td></tr>
+              <tr>
+                <td style="border-left:1px solid black;">Local Memory Usage %
+                <td style="border-left:1px solid black;">Local Memory Usage %</td></tr>
+              <tr>
+                <td style="border-left:1px solid black;">Network I/O rate (MB/s)
+                <td style="border-left:1px solid black;">Network I/O rate (MB/s)</td>
+              </tr>
+              <tr>
+                <td style="border-left:1px solid black;">M&C time diff (s)
+                <td style="border-left:1px solid black;">M&C time diff (s)</td>
+              </tr>
+            </tbody>
+            </table>
+         </div>
+        """
+    )
 
     caption["title"] = "Compute Help"
 
