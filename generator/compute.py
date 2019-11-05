@@ -149,7 +149,7 @@ def main():
 
     caption["text"] = (
         'An overview of many computer statisics.'
-        '<br><br><h4>Statstic types type</h4>'
+        '<br><br>Plotted statistics'
         """<div class="table-responsive">
             <table class="table table-striped" style="border:1px solid black; border-top; 1px solid black;">
             <thead>
