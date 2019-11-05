@@ -129,7 +129,7 @@ def main():
                 <td style="border-left:1px solid black;">Ant Metrics Mean Vij Cross Pol Ampltidue</td></tr>
               <tr>
                 <td style="border-left:1px solid black;">Frist Cal Agg Std
-                <td style="border-left:1px solid black;">First Cal Max Stde</td></tr>
+                <td style="border-left:1px solid black;">First Cal Max Std</td></tr>
               <tr>
                 <td style="border-left:1px solid black;">Ominical Phase Std Max
                 <td style="border-left:1px solid black;">Omnical Chi-square Total Average</td></tr>
