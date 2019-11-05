@@ -406,7 +406,10 @@ def main():
               "yaxis": {"title": 'Load % per CPU'},
               "title": {"text": 'NONE'},
               "height": 200,
-              "margin": {"t": 30, "r": 10, "b": 2, "l": 40},
+              "margin": {"t": 30,
+                         "r": 50,
+                         "b": 2,
+                         "l": 50},
               "legend": {"orientation": 'h', "x": 0.15, "y": -0.15},
               "showlegend": True,
               "hovermode": 'closest'
@@ -440,8 +443,11 @@ def main():
         data = do_disk_space(session, cutoff)
         layout["yaxis"]["title"] = "Data Volume [Gb]"
         layout["yaxis"]["zeroline"] = True
-        layout["yaxis2"] = {}
-        layout["yaxis2"]["title"] = "Free Space [Gb]"
+        layout["yaxis2"] = {
+            "title": "Free Space [Gb]",
+            "overlaying": 'y',
+            "side": 'right'
+        }
         layout["title"]["text"] = "Disk Usage"
 
         rendered_js = js_template.render(plotname="disk-space",
