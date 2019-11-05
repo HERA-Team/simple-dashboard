@@ -124,7 +124,8 @@ def do_disk_space(session, cutoff):
     __data = {"x": time_array,
               "y": [t[1] for t in data],
               "name": "Free space".replace(' ', '\t'),
-              "type": "scatter"
+              "type": "scatter",
+              "yaxis": 'y2'
               }
     _data.append(__data)
 
@@ -437,8 +438,10 @@ def main():
             js_file.write('\n\n')
 
         data = do_disk_space(session, cutoff)
-        layout["yaxis"]["title"] = "Gigabytes"
+        layout["yaxis"]["title"] = "Data Volume [Gb]"
         layout["yaxis"]["zeroline"] = True
+        layout["yaxis2"] = {}
+        layout["yaxis2"]["title"] = "Free Space [Gb]"
         layout["title"]["text"] = "Disk Usage"
 
         rendered_js = js_template.render(plotname="disk-space",
@@ -448,6 +451,7 @@ def main():
             js_file.write(rendered_js)
             js_file.write('\n\n')
 
+        layout.pop('yaxis2', None)
         data = do_bandwidths(session, cutoff)
         layout["yaxis"]["title"] = 'MB/s'
         layout["title"]["text"] = "Librarian Transfer Rates"
