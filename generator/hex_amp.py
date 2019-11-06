@@ -89,11 +89,17 @@ def main():
                                       'formats': ('<U5', '<f8', '<f8', '<f8')},
                                encoding=None)
         antnames = antpos['ANTNAME']
+        inds = [int(j[2:]) for j in antnames]
+        inds = np.argsort(inds)
+
+        antnames = np.take(antnames, inds)
+
         antpos = np.array([antpos['EAST'],
                            antpos['NORTH'],
                            antpos['UP']])
         array_center = np.mean(antpos, axis=1, keepdims=True)
         antpos -= array_center
+        antpos = np.take(antpos, inds, axis=1)
 
         stations = hsession.get_all_fully_connected_at_date(at_date='now')
 
@@ -102,6 +108,14 @@ def main():
                 ants = np.append(ants, station.antenna_number)
         ants = np.unique(ants)
 
+        stations = []
+        for station_type in hsession.geo.parse_station_types_to_check('default'):
+            for stn in hsession.geo.station_types[station_type]['Stations']:
+                stations.append(stn)
+
+        # stations is a list of HH??? numbers we just want the ints
+        stations = list(map(int, [j[2:] for j in stations]))
+        build_but_not_on = np.setdiff1d(stations, ants)
         # Get node and PAM info
         node_ind = np.zeros_like(ants, dtype=np.int)
         pam_ind = np.zeros_like(ants, dtype=np.int)
@@ -144,7 +158,7 @@ def main():
                     eq_coeffs[antpol] = np.median(_coeffs)
 
             # Try to get the snap info. Output is a dictionary with 'e' and 'n' keys
-            mc_name = 'HH{:d}'.format(ant)
+            mc_name = antnames[ant]
             snap_info = hsession.get_part_at_station_from_type(mc_name,
                                                                'now', 'snap')
             # get the first key in the dict to index easier
@@ -200,13 +214,12 @@ def main():
                                         mask=[True if int(name[2:]) in ants
                                               else False for name in antnames])
         ys_offline = np.ma.masked_array(antpos[1, :],
-                                        mask=xs_offline.mask).compressed()
-        name_offline = np.ma.masked_array(antnames,
-                                          mask=xs_offline.mask).compressed()
-        xs_offline = xs_offline.compressed()
-
-        ant_index = np.array([np.argwhere('HH{:d}'.format(ant) == antnames)
-                              for ant in ants]).squeeze()
+                                        mask=xs_offline.mask)
+        name_offline = np.ma.masked_array([aname + '<br>OFFLINE'
+                                           for aname in antnames],
+                                          mask=xs_offline.mask,
+                                          dtype=object)
+        xs_offline = xs_offline
 
         _amps = np.ma.masked_invalid([[amps[ant, pol] for ant in ants]
                                       for pol in pols])
@@ -225,11 +238,11 @@ def main():
 
         time_array = np.array([[time_array[ant, pol].to('hour').value
                                for ant in ants] for pol in pols])
-        xs = np.ma.masked_array(antpos[0, ant_index], mask=_amps[0].mask)
-        ys = np.ma.masked_array([antpos[1, ant_index] + 3 * (pol_cnt - .5)
+        xs = np.ma.masked_array(antpos[0, ants], mask=_amps[0].mask)
+        ys = np.ma.masked_array([antpos[1, ants] + 3 * (pol_cnt - .5)
                                  for pol_cnt, pol in enumerate(pols)],
                                 mask=_amps.mask)
-        _text = np.array([[antnames[ant_index[ant_cnt]] + pol
+        _text = np.array([[antnames[ant] + pol
                            + '<br>' + str(hostname[ant_cnt])
                            + '<br>' + 'PAM\t#:\t' + str(pam_ind[ant_cnt])
                            for ant_cnt, ant in enumerate(ants)]
@@ -262,16 +275,28 @@ def main():
         eq_mask = [True]
         # Offline antennas
         data_hex = []
-        offline_ants = {"x": xs_offline.tolist(),
-                        "y": ys_offline.tolist(),
-                        "text": name_offline.tolist(),
+        offline_ants = {"x": xs_offline.compressed().tolist(),
+                        "y": ys_offline.compressed().tolist(),
+                        "text": name_offline,
                         "mode": 'markers',
                         "visible": True,
-                        "marker": {"color": 'black',
-                                   "size": 14,
-                                   "opacity": .5,
-                                   "symbol": 'hexagon'},
-                        "hovertemplate": "%{text}<br>OFFLINE<extra></extra>"}
+                        "marker": {
+                            "color": np.ma.masked_array(
+                                ['black'] * len(name_offline),
+                                mask=xs_offline.mask
+                            ),
+                            "size": 14,
+                            "opacity": .5,
+                            "symbol": 'hexagon'},
+                        "hovertemplate": "%{text}<extra></extra>"}
+        # now we want to Fill in the conneted ones
+        offline_ants["marker"]["color"][build_but_not_on] = 'red'
+        offline_ants["text"].data[build_but_not_on] = [offline_ants["text"].data[ant].split('<br>')[0]
+                                                       + '<br>Constructed<br>Not\tOnline'
+                                                       for ant in build_but_not_on]
+
+        offline_ants["marker"]["color"] = offline_ants["marker"]["color"].compressed().tolist()
+        offline_ants["text"] = offline_ants["text"].compressed().tolist()
         data_hex.append(offline_ants)
 
         #  for each type of power, loop over pols and print out the data
