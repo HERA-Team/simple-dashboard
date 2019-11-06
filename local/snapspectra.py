@@ -68,6 +68,17 @@ def main():
         hsession = cm_sysutils.Handling(session)
         stations = hsession.get_all_fully_connected_at_date(at_date='now')
 
+        antpos = np.genfromtxt(os.path.join(mc.data_path, "HERA_350.txt"),
+                               usecols=(0, 1, 2, 3),
+                               dtype={'names': ('ANTNAME', 'EAST', 'NORTH', 'UP'),
+                                      'formats': ('<U5', '<f8', '<f8', '<f8')},
+                               encoding=None)
+        antnames = antpos['ANTNAME']
+        inds = [int(j[2:]) for j in antnames]
+        inds = np.argsort(inds)
+
+        antnames = np.take(antnames, inds)
+
         ants = []
         for station in stations:
             if station.antenna_number not in ants:
@@ -160,7 +171,7 @@ def main():
                 else:
                     # Try to get the snap info from M&C. Output is a dictionary with 'e' and 'n' keys
                     # connect to M&C to find all the hooked up Snap hostnames and corresponding ant-pols
-                    mc_name = 'HH{:d}'.format(ant)
+                    mc_name = antnames[ant]
                     # these two may not be used, but it is easier to grab them now
                     snap_info = hsession.get_part_at_station_from_type(mc_name,
                                                                        'now', 'snap',

@@ -75,6 +75,17 @@ def main():
                 ants = np.append(ants, station.antenna_number)
         ants = np.unique(ants).astype(int)
 
+        antpos = np.genfromtxt(os.path.join(mc.data_path, "HERA_350.txt"),
+                               usecols=(0, 1, 2, 3),
+                               dtype={'names': ('ANTNAME', 'EAST', 'NORTH', 'UP'),
+                                      'formats': ('<U5', '<f8', '<f8', '<f8')},
+                               encoding=None)
+        antnames = antpos['ANTNAME']
+        inds = [int(j[2:]) for j in antnames]
+        inds = np.argsort(inds)
+
+        antnames = np.take(antnames, inds)
+
         nodes = []
         hists = []
         bad_ants = []
@@ -82,7 +93,7 @@ def main():
         for ant_cnt, ant in enumerate(ants):
             ant_status = session.get_antenna_status(most_recent=True,
                                                     antenna_number=int(ant))
-            mc_name = "HH{:d}".format(int(ant))
+            mc_name = antnames[int(ant)]
             node_info = hsession.get_part_at_station_from_type(mc_name,
                                                                'now', 'node')
             if len(ant_status) == 0:
