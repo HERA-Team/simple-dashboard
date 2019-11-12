@@ -81,7 +81,7 @@ def main():
                            )
             rows_a.append(row)
     table_a_to_s["rows"] = rows_a
-    table_a_to_s["style"] = 'style="max-height: 2000px;"'
+    table_a_to_s["style"] = 'style="max-height: 2500px;"'
     all_tables.append(table_a_to_s)
 
     # make a table of the snap to antenna mapping
