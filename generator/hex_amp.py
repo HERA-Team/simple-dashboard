@@ -274,8 +274,6 @@ def main():
         for pol_cnt, pol in enumerate(pols):
             for ant_cnt, ant in enumerate(ants):
                 for _name, _power in zip(names, powers):
-                    if _name == 'FEM IMU PHI' and ant_cnt == 0 and pol_cnt == 0:
-                        print(_name, _power)
                     if not _power.mask[pol_cnt, ant_cnt]:
                         _text[pol_cnt, ant_cnt] += '<br>' + _name + ': {0:.2f}'.format(_power[pol_cnt, ant_cnt])
                     else:
@@ -417,7 +415,7 @@ def main():
                 data_hex.append(_power_offline)
 
         buttons = []
-        for _name, mask in enumerate(names, masks):
+        for _name, mask in zip(names, masks):
             _button = {"args": [{"visible": mask},
                                 {"title": '',
                                  "annotations": {}
@@ -636,7 +634,7 @@ def main():
 
                     data_node.append(_power_offline)
         buttons = []
-        for _name, mask in enumerate(names, masks):
+        for _name, mask in zip(names, masks):
             _button = {"args": [{"visible": mask},
                                 {"title": '',
                                  "annotations": {}
