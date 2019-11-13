@@ -68,6 +68,17 @@ def main():
         hsession = cm_sysutils.Handling(session)
         stations = hsession.get_all_fully_connected_at_date(at_date='now')
 
+        antpos = np.genfromtxt(os.path.join(mc.data_path, "HERA_350.txt"),
+                               usecols=(0, 1, 2, 3),
+                               dtype={'names': ('ANTNAME', 'EAST', 'NORTH', 'UP'),
+                                      'formats': ('<U5', '<f8', '<f8', '<f8')},
+                               encoding=None)
+        antnames = antpos['ANTNAME']
+        inds = [int(j[2:]) for j in antnames]
+        inds = np.argsort(inds)
+
+        antnames = np.take(antnames, inds)
+
         ants = []
         for station in stations:
             if station.antenna_number not in ants:
@@ -160,7 +171,7 @@ def main():
                 else:
                     # Try to get the snap info from M&C. Output is a dictionary with 'e' and 'n' keys
                     # connect to M&C to find all the hooked up Snap hostnames and corresponding ant-pols
-                    mc_name = 'HH{:d}'.format(ant)
+                    mc_name = antnames[ant]
                     # these two may not be used, but it is easier to grab them now
                     snap_info = hsession.get_part_at_station_from_type(mc_name,
                                                                        'now', 'snap',
@@ -312,11 +323,9 @@ def main():
                             "showticklabels": True,
                             "tick0": 0,
                             "dtick": 10,
-                            "range": [40, 250]
                             },
                   "yaxis": {"title": 'Power [dB]',
                             "showticklabels": True,
-                            # "range": [-35, 10]
                             },
                   "hoverlabel": {"align": "left"},
                   "margin": {"l": 40, "b": 30,
@@ -338,6 +347,33 @@ def main():
                                   ]
                   }
 
+        caption = {}
+        caption["title"] = "Snap Spectra Help"
+        caption["text"] = ("Autocorrelations (in dB) calculated by each Snap "
+                           "with equalization coefficients divided out. "
+                           "Calculation is independent of the corrlator. "
+                           "<br><br>"
+                           "Data is organized by the ADC Port number from "
+                           "each Snap. "
+                           "A mapping dictionary is used to look up the "
+                           "associated ant-pol for each ADC Port. "
+                           "Some ADC Ports may not have a known ant-pol "
+                           "and are labeled as N/C."
+                           "<br>Some antennas known to M&C may not have a known ADC port"
+                           " mapping and are labeled below the plot."
+                           "<br><br>Some Snap ports my not have data and are "
+                           "labeled in a table below the plot."
+                           "<br><br>The node selection button contains a lot "
+                           "of information described here."
+                           "<br><h4>Button Label Information</h4>"
+                           "<ul>"
+                           "<li>Snap hostname</li>"
+                           "<li>Last time the Snap was programmed</li>"
+                           "<li>Last time data was recorded from this Snap</li>"
+                           "<li>Last known temperature in C | PPS count | Uptime</li>"
+                           "</ul>"
+                           )
+
         plotname = "plotly-snap"
         html_template = env.get_template("refresh_with_table.html")
         js_template = env.get_template("plotly_base.js")
@@ -349,7 +385,8 @@ def main():
                                              gen_time_unix_ms=Time.now().unix * 1000,
                                              scriptname=os.path.basename(__file__),
                                              hostname=computer_hostname,
-                                             table=[table_snap, table_ants]
+                                             table=[table_snap, table_ants],
+                                             caption=caption
                                              )
         rendered_js = js_template.render(data=data,
                                          layout=layout,

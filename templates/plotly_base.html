@@ -4,12 +4,33 @@
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 {% block subhead %}{% endblock %}
 {% endblock %}
+
+
+{% block caption %}
+{% if caption is defined %}
+<div class="sidebar-header" style="text-align:center;">
+  {% if caption.title is defined %}
+    <h3>{{ caption["title"] }}</h3>
+  {% else %}
+      <h3>Page Help</h3>
+   {% endif %}
+  </div>
+  <div class="sidebar-body" style="margin-left: 1.5em; margin-right: 1.5em;">
+    <p>
+      {{ caption["text"] }}
+    </p>
+  </div>
+{% endif %}
+{% endblock %}
+
+
 {% block body %}
 {% block prebody %}{% endblock %}
 
     <div class="container">
       {# Want to be able to support a list of names as input #}
       {# if not a list assume a single string as a name #}
+
       {% if plotname is iterable and plotname is not string %}
       {% for namelist in plotname %}
 
@@ -19,10 +40,10 @@
         {% if namelist is iterable and namelist is not string %}
         {% for name in namelist %}
 
-        <div id="{{ name }}" class="col-md-{{ colsize or 6 }}", style="{{ plotstyle or 'height: 85vh'}}"></div>
+        <div id="{{ name }}" class="col-md-{{ colsize or 6 }}" style="{{ plotstyle or 'height: 85vh'}}; max-height: 950px"></div>
         {% endfor %}
         {% else %}
-        <div id="{{ namelist }}" class="col-md-{{ colsize or 12 }}", style="{{ plotstyle or 'height: 85vh'}}"></div>
+        <div id="{{ namelist }}" class="col-md-{{ colsize or 12 }}" style="{{ plotstyle or 'height: 85vh'}}; max-height: 950px"></div>
         {% endif %}
 
       </div>
@@ -30,20 +51,18 @@
       {% else %}
 
       <div class="row">
-        <div id="{{ plotname }}" class="col-md-{{ colsize or 12 }}", style="{{ plotstyle or 'height: 85vh'}}"></div>
+        <div id="{{ plotname }}" class="col-md-{{ colsize or 12 }}" style="{{ plotstyle or 'height: 85vh'}}; max-height: 950px"></div>
       </div>
       {% endif %}
 
       {% block postbody %}{% endblock %}
-    </div>
-
 {% endblock %}
 
 {% block footer %}
       {% if data_type is defined %}
-      <p class="text-muted text-center"><small><small>
-        {{ data_type }} observed on {{data_date}} (JD: {{ data_jd_date }})<br>
-        Last updated: <span id="age">???</span> ago at {{ gen_date }}<br>
+      <p class="text-muted text-center">
+        <b>{{ data_type }} observed <span id="data_age">???</span> ago ({{data_date_iso}} JD: {{ data_date_jd }})</b><br>
+        <small><small>Last updated: <span id="age">???</span> ago at {{ gen_date }}<br>
         Script name: {{ scriptname }}
         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
         Executing host: {{ hostname }}
@@ -57,4 +76,26 @@
       </small></small></p>
       {% endif %}
     <script src="{{js_name}}.js"></script>
+{% endblock %}
+
+{% block script %}
+{% if data_type is defined %}
+<script type='text/javascript'>
+let data_age = 0.001 * (Date.now() - {{data_date_unix_ms}});
+let data_text = "?";
+if (data_age < 300) {
+  data_text = data_age.toFixed(0) + " seconds";
+} else if (data_age < 10800) { // 3 hours
+  data_text = (data_age / 60).toFixed(0) + " minutes";
+} else if (data_age < 172800) { // 48 hours
+  data_text = (data_age / 3600).toFixed(0) + " hours";
+} else {
+  data_text = (data_age / 86400).toFixed(1) + " days";
+}
+document.getElementById("data_age").textContent = data_text;
+if (data_age > 1800) {
+    document.getElementById("data_age").style.color = 'red';
+}
+</script>
+{% endif %}
 {% endblock %}

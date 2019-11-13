@@ -74,10 +74,22 @@ def main():
     ant_to_snap = json.loads(corr_map[b'ant_to_snap'])
     node_map = {}
     nodes = []
+    # want to be smart against the length of the autos, they sometimes change
+    # depending on the mode of the array
+    for i in ants:
+        for pol in ['e', 'n']:
+            d = r.get('auto:{ant:d}{pol:s}'.format(ant=i, pol=pol))
+            if d is not None:
+                auto = np.frombuffer(d, dtype=np.float32).copy()
+                break
+    auto_size = auto.size
     # Generate frequency axis
-    NCHANS = int(2048 // 4 * 3)
+    # Some times we have 6144 length inputs, others 1536, this should
+    # set the length to match whatever the auto we got was
+    NCHANS = int(8192 // 4 * 3)
     NCHANS_F = 8192
-    NCHAN_SUM = 4
+    NCHAN_SUM = NCHANS // auto_size
+    NCHANS = auto_size
     frange = np.linspace(0, 250e6, NCHANS_F + 1)[1536:1536 + (8192 // 4 * 3)]
     # average over channels
     frange = frange.reshape(NCHANS, NCHAN_SUM).sum(axis=1) / NCHAN_SUM
@@ -86,9 +98,12 @@ def main():
     got_time = False
     n_signals = 0
 
-    t_plot_jd = np.frombuffer(r['auto:timestamp'], dtype=np.float64)[0]
-    t_plot_iso = Time(t_plot_jd, format='jd').iso
-    got_time = True
+    try:
+        t_plot_jd = np.frombuffer(r['auto:timestamp'], dtype=np.float64)[0]
+        t_plot = Time(t_plot_jd, format='jd')
+        got_time = True
+    except:
+        pass
     # grab data from redis and format it according to plotly's javascript api
     autospectra = []
 
@@ -180,7 +195,7 @@ def main():
     buttons = []
     _button = {"args": [{"visible": [True for s in autospectra]},
                         {"title": '',
-                         "annotations": {}
+                         # "annotations": {}
                          }
                         ],
                "label": "All\tAnts",
@@ -195,11 +210,11 @@ def main():
 
         _button = {"args": [{"visible": node_mask[node_cnt]},
                             {"title": '',
-                             "annotations": {}
+                             # "annotations": {}
                              }
                             ],
                    "label": label,
-                   "method": "restyle"
+                   "method": "update"
                    }
         buttons.append(_button)
 
@@ -207,13 +222,21 @@ def main():
                     "showactive": True,
                     "active": 0,
                     "type": "dropdown",
-                    "x": .55,
-                    "y": 1.1,
+                    "x": .535,
+                    "y": 1.03,
                     }
                    ]
 
     layout = {"xaxis": {"title": "Frequency [MHz]"},
               "yaxis": {"title": "Power [dB]"},
+              "title": {"text": "Autocorrelations",
+                        "xref": 'paper',
+                        "x": 0.5,
+                        "yref": 'paper',
+                        "y": 1.5,
+                        "font": {"size": 24,
+                                 }
+                        },
               "autosize": True,
               "showlegend": True,
               "legend": {"x": 1,
@@ -221,10 +244,25 @@ def main():
               "margin": {"l": 40,
                          "b": 30,
                          "r": 40,
-                         "t": 30},
+                         "t": 75},
               "hovermode": "closest",
               }
     plotname = "plotly-autos"
+
+    caption = {}
+    caption["text"] = ('The Autocorrelations from the correlator (in dB) versus frequency '
+                       'with equalization coefficients divided out.\n '
+                       '<br><br>Some antennas may not have '
+                       'a known node mapping and are listed below the image.\n  '
+                       '<br><br>Plot can be downselected to display individual nodes '
+                       'or show the entire array.\n '
+                       '<br><br>Double click on an entry in the legend to select only that '
+                       'entry, double click again to restore all plots.\n  '
+                       '<br><br>Single click an entry in the legend to un-plot it, '
+                       'single click again to restore it to the plot.'
+
+                       )
+    caption["title"] = "Autocorrelations Help"
 
     html_template = env.get_template("refresh_with_table.html")
     js_template = env.get_template("plotly_base.js")
@@ -233,13 +271,15 @@ def main():
                                          data_type="Auto correlations",
                                          plotstyle="height: 85vh",
                                          gen_date=Time.now().iso,
-                                         data_date=t_plot_iso,
-                                         data_jd_date=t_plot_jd,
+                                         data_date_iso=t_plot.iso,
+                                         data_date_jd=t_plot.jd,
+                                         data_date_unix_ms=t_plot.unix * 1000,
                                          js_name="spectra",
                                          gen_time_unix_ms=Time.now().unix * 1000,
                                          scriptname=os.path.basename(__file__),
                                          hostname=computer_hostname,
-                                         table=table_ants)
+                                         table=table_ants,
+                                         caption=caption)
 
     rendered_js = js_template.render(data=autospectra,
                                      layout=layout,

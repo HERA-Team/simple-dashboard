@@ -124,7 +124,8 @@ def do_disk_space(session, cutoff):
     __data = {"x": time_array,
               "y": [t[1] for t in data],
               "name": "Free space".replace(' ', '\t'),
-              "type": "scatter"
+              "type": "scatter",
+              "yaxis": 'y2'
               }
     _data.append(__data)
 
@@ -403,8 +404,12 @@ def main():
 
     layout = {"xaxis": {"range": time_axis_range},
               "yaxis": {"title": 'Load % per CPU'},
+              "title": {"text": 'NONE'},
               "height": 200,
-              "margin": {"t": 2, "r": 10, "b": 2, "l": 40},
+              "margin": {"t": 30,
+                         "r": 50,
+                         "b": 2,
+                         "l": 50},
               "legend": {"orientation": 'h', "x": 0.15, "y": -0.15},
               "showlegend": True,
               "hovermode": 'closest'
@@ -416,7 +421,7 @@ def main():
     with db.sessionmaker() as session:
 
         data = do_server_loads(session, cutoff)
-
+        layout["title"]["text"] = "CPU Loads"
         rendered_js = js_template.render(plotname="server-loads",
                                          data=data,
                                          layout=layout)
@@ -427,6 +432,7 @@ def main():
         data = do_upload_ages(session, cutoff)
         layout["yaxis"]["title"] = "Minutes"
         layout["yaxis"]["zeroline"] = False
+        layout["title"]["text"] = "Time Since last upload"
         rendered_js = js_template.render(plotname="upload-ages",
                                          data=data,
                                          layout=layout)
@@ -435,8 +441,14 @@ def main():
             js_file.write('\n\n')
 
         data = do_disk_space(session, cutoff)
-        layout["yaxis"]["title"] = "Gigabytes"
+        layout["yaxis"]["title"] = "Data Volume [Gb]"
         layout["yaxis"]["zeroline"] = True
+        layout["yaxis2"] = {
+            "title": "Free Space [Gb]",
+            "overlaying": 'y',
+            "side": 'right'
+        }
+        layout["title"]["text"] = "Disk Usage"
 
         rendered_js = js_template.render(plotname="disk-space",
                                          data=data,
@@ -445,8 +457,10 @@ def main():
             js_file.write(rendered_js)
             js_file.write('\n\n')
 
+        layout.pop('yaxis2', None)
         data = do_bandwidths(session, cutoff)
         layout["yaxis"]["title"] = 'MB/s'
+        layout["title"]["text"] = "Librarian Transfer Rates"
         rendered_js = js_template.render(plotname="bandwidths",
                                          data=data,
                                          layout=layout)
@@ -457,6 +471,7 @@ def main():
         data = do_num_files(session, cutoff)
         layout["yaxis"]["title"] = 'Number'
         layout["yaxis"]["zeroline"] = False
+        layout["title"]["text"] = "Total Number of Files in Librarian"
         rendered_js = js_template.render(plotname="num-files",
                                          data=data,
                                          layout=layout)
@@ -468,6 +483,7 @@ def main():
         layout["yaxis"]["title"] = 'ms'
         layout["yaxis"]["rangemode"] = 'tozero'
         layout["yaxis"]["zeroline"] = True
+        layout["title"]["text"] = "Server Ping Times"
         rendered_js = js_template.render(plotname="ping-times",
                                          data=data,
                                          layout=layout)
@@ -480,6 +496,7 @@ def main():
             layout["yaxis"]["title"] = 'Files in <br><b>temporary staging</b>'
             layout["yaxis"]["zeroline"] = True
             layout["margin"]["l"] = 60
+            layout["title"]["text"] = "Files in <b>Temporary Staging</b>"
             rendered_js = js_template.render(plotname="file-compare",
                                              data=data,
                                              layout=layout)
@@ -491,6 +508,41 @@ def main():
         tables.append(do_raid_errors(session, cutoff))
         tables.append(do_raid_status(session, cutoff))
 
+        caption = {}
+        caption["title"] = "Librarian Help"
+
+        caption["text"] = (
+            "An overview of many Librarian related statisics. "
+            "<br>The Plots are organized as follows: "
+            """<div class="table-responsive">
+                <table class="table table-striped" style="border:1px solid black; border-top; 1px solid black;">
+                <tbody>
+                  <tr>
+                    <td style="border-left:1px solid black;">CPU Load
+                    <td style="border-left:1px solid black;">Time Since last Upload</td>
+                  </tr>
+                  <tr>
+                    <td style="border-left:1px solid black;">Disk Space Usage
+                    <td style="border-left:1px solid black;">AOC Transfer Speeds</td></tr>
+                  <tr>
+                    <td style="border-left:1px solid black;">Total Number of files in Librarian
+                    <td style="border-left:1px solid black;">AOC ping time</td></tr>
+                  <tr>
+                    <td style="border-left:1px solid black;">Files in <b>Temporary Storage</b>
+                    <td style="border-left:1px solid black;"></td></tr>
+                </tbody>
+                </table>
+             </div>
+            """
+            "The files in temporary storage counts the number of raw files at /mnt/sn1 "
+            "on qmaster and compares that to the number of processed files whose "
+            "JDs are >= oldest raw file.<br>It is a hacky proxy for 'DID RTP RUN?' "
+            "<br>Assuming RTP runs successfully on all files from an observation, "
+            "both lines should report the same number of files."
+            "<br><br>"
+            "The final two tables give some recent RAID errors and status reports."
+        )
+
         rendered_html = html_template.render(plotname=plotnames,
                                              title="Librarian",
                                              plotstyle="height: 220",
@@ -500,7 +552,8 @@ def main():
                                              js_name='librarian',
                                              hostname=computer_hostname,
                                              scriptname=os.path.basename(__file__),
-                                             tables=tables
+                                             tables=tables,
+                                             caption=caption
                                              )
 
         with open('librarian.html', 'w') as h_file:

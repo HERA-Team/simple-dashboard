@@ -75,6 +75,17 @@ def main():
                 ants = np.append(ants, station.antenna_number)
         ants = np.unique(ants).astype(int)
 
+        antpos = np.genfromtxt(os.path.join(mc.data_path, "HERA_350.txt"),
+                               usecols=(0, 1, 2, 3),
+                               dtype={'names': ('ANTNAME', 'EAST', 'NORTH', 'UP'),
+                                      'formats': ('<U5', '<f8', '<f8', '<f8')},
+                               encoding=None)
+        antnames = antpos['ANTNAME']
+        inds = [int(j[2:]) for j in antnames]
+        inds = np.argsort(inds)
+
+        antnames = np.take(antnames, inds)
+
         nodes = []
         hists = []
         bad_ants = []
@@ -82,7 +93,7 @@ def main():
         for ant_cnt, ant in enumerate(ants):
             ant_status = session.get_antenna_status(most_recent=True,
                                                     antenna_number=int(ant))
-            mc_name = "HH{:d}".format(int(ant))
+            mc_name = antnames[int(ant)]
             node_info = hsession.get_part_at_station_from_type(mc_name,
                                                                'now', 'node')
             if len(ant_status) == 0:
@@ -166,7 +177,18 @@ def main():
                   "yaxis": {"title": 'Occurance',
                             "type": "linear"
                             },
-                  "margin": {"l": 40, "b": 30, "r": 40, "t": 30},
+                  "title": {"text": "ADC Histograms",
+                            "xref": 'paper',
+                            "x": 0.5,
+                            "yref": 'paper',
+                            "y": 1.5,
+                            "font": {"size": 24,
+                                     }
+                            },
+                  "margin": {"l": 40,
+                             "b": 30,
+                             "r": 40,
+                             "t": 70},
                   "hovermode": "closest",
                   "autosize": True,
                   "showlegend": True
@@ -229,8 +251,8 @@ def main():
                         "showactive": True,
                         "active": 0,
                         "type": "dropdown",
-                        "x": .55,
-                        "y": 1.1,
+                        "x": .535,
+                        "y": 1.03,
                         },
                        {"buttons": buttons,
                         "showactive": True,
@@ -244,10 +266,35 @@ def main():
         html_template = env.get_template("ploty_with_multi_table.html")
         js_template = env.get_template("plotly_base.js")
 
+        caption = {}
+
+        caption["text"] = ('The ADC Histograms with equalization coefficients '
+                           'divided out.'
+                           '<br><br>Some antennas known to M&C may not have a histogram '
+                           ' and are listed below the image.'
+                           '<br><br>Some antennas may not have '
+                           'a known node mapping and are listed below the image.\n  '
+                           '<br><br>Plot can be downselected to display '
+                           'individual nodes  or show the entire array.\n '
+                           '<br><br>Double click on an entry in the legend '
+                           'to select only that entry, '
+                           'double click again to restore all plots.\n  '
+                           '<br><br><h4>Formatting options</h4>'
+                           '<ul>'
+                           '<li>Linear - Display with Linear y-axis</li>'
+                           '<li>Log - Display with Log y-axis</li>'
+                           '</ul>'
+                           '<br><br>Single click an entry in the legend to un-plot it, '
+                           'single click again to restore it to the plot.'
+                           )
+
+        caption["title"] = "Histogram Help"
+
         rendered_html = html_template.render(plotname=plotname,
                                              plotstyle="height: 85vh",
                                              gen_date=now.iso,
                                              js_name="adchist",
+                                             caption=caption,
                                              gen_time_unix_ms=now.unix * 1000,
                                              scriptname=os.path.basename(__file__),
                                              hostname=computer_hostname,

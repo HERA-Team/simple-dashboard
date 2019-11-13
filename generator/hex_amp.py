@@ -89,11 +89,17 @@ def main():
                                       'formats': ('<U5', '<f8', '<f8', '<f8')},
                                encoding=None)
         antnames = antpos['ANTNAME']
+        inds = [int(j[2:]) for j in antnames]
+        inds = np.argsort(inds)
+
+        antnames = np.take(antnames, inds)
+
         antpos = np.array([antpos['EAST'],
                            antpos['NORTH'],
                            antpos['UP']])
         array_center = np.mean(antpos, axis=1, keepdims=True)
         antpos -= array_center
+        antpos = np.take(antpos, inds, axis=1)
 
         stations = hsession.get_all_fully_connected_at_date(at_date='now')
 
@@ -102,6 +108,14 @@ def main():
                 ants = np.append(ants, station.antenna_number)
         ants = np.unique(ants)
 
+        stations = []
+        for station_type in hsession.geo.parse_station_types_to_check('default'):
+            for stn in hsession.geo.station_types[station_type]['Stations']:
+                stations.append(stn)
+
+        # stations is a list of HH??? numbers we just want the ints
+        stations = list(map(int, [j[2:] for j in stations]))
+        build_but_not_on = np.setdiff1d(stations, ants)
         # Get node and PAM info
         node_ind = np.zeros_like(ants, dtype=np.int)
         pam_ind = np.zeros_like(ants, dtype=np.int)
@@ -144,7 +158,7 @@ def main():
                     eq_coeffs[antpol] = np.median(_coeffs)
 
             # Try to get the snap info. Output is a dictionary with 'e' and 'n' keys
-            mc_name = 'HH{:d}'.format(ant)
+            mc_name = antnames[ant]
             snap_info = hsession.get_part_at_station_from_type(mc_name,
                                                                'now', 'snap')
             # get the first key in the dict to index easier
@@ -180,11 +194,16 @@ def main():
                 _node_num = re.findall(r'N(\d+)', node_info[_key][pol_key])[0]
                 node_ind[ant_cnt] = np.int(_node_num)
 
-                snap_status = session.get_snap_status(most_recent=True,
-                                                      nodeID=np.int(_node_num))
-                for _status in snap_status:
-                    if _status.serial_number == snap_serial[ant_cnt]:
-                        hostname[ant_cnt] = _status.hostname
+                _hostname = session.get_snap_hostname_from_serial(snap_serial[ant_cnt])
+
+                if _hostname is not None:
+                    hostname[ant_cnt] = _hostname
+                else:
+                    snap_status = session.get_snap_status(most_recent=True,
+                                                          nodeID=np.int(_node_num))
+                    for _status in snap_status:
+                        if _status.serial_number == snap_serial[ant_cnt]:
+                            hostname[ant_cnt] = _status.hostname
             else:
                 node_ind[ant_cnt] = -1
 
@@ -195,13 +214,12 @@ def main():
                                         mask=[True if int(name[2:]) in ants
                                               else False for name in antnames])
         ys_offline = np.ma.masked_array(antpos[1, :],
-                                        mask=xs_offline.mask).compressed()
-        name_offline = np.ma.masked_array(antnames,
-                                          mask=xs_offline.mask).compressed()
-        xs_offline = xs_offline.compressed()
-
-        ant_index = np.array([np.argwhere('HH{:d}'.format(ant) == antnames)
-                              for ant in ants]).squeeze()
+                                        mask=xs_offline.mask)
+        name_offline = np.ma.masked_array([aname + '<br>OFFLINE'
+                                           for aname in antnames],
+                                          mask=xs_offline.mask,
+                                          dtype=object)
+        xs_offline = xs_offline
 
         _amps = np.ma.masked_invalid([[amps[ant, pol] for ant in ants]
                                       for pol in pols])
@@ -220,11 +238,11 @@ def main():
 
         time_array = np.array([[time_array[ant, pol].to('hour').value
                                for ant in ants] for pol in pols])
-        xs = np.ma.masked_array(antpos[0, ant_index], mask=_amps[0].mask)
-        ys = np.ma.masked_array([antpos[1, ant_index] + 3 * (pol_cnt - .5)
+        xs = np.ma.masked_array(antpos[0, ants], mask=_amps[0].mask)
+        ys = np.ma.masked_array([antpos[1, ants] + 3 * (pol_cnt - .5)
                                  for pol_cnt, pol in enumerate(pols)],
                                 mask=_amps.mask)
-        _text = np.array([[antnames[ant_index[ant_cnt]] + pol
+        _text = np.array([[antnames[ant] + pol
                            + '<br>' + str(hostname[ant_cnt])
                            + '<br>' + 'PAM\t#:\t' + str(pam_ind[ant_cnt])
                            for ant_cnt, ant in enumerate(ants)]
@@ -257,16 +275,28 @@ def main():
         eq_mask = [True]
         # Offline antennas
         data_hex = []
-        offline_ants = {"x": xs_offline.tolist(),
-                        "y": ys_offline.tolist(),
-                        "text": name_offline.tolist(),
+        offline_ants = {"x": xs_offline.compressed().tolist(),
+                        "y": ys_offline.compressed().tolist(),
+                        "text": name_offline,
                         "mode": 'markers',
                         "visible": True,
-                        "marker": {"color": 'black',
-                                   "size": 14,
-                                   "opacity": .5,
-                                   "symbol": 'hexagon'},
-                        "hovertemplate": "%{text}<br>OFFLINE<extra></extra>"}
+                        "marker": {
+                            "color": np.ma.masked_array(
+                                ['black'] * len(name_offline),
+                                mask=xs_offline.mask
+                            ),
+                            "size": 14,
+                            "opacity": .5,
+                            "symbol": 'hexagon'},
+                        "hovertemplate": "%{text}<extra></extra>"}
+        # now we want to Fill in the conneted ones
+        offline_ants["marker"]["color"][build_but_not_on] = 'red'
+        offline_ants["text"].data[build_but_not_on] = [offline_ants["text"].data[ant].split('<br>')[0]
+                                                       + '<br>Constructed<br>Not\tOnline'
+                                                       for ant in build_but_not_on]
+
+        offline_ants["marker"]["color"] = offline_ants["marker"]["color"].compressed().tolist()
+        offline_ants["text"] = offline_ants["text"].compressed().tolist()
         data_hex.append(offline_ants)
 
         #  for each type of power, loop over pols and print out the data
@@ -436,12 +466,53 @@ def main():
 
         layout_hex = {"xaxis": {"title": "East-West Position [m]"},
                       "yaxis": {"title": "North-South Position [m]"},
+                      "title": {"text": "Per Antpol Stats vs Hex position",
+                                "font": {"size": 24,
+                                         }
+                                },
                       "hoverlabel": {"align": "left"},
-                      "margin": {"t": 10},
+                      "margin": {"t": 40},
                       "autosize": True,
                       "showlegend": False,
                       "hovermode": "closest"
                       }
+        caption = {}
+        caption["title"] = "Stats vs Hex pos Help"
+        caption["text"] = ("This plot shows various statistics and measurements "
+                           "per ant-pol versus its position in the array."
+                           "<br>Antennas which are build but not fully hooked up "
+                           "are shown in light red."
+                           "<br>Grey antennas are not yet constructed."
+                           "<br><br><h4>Available plotting options</h4>"
+                           "<ul>"
+                           "<li>Auto Corr - Median Auto Correlation (in db) "
+                           "from the correlator with equalization coefficients "
+                           "divided out</li>"
+                           "<li>Pam Power - Latest Pam Power (in db) recorded in M&C</li>"
+                           "<li>ADC Power - Latest ADC Power (in db) recorded in M&C</li>"
+                           "<li>ADC RMS - Latest linear ADC RMS recorded in M&C</li>"
+                           "<li>EQ Coeffs - Latest Median Equalization Coefficient recorded in M&C</li>"
+                           "</ul>"
+                           "Any antpol showing with an orange color means "
+                           "no data is avaible for the currenty plot selection."
+                           "<h4>Hover label Formatting</h4>"
+                           "<ul>"
+                           "<li>Antenna Name from M&C<br>(e.g. HH0n = Hera Hex Antenna 0 Polarization N)</li>"
+                           "<li>Snap hostname from M&C<br>(e.g. heraNode0Snap0)</li>"
+                           "<li>PAM Number</li>"
+                           "<li>Median Auto Correlation power in dB</li>"
+                           "<li>PAM power in dB</li>"
+                           "<li>ADC power in dB</li>"
+                           "<li>Linear ADC RMS</li>"
+                           "<li>Median Equalization Coefficient</li>"
+                           "<li>Time ago in hours the M&C Antenna Status was updated. "
+                           "This time stamp applies to all data for this antenna "
+                           "except the Auto Correlation.</li>"
+                           "</ul>"
+                           "In any hover label entry 'No Data' means "
+                           "information not currrently available in M&C."
+
+                           )
 
         # Render all the power vs position files
         plotname = "plotly-hex"
@@ -452,12 +523,15 @@ def main():
                                                  data_type="Auto correlations",
                                                  plotstyle="height: 85vh",
                                                  gen_date=now.iso,
-                                                 data_date=latest.iso,
-                                                 data_jd_date=latest.jd,
+                                                 data_date_iso=latest.iso,
+                                                 data_date_jd=latest.jd,
+                                                 data_date_unix_ms=latest.unix * 1000,
                                                  js_name="hex_amp",
                                                  gen_time_unix_ms=now.unix * 1000,
                                                  scriptname=os.path.basename(__file__),
-                                                 hostname=computer_hostname)
+                                                 hostname=computer_hostname,
+                                                 caption=caption
+                                                 )
 
         rendered_hex_js = js_template.render(data=data_hex,
                                              layout=layout_hex,
@@ -652,12 +726,51 @@ def main():
                        "yaxis": {"showticklabels": False,
                                  "showgrid": False,
                                  "zeroline": False},
+                       "title": {"text": "Per Antpol Stats vs Node #",
+                                 "font": {"size": 24,
+                                          }
+                                 },
                        "hoverlabel": {"align": "left"},
-                       "margin": {"t": 10},
+                       "margin": {"t": 40},
                        "autosize": True,
                        "showlegend": False,
                        "hovermode": "closest"
                        }
+
+        caption_node = {}
+        caption_node["title"] = "Stats vs Node Help"
+        caption_node["text"] = ("This plot shows various statistics and measurements "
+                                "per ant-pol versus the node number to which it is connected."
+                                "<br><br><h4>Available plotting options</h4>"
+                                "<ul>"
+                                "<li>Auto Corr - Median Auto Correlation (in db) "
+                                "from the correlator with equalization coefficients "
+                                "divided out</li>"
+                                "<li>Pam Power - Latest Pam Power (in db) recorded in M&C</li>"
+                                "<li>ADC Power - Latest ADC Power (in db) recorded in M&C</li>"
+                                "<li>ADC RMS - Latest linear ADC RMS recorded in M&C</li>"
+                                "<li>EQ Coeffs - Latest Median Equalization Coefficient recorded in M&C</li>"
+                                "</ul>"
+                                "Any antpol showing with an orange color means "
+                                "no data is avaible for the currenty plot selection."
+                                "<h4>Hover label Formatting</h4>"
+                                "<ul>"
+                                "<li>Antenna Name from M&C<br>(e.g. HH0n = Hera Hex Antenna 0 Polarization N)</li>"
+                                "<li>Snap hostname from M&C<br>(e.g. heraNode0Snap0)</li>"
+                                "<li>PAM Number</li>"
+                                "<li>Median Auto Correlation power in dB</li>"
+                                "<li>PAM power in dB</li>"
+                                "<li>ADC power in dB</li>"
+                                "<li>Linear ADC RMS</li>"
+                                "<li>Median Equalization Coefficient</li>"
+                                "<li>Time ago in hours the M&C Antenna Status was updated. "
+                                "This time stamp applies to all data for this antenna "
+                                "except the Auto Correlation.</li>"
+                                "</ul>"
+                                "In any hover label entry 'No Data' means "
+                                "information not currrently available in M&C."
+
+                                )
 
         # Render all the power vs ndde files
         plotname = "plotly-node"
@@ -669,11 +782,13 @@ def main():
                                                   plotstyle="height: 85vh",
                                                   gen_date=now.iso,
                                                   gen_time_unix_ms=now.unix * 1000,
-                                                  data_date=latest.iso,
-                                                  data_jd_date=latest.jd,
+                                                  data_date_iso=latest.iso,
+                                                  data_date_jd=latest.jd,
+                                                  data_date_unix_ms=latest.unix * 1000,
                                                   js_name="node_amp",
                                                   scriptname=os.path.basename(__file__),
-                                                  hostname=computer_hostname)
+                                                  hostname=computer_hostname,
+                                                  caption=caption_node)
 
         rendered_node_js = js_template.render(data=data_node,
                                               layout=layout_node,

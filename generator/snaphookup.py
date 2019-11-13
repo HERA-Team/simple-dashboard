@@ -81,6 +81,7 @@ def main():
                            )
             rows_a.append(row)
     table_a_to_s["rows"] = rows_a
+    table_a_to_s["style"] = 'style="max-height: 2500px;"'
     all_tables.append(table_a_to_s)
 
     # make a table of the snap to antenna mapping
@@ -126,6 +127,7 @@ def main():
         rows_ant_ind.append(row)
 
     table_ant_ind["rows"] = rows_ant_ind
+    table_ant_ind["float"] = "right"
     all_tables.append(table_ant_ind)
 
     # Make a table of the XENG channel indices
@@ -147,18 +149,22 @@ def main():
                        )
         rows_xeng.append(row)
     table_xeng["rows"] = rows_xeng
+    table_xeng["float"] = "right"
+
     all_tables.append(table_xeng)
 
     html_template = env.get_template("tables_with_footer.html")
 
     rendered_html = html_template.render(tables=all_tables,
                                          data_type="Hookup information",
-                                         data_date=update_time.iso,
-                                         data_jd_date=update_time.jd,
+                                         data_date_iso=update_time.iso,
+                                         data_date_jd=update_time.jd,
+                                         data_date_unix_ms=update_time.unix * 1000,
                                          gen_date=Time.now().iso,
                                          gen_time_unix_ms=Time.now().unix * 1000,
                                          scriptname=os.path.basename(__file__),
-                                         hostname=computer_hostname)
+                                         hostname=computer_hostname,
+                                         colsize=6)
 
     with open('snaphookup.html', 'w') as h_file:
         h_file.write(rendered_html)

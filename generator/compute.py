@@ -145,6 +145,46 @@ def main():
     cutoff = now - TimeDelta(TIME_WINDOW, format='jd')
     time_axis_range = [cutoff.isot, now.isot]
 
+    caption = {}
+
+    caption["text"] = (
+        'An overview of many computer statisics.'
+        '<br><br>Plotted statistics'
+        """<div class="table-responsive">
+            <table class="table table-striped" style="border:1px solid black; border-top; 1px solid black;">
+            <thead>
+            <tr>
+              <td style="border-left:1px solid black;">Librarian Related Computers
+              <td style="border-left:1px solid black;">RTP Related Computers</td>
+            </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td style="border-left:1px solid black;">Load % per Computer
+                <td style="border-left:1px solid black;">Load % per Computer</td>
+              </tr>
+              <tr>
+                <td style="border-left:1px solid black;">Local Disk Usage %
+                <td style="border-left:1px solid black;">Local Disk Usage %</td></tr>
+              <tr>
+                <td style="border-left:1px solid black;">Local Memory Usage %
+                <td style="border-left:1px solid black;">Local Memory Usage %</td></tr>
+              <tr>
+                <td style="border-left:1px solid black;">Network I/O rate (MB/s)
+                <td style="border-left:1px solid black;">Network I/O rate (MB/s)</td>
+              </tr>
+              <tr>
+                <td style="border-left:1px solid black;">M&C time diff (s)
+                <td style="border-left:1px solid black;">M&C time diff (s)</td>
+              </tr>
+            </tbody>
+            </table>
+         </div>
+        """
+    )
+
+    caption["title"] = "Compute Help"
+
     html_template = env.get_template("plotly_base.html")
     rendered_html = html_template.render(plotname=plotnames,
                                          plotstyle="height: 220",
@@ -153,7 +193,8 @@ def main():
                                          gen_time_unix_ms=now.unix * 1000,
                                          js_name='compute',
                                          hostname=computer_hostname,
-                                         scriptname=os.path.basename(__file__)
+                                         scriptname=os.path.basename(__file__),
+                                         caption=caption
                                          )
     with open('compute.html', 'w') as h_file:
         h_file.write(rendered_html)
@@ -166,9 +207,14 @@ def main():
                   "yaxis": {"title": 'placeholder',
                             "rangemode": "tozero"
                             },
+                  "title": {"text": "placeholder",
+                            "font": {"size": 18}
+                            },
                   "height": 200,
-                  "margin": {"t": 2, "r": 10,
-                             "b": 2, "l": 40},
+                  "margin": {"t": 25,
+                             "r": 10,
+                             "b": 10,
+                             "l": 40},
                   "legend": {"orientation": "h",
                              "x": 0.15,
                              "y": -0.15
@@ -176,17 +222,25 @@ def main():
                   "showlegend": True,
                   "hovermode": "closest"
                   }
-        titles = {"load": "Load % per CPU",
-                  "disk": "Local disk usage (%)",
-                  "mem": "Memory usage (%)",
-                  "bandwidth": "Network I/O (MB/s)",
-                  "timediff": "M&C time diff. (s)"
+        yaxis_titles = {"load": "Load % per CPU",
+                        "disk": "Local disk usage (%)",
+                        "mem": "Memory usage (%)",
+                        "bandwidth": "Network I/O (MB/s)",
+                        "timediff": "M&C time diff. (s)"
+                        }
+
+        titles = {"load": "CPU Load",
+                  "disk": "Disk Usage",
+                  "mem": "Memory Usage",
+                  "bandwidth": "Network I/O",
+                  "timediff": "M&C time diff. "
                   }
         for server_type, data_dict in zip(['lib', 'rtp'], [lib_data, rtp_data]):
             js_template = env.get_template('plotly_base.js')
 
             for pname in ['load', 'disk', 'mem', 'bandwidth', 'timediff']:
-                layout['yaxis']['title'] = titles[pname]
+                layout['yaxis']['title'] = yaxis_titles[pname]
+                layout['title']['text'] = server_type + ' ' + titles[pname]
                 _name = server_type + '-' + pname
                 rendered_js = js_template.render(plotname=_name,
                                                  data=data_dict[pname],

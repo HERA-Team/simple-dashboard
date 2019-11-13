@@ -4,9 +4,9 @@
 {% block prebody %}{% endblock %}
 
     {% for table in tables %}
-    <h2> {{ table.title }} </h2>
-    <div class="table-responsive col-md-{{ colsize or 6 }}">
-    <table class="table table-striped" style="float: left">
+    <div class="table-responsive col-md-{{ colsize or 6 }}" {{ table.style or '' }}>
+      <h2 style="position: -webkit-sticky; position: sticky; top: 0;background-color: white;"> {{ table.title }} </h2>
+    <table class="table table-striped" style="float: {{ table.float or 'left' }}">
       <thead>
       {% for head in table.headers %}
       <th>{{ head }}</th>
@@ -32,9 +32,9 @@
 
 {% block footer %}
       {% if data_type is defined %}
-      <p class="text-muted text-center"><small><small>
-        {{ data_type }} from on {{data_date}} (JD: {{ data_jd_date }})<br>
-        Last updated: <span id="age">???</span> ago at {{ gen_date }}<br>
+      <p class="text-muted text-center">
+        <b>{{ data_type }} observed <span id="data_age">???</span> ago ({{data_date_iso}} JD: {{ data_date_jd }})</b><br>
+        <small><small>Last updated: <span id="age">???</span> ago at {{ gen_date }}<br>
         Script name: {{ scriptname }}
         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
         Executing host: {{ hostname }}
@@ -50,4 +50,26 @@
     {% if js_name is defined %}
     <script src="{{js_name}}.js"></script>
     {% endif %}
+{% endblock %}
+
+{% block script %}
+{% if data_type is defined %}
+<script type='text/javascript'>
+let data_age = 0.001 * (Date.now() - {{data_date_unix_ms}});
+let data_text = "?";
+if (data_age < 300) {
+  data_text = data_age.toFixed(0) + " seconds";
+} else if (data_age < 10800) { // 3 hours
+  data_text = (data_age / 60).toFixed(0) + " minutes";
+} else if (data_age < 172800) { // 48 hours
+  data_text = (data_age / 3600).toFixed(0) + " hours";
+} else {
+  data_text = (data_age / 86400).toFixed(1) + " days";
+}
+document.getElementById("data_age").textContent = data_text;
+if (data_age > 1800) {
+    document.getElementById("data_age").style.color = 'red';
+}
+</script>
+{% endif %}
 {% endblock %}
