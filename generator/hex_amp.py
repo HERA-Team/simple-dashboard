@@ -598,10 +598,11 @@ def main():
                             mask.extend([False] * 2)
 
                     __power = power[pol_ind][host_index]
+                    ___text = __text[pol_ind][host_index]
 
                     _power = {"x": xs[pol_ind].data[~__power.mask].tolist(),
                               "y": ys[pol_ind].data[~__power.mask].tolist(),
-                              "text": __text[pol_ind][~__power.mask].tolist(),
+                              "text": ___text[~__power.mask].tolist(),
                               "mode": 'markers',
                               "visible": visible,
                               "marker": {"color": __power.data[~__power.mask].tolist(),
@@ -618,7 +619,7 @@ def main():
 
                     _power_offline = {"x": xs[pol_ind].data[__power.mask].tolist(),
                                       "y": ys[pol_ind].data[__power.mask].tolist(),
-                                      "text": __text[pol_ind][__power.mask].tolist(),
+                                      "text": ___text[__power.mask].tolist(),
                                       "mode": 'markers',
                                       "visible": visible,
                                       "marker": {"color": "orange",
