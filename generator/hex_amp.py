@@ -40,7 +40,7 @@ def write_csv(filename, antnames, ants, pols, stat_names, stats):
     None
 
     """
-    print(Time.now().iso + 'Writing to antenna stats to {}'.format(filename))
+    print(Time.now().iso + '    Writing to antenna stats to {}'.format(filename))
     max_len = len(max(stat_names, key=len))
     format_string = '{:<' + '{}'.format(max_len) + '}'
     float_format_string = '{:<' + '{}'.format(max_len) + '.5f}'
@@ -55,7 +55,7 @@ def write_csv(filename, antnames, ants, pols, stat_names, stats):
 
         for ant_cnt, ant in enumerate(ants):
             for pol_cnt, pol in enumerate(pols):
-                _name = antnames[ant_cnt] + pol
+                _name = antnames[ant] + pol
                 csv_file.write(
                     (format_string + ' ').format(_name)
                     + ' '.join([float_format_string] * len(stats))
