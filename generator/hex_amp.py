@@ -40,6 +40,7 @@ def write_csv(filename, antnames, ants, pols, stat_names, stats):
     None
 
     """
+    print(Time.now().iso + 'Writing to antenna stats to {}'.format(filename))
     max_len = len(max(stat_names, key=len))
     format_string = '{:<' + '{}'.format(max_len) + '}'
     float_format_string = '{:<' + '{}'.format(max_len) + '.5f}'
@@ -197,7 +198,6 @@ def main():
                 if status.pam_power is not None:
                     pam_power[antpol] = status.pam_power
                 if status.adc_power is not None:
-                    print(adc_power)
                     adc_power[antpol] = 10 * np.log10(status.adc_power)
                 if status.adc_rms is not None:
                     adc_rms[antpol] = status.adc_rms
