@@ -41,15 +41,14 @@ def write_csv(filename, antnames, ants, pols, stat_names, stats):
 
     """
     print(Time.now().iso + '    Writing to antenna stats to {}'.format(filename))
-    max_len = len(max(stat_names, key=len))
-    format_string = '{:<' + '{}'.format(max_len) + '}'
-    float_format_string = '{:<' + '{}'.format(max_len) + '.5f}'
+    format_string = '{}'
+    float_format_string = '{:.5f}'
     stats = np.ma.masked_invalid(stats)
 
     with open(filename, 'w') as csv_file:
         csv_file.write(
-            (format_string + ' ').format('ANTNAME')
-            + ' '.join([format_string] * len(stat_names)).format(*stat_names)
+            format_string.format('ANTNAME') + ','
+            + ','.join([format_string] * len(stat_names)).format(*stat_names)
         )
         csv_file.write('\n')
 
@@ -57,8 +56,8 @@ def write_csv(filename, antnames, ants, pols, stat_names, stats):
             for pol_cnt, pol in enumerate(pols):
                 _name = antnames[ant] + pol
                 csv_file.write(
-                    (format_string + ' ').format(_name)
-                    + ' '.join([float_format_string] * len(stats))
+                    format_string.format(_name) + ','
+                    + ','.join([float_format_string] * len(stats))
                     .format(*[p.filled(np.nan)[pol_cnt, ant_cnt] for p in stats])
                 )
                 csv_file.write('\n')
