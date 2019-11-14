@@ -57,7 +57,7 @@ def write_csv(filename, antnames, ants, pols, stat_names, stats):
             for pol_cnt, pol in enumerate(pols):
                 _name = antname + pol
                 if antnum in ants:
-                    ant_ind = np.nonzero(antnum == ants)[0]
+                    ant_ind = np.nonzero(antnum == ants)[0].item()
                     csv_file.write(
                         format_string.format(_name) + ','
                         + ','.join([float_format_string] * len(stats))
