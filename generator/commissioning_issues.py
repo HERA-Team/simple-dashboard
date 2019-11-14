@@ -12,6 +12,7 @@ import sys
 import github3
 import argparse
 import requests
+import numpy as np
 from dateutil import parser as dateparser
 from datetime import timedelta, timezone
 from astropy.time import Time
@@ -41,7 +42,7 @@ def main(pem_file, app_id_file):
 
     table = {}
     table["title"] = "Commissioning Daily Logs"
-    table["div_style"] = "max-height= 1500px;"
+    table["div_style"] = 'style="max-height: 1500px;"'
     table["headers"] = [
         "Julian Date",
         "Issue",
@@ -79,7 +80,8 @@ def main(pem_file, app_id_file):
     )
     for cnt, issue in enumerate(issues):
         row = {}
-        jd = issue.title
+        # jd = issue.title
+        jd = int(np.floor(Time(issue.created_at, format='datetime').jd))
         # jd = int(issue.title.split(' ')[-1])
         try:
             obs_date = Time(jd, format='jd')
