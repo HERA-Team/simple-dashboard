@@ -17,6 +17,53 @@ from astropy.time import Time
 from jinja2 import Environment, FileSystemLoader
 
 
+def write_csv(filename, antnames, ants, pols, stat_names, stats):
+    """Write out antenna stats to csv file.
+
+    Parameters
+    ----------
+    filenae : str
+        name of file to write
+    antnames : array_like str
+        Names of antennas
+    ants : array_like int
+        Antenna numbers
+    pols : array_list str
+        array of antenna feed polarizations
+    stat_names : array_like str
+        array of names of antenna statistics to write to file
+    stats : array_like
+        list of arrays of statistics to write to file
+
+    Returns
+    -------
+    None
+
+    """
+    max_len = len(max(stat_names, key=len))
+    format_string = '{:<' + '{}'.format(max_len) + '}'
+    float_format_string = '{:<' + '{}'.format(max_len) + '.5f}'
+    stats = np.ma.masked_invalid(stats)
+
+    with open(filename, 'w') as csv_file:
+        csv_file.write(
+            (format_string + ' ').format('ANTNAME')
+            + ' '.join([format_string] * len(stat_names)).format(*stat_names)
+        )
+        csv_file.write('\n')
+
+        for ant_cnt, ant in enumerate(ants):
+            for pol_cnt, pol in enumerate(pols):
+                _name = antnames[ant_cnt] + pol
+                csv_file.write(
+                    (format_string + ' ').format(_name)
+                    + ' '.join([float_format_string] * len(stats))
+                    .format(*[p.filled(np.nan)[pol_cnt, ant_cnt] for p in stats])
+                )
+                csv_file.write('\n')
+    return
+
+
 def main():
     # templates are stored relative to the script dir
     # stored one level up, find the parent directory
@@ -150,7 +197,8 @@ def main():
                 if status.pam_power is not None:
                     pam_power[antpol] = status.pam_power
                 if status.adc_power is not None:
-                    adc_power[antpol] = status.adc_power
+                    print(adc_power)
+                    adc_power[antpol] = 10 * np.log10(status.adc_power)
                 if status.adc_rms is not None:
                     adc_rms[antpol] = status.adc_rms
                 if status.time is not None:
@@ -229,47 +277,57 @@ def main():
                                           dtype=object)
         xs_offline = xs_offline
 
-        _amps = np.ma.masked_invalid([[amps[ant, pol] for ant in ants]
-                                      for pol in pols])
-        _adc_power = np.ma.masked_invalid([[adc_power[ant, pol] for ant in ants]
-                                           for pol in pols])
-        # conver adc power to dB
-        _adc_power = 10 * np.log10(_adc_power)
+        names = ['Auto  [dB]', 'PAM [dB]',
+                 'ADC [dB]', 'ADC RMS',
+                 'FEM IMU THETA', 'FEM IMU PHI',
+                 'EQ COEF']
+        powers = [amps, pam_power,
+                  adc_power, adc_rms,
+                  fem_imu_theta, fem_imu_phi,
+                  eq_coeffs
+                  ]
+        powers = [
+            np.ma.masked_invalid(
+                [[p[ant, pol] for ant in ants] for pol in pols]
+            )
+            for p in powers
+        ]
+        write_csv('ant_stats.csv', antnames, ants, pols, names, powers)
 
-        _adc_rms = np.ma.masked_invalid([[adc_rms[ant, pol] for ant in ants]
-                                         for pol in pols])
-
-        _pam_power = np.ma.masked_invalid([[pam_power[ant, pol] for ant in ants]
-                                           for pol in pols])
-        _eq_coeffs = np.ma.masked_invalid([[eq_coeffs[ant, pol] for ant in ants]
-                                           for pol in pols])
-
-        _fem_imu_theta = np.ma.masked_invalid([[fem_imu_theta[ant, pol]
-                                                for ant in ants]
-                                               for pol in pols])
-        _fem_imu_phi = np.ma.masked_invalid([[fem_imu_phi[ant, pol]
-                                              for ant in ants]
-                                             for pol in pols])
+        # _amps = np.ma.masked_invalid([[amps[ant, pol] for ant in ants]
+        #                               for pol in pols])
+        # _adc_power = np.ma.masked_invalid([[adc_power[ant, pol] for ant in ants]
+        #                                    for pol in pols])
+        # # conver adc power to dB
+        # _adc_power = 10 * np.log10(_adc_power)
+        #
+        # _adc_rms = np.ma.masked_invalid([[adc_rms[ant, pol] for ant in ants]
+        #                                  for pol in pols])
+        #
+        # _pam_power = np.ma.masked_invalid([[pam_power[ant, pol] for ant in ants]
+        #                                    for pol in pols])
+        # _eq_coeffs = np.ma.masked_invalid([[eq_coeffs[ant, pol] for ant in ants]
+        #                                    for pol in pols])
+        #
+        # _fem_imu_theta = np.ma.masked_invalid([[fem_imu_theta[ant, pol]
+        #                                         for ant in ants]
+        #                                        for pol in pols])
+        # _fem_imu_phi = np.ma.masked_invalid([[fem_imu_phi[ant, pol]
+        #                                       for ant in ants]
+        #                                      for pol in pols])
 
         time_array = np.array([[time_array[ant, pol].to('hour').value
                                for ant in ants] for pol in pols])
-        xs = np.ma.masked_array(antpos[0, ants], mask=_amps[0].mask)
+        xs = np.ma.masked_array(antpos[0, ants], mask=powers[0][0].mask)
         ys = np.ma.masked_array([antpos[1, ants] + 3 * (pol_cnt - .5)
                                  for pol_cnt, pol in enumerate(pols)],
-                                mask=_amps.mask)
+                                mask=powers[0].mask)
         _text = np.array([[antnames[ant] + pol
                            + '<br>' + str(hostname[ant_cnt])
                            + '<br>' + 'PAM\t#:\t' + str(pam_ind[ant_cnt])
                            for ant_cnt, ant in enumerate(ants)]
                           for pol_cnt, pol in enumerate(pols)], dtype='object')
-        powers = [_amps, _pam_power,
-                  _adc_power, _adc_rms,
-                  _fem_imu_theta, _fem_imu_phi,
-                  _eq_coeffs]
-        names = ['Auto  [dB]', 'PAM [dB]',
-                 'ADC [dB]', 'ADC RMS',
-                 'FEM IMU THETA', 'FEM IMU PHI',
-                 'EQ COEF']
+
         #  want to format No Data where data was not retrieved for each type of power
         for pol_cnt, pol in enumerate(pols):
             for ant_cnt, ant in enumerate(ants):
@@ -289,18 +347,7 @@ def main():
                 # spaces by \t
                 _text[pol_cnt, ant_cnt] = _text[pol_cnt, ant_cnt].replace(' ', '\t')
 
-        amp_mask = [True]
-        pam_mask = [True]
-        adc_mask = [True]
-        adc_rms_mask = [True]
-        eq_mask = [True]
-        fem_theta_mask = [True]
-        fem_phi_mask = [True]
-
-        masks = [amp_mask, pam_mask,
-                 adc_mask, adc_rms_mask,
-                 fem_theta_mask, fem_phi_mask,
-                 eq_mask]
+        masks = [[True] * len(powers)]
 
         # Offline antennas
         data_hex = []
@@ -519,18 +566,7 @@ def main():
         # now prepare the data to be plotted vs node number
         data_node = []
 
-        amp_mask = []
-        pam_mask = []
-        adc_mask = []
-        adc_rms_mask = []
-        eq_mask = []
-
-        fem_theta_mask = []
-        fem_phi_mask = []
-        masks = [amp_mask, pam_mask,
-                 adc_mask, adc_rms_mask,
-                 fem_theta_mask, fem_phi_mask,
-                 eq_mask]
+        masks = [[] * len(powers)]
 
         vmax = [np.max(power.compressed()) if power.compressed().size > 1 else 1
                 for power in powers]
@@ -547,7 +583,7 @@ def main():
 
             ys = np.ma.masked_array([np.arange(node_index.size) + .3 * pol_cnt
                                      for pol_cnt, pol in enumerate(pols)],
-                                    mask=_amps[:, node_index].mask)
+                                    mask=powers[0][:, node_index].mask)
             xs = np.zeros_like(ys)
             xs[:] = node
             powers_node = [pow[:, node_index] for pow in powers]
