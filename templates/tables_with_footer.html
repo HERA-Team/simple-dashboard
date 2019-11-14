@@ -5,15 +5,15 @@
 
     {% for table in tables %}
     <div class="table-responsive col-md-{{ colsize or 6 }}" {{ table.div_style or '' }}>
-      <h2 style="position: -webkit-sticky; position: sticky; top: 0;background-color: white;"> {{ table.title }} </h2>
+      <h2 style="position: -webkit-sticky; position: sticky; top: 0px;background-color: white;"> {{ table.title }} </h2>
     <table class="table table-striped" style="{{ table.style or '' }}">
-      <!-- <thead> -->
+      <thead>
       <tr>
       {% for head in table.headers %}
-      <th class="text-center">{{ head }}</th>
+      <th class="text-center" style="position: -webkit-sticky; position: sticky; top: 32px;background-color: white;">{{ head }}</th>
       {% endfor %}
       </tr>
-      <!-- </thead> -->
+      </thead>
       <tbody>
       {% if table.rows|length > 0 %}
       {% for row in table.rows %}
