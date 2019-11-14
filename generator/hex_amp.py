@@ -63,12 +63,13 @@ def write_csv(filename, antnames, ants, pols, stat_names, stats):
                         + ','.join([float_format_string] * len(stats))
                         .format(*[p.filled(np.nan)[pol_cnt, ant_ind] for p in stats])
                     )
-                    csv_file.write('\n')
                 else:
                     csv_file.write(
                         format_string.format(_name) + ', CONST'
                         + ','.join(["nan"] * (len(stats) - 1))
                     )
+                csv_file.write('\n')
+
     return
 
 
