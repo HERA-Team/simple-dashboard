@@ -347,7 +347,7 @@ def main():
                 # spaces by \t
                 _text[pol_cnt, ant_cnt] = _text[pol_cnt, ant_cnt].replace(' ', '\t')
 
-        masks = [[True] * len(powers)]
+        masks = [[True] for p in powers]
 
         # Offline antennas
         data_hex = []
@@ -566,7 +566,7 @@ def main():
         # now prepare the data to be plotted vs node number
         data_node = []
 
-        masks = [[] * len(powers)]
+        masks = [[] for p in powers]
 
         vmax = [np.max(power.compressed()) if power.compressed().size > 1 else 1
                 for power in powers]
