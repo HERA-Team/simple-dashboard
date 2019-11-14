@@ -52,15 +52,22 @@ def write_csv(filename, antnames, ants, pols, stat_names, stats):
         )
         csv_file.write('\n')
 
-        for ant_cnt, ant in enumerate(ants):
+        for ant_cnt, antname in enumerate(antnames):
+            antnum = int(antname[2:])
             for pol_cnt, pol in enumerate(pols):
-                _name = antnames[ant] + pol
-                csv_file.write(
-                    format_string.format(_name) + ','
-                    + ','.join([float_format_string] * len(stats))
-                    .format(*[p.filled(np.nan)[pol_cnt, ant_cnt] for p in stats])
-                )
-                csv_file.write('\n')
+                _name = antname + pol
+                if antnum in ants:
+                    csv_file.write(
+                        format_string.format(_name) + ','
+                        + ','.join([float_format_string] * len(stats))
+                        .format(*[p.filled(np.nan)[pol_cnt, ant_cnt] for p in stats])
+                    )
+                    csv_file.write('\n')
+                else:
+                    csv_file.write(
+                        format_string.format(_name) + ', CONST'
+                        + ','.join(["nan"] * len(stats) - 1)
+                    )
     return
 
 
