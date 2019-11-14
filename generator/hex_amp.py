@@ -17,6 +17,53 @@ from astropy.time import Time
 from jinja2 import Environment, FileSystemLoader
 
 
+def write_csv(filename, antnames, ants, pols, stat_names, stats):
+    """Write out antenna stats to csv file.
+
+    Parameters
+    ----------
+    filenae : str
+        name of file to write
+    antnames : array_like str
+        Names of antennas
+    ants : array_like int
+        Antenna numbers
+    pols : array_list str
+        array of antenna feed polarizations
+    stat_names : array_like str
+        array of names of antenna statistics to write to file
+    stats : array_like
+        list of arrays of statistics to write to file
+
+    Returns
+    -------
+    None
+
+    """
+    print(Time.now().iso + '    Writing to antenna stats to {}'.format(filename))
+    format_string = '{}'
+    float_format_string = '{:.5f}'
+    stats = np.ma.masked_invalid(stats)
+
+    with open(filename, 'w') as csv_file:
+        csv_file.write(
+            format_string.format('ANTNAME') + ','
+            + ','.join([format_string] * len(stat_names)).format(*stat_names)
+        )
+        csv_file.write('\n')
+
+        for ant_cnt, ant in enumerate(ants):
+            for pol_cnt, pol in enumerate(pols):
+                _name = antnames[ant] + pol
+                csv_file.write(
+                    format_string.format(_name) + ','
+                    + ','.join([float_format_string] * len(stats))
+                    .format(*[p.filled(np.nan)[pol_cnt, ant_cnt] for p in stats])
+                )
+                csv_file.write('\n')
+    return
+
+
 def main():
     # templates are stored relative to the script dir
     # stored one level up, find the parent directory
@@ -127,6 +174,8 @@ def main():
         adc_power = {}
         adc_rms = {}
         time_array = {}
+        fem_imu_theta = {}
+        fem_imu_phi = {}
         eq_coeffs = {}
         for ant in ants:
             for pol in pols:
@@ -135,6 +184,8 @@ def main():
                 adc_power.setdefault((ant, pol), np.Inf)
                 adc_rms.setdefault((ant, pol), np.Inf)
                 eq_coeffs.setdefault((ant, pol), np.Inf)
+                fem_imu_theta.setdefault((ant, pol), np.Inf)
+                fem_imu_phi.setdefault((ant, pol), np.Inf)
                 time_array.setdefault((ant, pol), now - Time(0, format='gps'))
 
         for ant_cnt, ant in enumerate(ants):
@@ -146,11 +197,15 @@ def main():
                 if status.pam_power is not None:
                     pam_power[antpol] = status.pam_power
                 if status.adc_power is not None:
-                    adc_power[antpol] = status.adc_power
+                    adc_power[antpol] = 10 * np.log10(status.adc_power)
                 if status.adc_rms is not None:
                     adc_rms[antpol] = status.adc_rms
                 if status.time is not None:
                     time_array[antpol] = now - Time(status.time, format='gps')
+                if status.fem_imu_phi is not None:
+                    fem_imu_phi[antpol] = status.fem_imu_phi
+                if status.fem_imu_theta is not None:
+                    fem_imu_theta[antpol] = status.fem_imu_theta
                 if status.eq_coeffs is not None:
                     _coeffs = np.fromstring(status.eq_coeffs.strip('[]'),
                                             sep=',')
@@ -221,39 +276,39 @@ def main():
                                           dtype=object)
         xs_offline = xs_offline
 
-        _amps = np.ma.masked_invalid([[amps[ant, pol] for ant in ants]
-                                      for pol in pols])
-        _adc_power = np.ma.masked_invalid([[adc_power[ant, pol] for ant in ants]
-                                           for pol in pols])
-        # conver adc power to dB
-        _adc_power = 10 * np.log10(_adc_power)
-
-        _adc_rms = np.ma.masked_invalid([[adc_rms[ant, pol] for ant in ants]
-                                         for pol in pols])
-
-        _pam_power = np.ma.masked_invalid([[pam_power[ant, pol] for ant in ants]
-                                           for pol in pols])
-        _eq_coeffs = np.ma.masked_invalid([[eq_coeffs[ant, pol] for ant in ants]
-                                           for pol in pols])
+        names = ['Auto  [dB]', 'PAM [dB]',
+                 'ADC [dB]', 'ADC RMS',
+                 'FEM IMU THETA', 'FEM IMU PHI',
+                 'EQ COEF']
+        powers = [amps, pam_power,
+                  adc_power, adc_rms,
+                  fem_imu_theta, fem_imu_phi,
+                  eq_coeffs
+                  ]
+        powers = [
+            np.ma.masked_invalid(
+                [[p[ant, pol] for ant in ants] for pol in pols]
+            )
+            for p in powers
+        ]
+        write_csv('ant_stats.csv', antnames, ants, pols, names, powers)
 
         time_array = np.array([[time_array[ant, pol].to('hour').value
                                for ant in ants] for pol in pols])
-        xs = np.ma.masked_array(antpos[0, ants], mask=_amps[0].mask)
+        xs = np.ma.masked_array(antpos[0, ants], mask=powers[0][0].mask)
         ys = np.ma.masked_array([antpos[1, ants] + 3 * (pol_cnt - .5)
                                  for pol_cnt, pol in enumerate(pols)],
-                                mask=_amps.mask)
+                                mask=powers[0].mask)
         _text = np.array([[antnames[ant] + pol
                            + '<br>' + str(hostname[ant_cnt])
                            + '<br>' + 'PAM\t#:\t' + str(pam_ind[ant_cnt])
                            for ant_cnt, ant in enumerate(ants)]
                           for pol_cnt, pol in enumerate(pols)], dtype='object')
+
         #  want to format No Data where data was not retrieved for each type of power
         for pol_cnt, pol in enumerate(pols):
             for ant_cnt, ant in enumerate(ants):
-                for _name, _power in zip(
-                        ['Auto  [dB]', 'PAM [dB]', 'ADC [dB]', 'ADC RMS', 'EQ COEF'],
-                        [_amps, _pam_power, _adc_power, _adc_rms, _eq_coeffs]
-                ):
+                for _name, _power in zip(names, powers):
                     if not _power.mask[pol_cnt, ant_cnt]:
                         _text[pol_cnt, ant_cnt] += '<br>' + _name + ': {0:.2f}'.format(_power[pol_cnt, ant_cnt])
                     else:
@@ -262,17 +317,15 @@ def main():
                     # if the value is older than 2 years it is bad
                     # value are stored in hours.
                     # 2 was chosen arbitraritly.
-                    _text[pol_cnt, ant_cnt] += '<br>' + 'PAM/ADC - No Data'
+                    _text[pol_cnt, ant_cnt] += '<br>' + 'Ant Status:  No Date'
                 else:
-                    _text[pol_cnt, ant_cnt] += '<br>' + 'PAM/ADC: {0:.2f} hrs old'.format(time_array[pol_cnt, ant_cnt])
+                    _text[pol_cnt, ant_cnt] += '<br>' + 'Ant Status: {0:.2f} hrs old'.format(time_array[pol_cnt, ant_cnt])
                 # having spaces will cause odd wrapping issues, replace all
                 # spaces by \t
                 _text[pol_cnt, ant_cnt] = _text[pol_cnt, ant_cnt].replace(' ', '\t')
-        amp_mask = [True]
-        pam_mask = [True]
-        adc_mask = [True]
-        adc_rms_mask = [True]
-        eq_mask = [True]
+
+        masks = [[True] for p in powers]
+
         # Offline antennas
         data_hex = []
         offline_ants = {"x": xs_offline.compressed().tolist(),
@@ -318,8 +371,8 @@ def main():
             ['0.8', 'rgb(180,222,44)'],
             ['1.0', 'rgb(253,231,37)']
         ]
-        for pow_ind, power in enumerate([_amps, _pam_power, _adc_power,
-                                         _adc_rms, _eq_coeffs]):
+
+        for pow_ind, power in enumerate(powers):
             if power.compressed().size > 0:
                 vmax = np.max(power.compressed())
                 vmin = np.min(power.compressed())
@@ -327,53 +380,31 @@ def main():
                 vmax = 1
                 vmin = 0
 
+            colorscale = "Viridis"
+
             if pow_ind == 3:
+                cbar_title = 'RMS\tlinear'
                 vmin = rms_scale_vals[0] * relavitve_values[0]
                 vmax = rms_scale_vals[1] / relavitve_values[1]
                 colorscale = rms_color_scale
+            elif pow_ind == 4 or pow_ind == 5:
+                cbar_title = "Degrees"
+            elif pow_ind == len(powers) - 1:
+                cbar_title = 'Median\tCoeff'
             else:
-                colorscale = "Viridis"
+                cbar_title = 'dB'
 
-            cbar_title = 'dB'
+            if pow_ind == 0:
+                visible = True
+            else:
+                visible = False
+
             for pol_ind, pol in enumerate(pols):
-                if pow_ind == 0:
-                    amp_mask.extend([True] * 2)
-                    pam_mask.extend([False] * 2)
-                    adc_mask.extend([False] * 2)
-                    adc_rms_mask.extend([False] * 2)
-                    eq_mask.extend([False] * 2)
-                    visible = True
-
-                elif pow_ind == 1:
-                    amp_mask.extend([False] * 2)
-                    pam_mask.extend([True] * 2)
-                    adc_mask.extend([False] * 2)
-                    adc_rms_mask.extend([False] * 2)
-                    eq_mask.extend([False] * 2)
-                    visible = False
-                elif pow_ind == 2:
-                    amp_mask.extend([False] * 2)
-                    pam_mask.extend([False] * 2)
-                    adc_mask.extend([True] * 2)
-                    adc_rms_mask.extend([False] * 2)
-                    eq_mask.extend([False] * 2)
-                    visible = False
-                elif pow_ind == 3:
-                    cbar_title = 'RMS\tlinear'
-                    amp_mask.extend([False] * 2)
-                    pam_mask.extend([False] * 2)
-                    adc_mask.extend([False] * 2)
-                    adc_rms_mask.extend([True] * 2)
-                    eq_mask.extend([False] * 2)
-                    visible = False
-                else:
-                    cbar_title = 'Median\tCoeff'
-                    amp_mask.extend([False] * 2)
-                    pam_mask.extend([False] * 2)
-                    adc_mask.extend([False] * 2)
-                    adc_rms_mask.extend([False] * 2)
-                    eq_mask.extend([True] * 2)
-                    visible = False
+                for mask_cnt, mask in enumerate(masks):
+                    if mask_cnt == pow_ind:
+                        mask.extend([True] * 2)
+                    else:
+                        mask.extend([False] * 2)
 
                 _power = {"x": xs.data[~power[pol_ind].mask].tolist(),
                           "y": ys[pol_ind].data[~power[pol_ind].mask].tolist(),
@@ -408,55 +439,16 @@ def main():
                 data_hex.append(_power_offline)
 
         buttons = []
-        amp_button = {"args": [{"visible": amp_mask},
-                               {"title": '',
-                                "annotations": {}
-                                }
-                               ],
-                      "label": "Auto Corr",
-                      "method": "restyle"
-                      }
-        buttons.append(amp_button)
-
-        pam_button = {"args": [{"visible": pam_mask},
-                               {"title": '',
-                                "annotations": {}
-                                }
-                               ],
-                      "label": "Pam Power",
-                      "method": "restyle"
-                      }
-        buttons.append(pam_button)
-
-        adc_button = {"args": [{"visible": adc_mask},
-                               {"title": '',
-                                "annotations": {}
-                                }
-                               ],
-                      "label": "ADC Power",
-                      "method": "restyle"
-                      }
-        buttons.append(adc_button)
-
-        adc_rms_button = {"args": [{"visible": adc_rms_mask},
-                                   {"title": '',
-                                    "annotations": {}
-                                    }
-                                   ],
-                          "label": "ADC RMS",
-                          "method": "restyle"
-                          }
-        buttons.append(adc_rms_button)
-
-        eq_button = {"args": [{"visible": eq_mask},
-                              {"title": '',
-                               "annotations": {}
-                               }
-                              ],
-                     "label": "EQ Coeffs",
-                     "method": "restyle"
-                     }
-        buttons.append(eq_button)
+        for _name, mask in zip(names, masks):
+            _button = {"args": [{"visible": mask},
+                                {"title": '',
+                                 "annotations": {}
+                                 }
+                                ],
+                       "label": _name,
+                       "method": "restyle"
+                       }
+            buttons.append(_button)
 
         updatemenus_hex = [{"buttons": buttons,
                             "showactive": True,
@@ -491,6 +483,8 @@ def main():
                            "<li>Pam Power - Latest Pam Power (in db) recorded in M&C</li>"
                            "<li>ADC Power - Latest ADC Power (in db) recorded in M&C</li>"
                            "<li>ADC RMS - Latest linear ADC RMS recorded in M&C</li>"
+                           "<li>FEM IMU THETA - IMU-reported theta, in degrees</li>"
+                           "<li>FEM IMU PHI - IMU-reported phi, in degrees</li>"
                            "<li>EQ Coeffs - Latest Median Equalization Coefficient recorded in M&C</li>"
                            "</ul>"
                            "Any antpol showing with an orange color means "
@@ -504,6 +498,8 @@ def main():
                            "<li>PAM power in dB</li>"
                            "<li>ADC power in dB</li>"
                            "<li>Linear ADC RMS</li>"
+                           "<li>FEM IMU reported theta in degrees</li>"
+                           "<li>FEM IMU reported phi in degrees</li>"
                            "<li>Median Equalization Coefficient</li>"
                            "<li>Time ago in hours the M&C Antenna Status was updated. "
                            "This time stamp applies to all data for this antenna "
@@ -547,92 +543,71 @@ def main():
         # now prepare the data to be plotted vs node number
         data_node = []
 
-        amp_mask = []
-        pam_mask = []
-        adc_mask = []
-        adc_rms_mask = []
-        eq_mask = []
+        masks = [[] for p in powers]
 
         vmax = [np.max(power.compressed()) if power.compressed().size > 1 else 1
-                for power in [_amps, _pam_power, _adc_power, _adc_rms, _eq_coeffs]]
+                for power in powers]
         vmin = [np.min(power.compressed()) if power.compressed().size > 1 else 0
-                for power in [_amps, _pam_power, _adc_power, _adc_rms, _eq_coeffs]]
-
+                for power in powers]
         vmin[3] = rms_scale_vals[0] * relavitve_values[0]
         vmax[3] = rms_scale_vals[1] / relavitve_values[1]
 
         for node in nodes:
             node_index = np.where(node_ind == node)[0]
+            hosts = hostname[node_index]
+
+            host_index = np.argsort(hosts)
 
             ys = np.ma.masked_array([np.arange(node_index.size) + .3 * pol_cnt
                                      for pol_cnt, pol in enumerate(pols)],
-                                    mask=_amps[:, node_index].mask)
+                                    mask=powers[0][:, node_index].mask)
             xs = np.zeros_like(ys)
             xs[:] = node
-            __amps = _amps[:, node_index]
-            __adc = _adc_power[:, node_index]
-            __adc_rms = _adc_rms[:, node_index]
-            __pam = _pam_power[:, node_index]
-            __eqs = _eq_coeffs[:, node_index]
+            powers_node = [pow[:, node_index] for pow in powers]
             __text = _text[:, node_index]
 
-            for pow_ind, power in enumerate(
-                    [__amps, __pam, __adc, __adc_rms, __eqs]
-            ):
+            for pow_ind, power in enumerate(powers_node):
                 cbar_title = 'dB'
+                if pow_ind == 4 or pow_ind == 5:
+                    cbar_title = 'Degrees'
 
                 if pow_ind == 3:
-
                     colorscale = rms_color_scale
                 else:
                     colorscale = "Viridis"
+                colorscale = "Viridis"
+
+                if pow_ind == 3:
+                    cbar_title = 'RMS\tlinear'
+                    colorscale = rms_color_scale
+                elif pow_ind == 4 or pow_ind == 5:
+                    cbar_title = "Degrees"
+                elif pow_ind == len(powers) - 1:
+                    cbar_title = 'Median\tCoeff'
+                else:
+                    cbar_title = 'dB'
+
+                if pow_ind == 0:
+                    visible = True
+                else:
+                    visible = False
 
                 for pol_ind, pol in enumerate(pols):
-                    if pow_ind == 0:
-                        amp_mask.extend([True] * 2)
-                        pam_mask.extend([False] * 2)
-                        adc_mask.extend([False] * 2)
-                        adc_rms_mask.extend([False] * 2)
-                        eq_mask.extend([False] * 2)
-                        visible = True
+                    for mask_cnt, mask in enumerate(masks):
+                        if mask_cnt == pow_ind:
+                            mask.extend([True] * 2)
+                        else:
+                            mask.extend([False] * 2)
 
-                    elif pow_ind == 1:
-                        amp_mask.extend([False] * 2)
-                        pam_mask.extend([True] * 2)
-                        adc_mask.extend([False] * 2)
-                        adc_rms_mask.extend([False] * 2)
-                        eq_mask.extend([False] * 2)
-                        visible = False
-                    elif pow_ind == 2:
-                        amp_mask.extend([False] * 2)
-                        pam_mask.extend([False] * 2)
-                        adc_mask.extend([True] * 2)
-                        adc_rms_mask.extend([False] * 2)
-                        eq_mask.extend([False] * 2)
-                        visible = False
-                    elif pow_ind == 3:
-                        cbar_title = 'RMS\tlinear'
-                        amp_mask.extend([False] * 2)
-                        pam_mask.extend([False] * 2)
-                        adc_mask.extend([False] * 2)
-                        adc_rms_mask.extend([True] * 2)
-                        eq_mask.extend([False] * 2)
-                        visible = False
-                    else:
-                        cbar_title = 'Median\tCoeff'
-                        amp_mask.extend([False] * 2)
-                        pam_mask.extend([False] * 2)
-                        adc_mask.extend([False] * 2)
-                        adc_rms_mask.extend([False] * 2)
-                        eq_mask.extend([True] * 2)
-                        visible = False
+                    __power = power[pol_ind][host_index]
+                    ___text = __text[pol_ind][host_index]
 
-                    _power = {"x": xs[pol_ind].data[~power[pol_ind].mask].tolist(),
-                              "y": ys[pol_ind].data[~power[pol_ind].mask].tolist(),
-                              "text": __text[pol_ind][~power[pol_ind].mask].tolist(),
+                    _power = {"x": xs[pol_ind].data[~__power.mask].tolist(),
+                              "y": ys[pol_ind].data[~__power.mask].tolist(),
+                              "text": ___text[~__power.mask].tolist(),
                               "mode": 'markers',
                               "visible": visible,
-                              "marker": {"color": power[pol_ind].data[~power[pol_ind].mask].tolist(),
+                              "marker": {"color": __power.data[~__power.mask].tolist(),
                                          "size": 14,
                                          "cmin": vmin[pow_ind],
                                          "cmax": vmax[pow_ind],
@@ -644,9 +619,9 @@ def main():
 
                     data_node.append(_power)
 
-                    _power_offline = {"x": xs[pol_ind].data[power[pol_ind].mask].tolist(),
-                                      "y": ys[pol_ind].data[power[pol_ind].mask].tolist(),
-                                      "text": __text[pol_ind][power[pol_ind].mask].tolist(),
+                    _power_offline = {"x": xs[pol_ind].data[__power.mask].tolist(),
+                                      "y": ys[pol_ind].data[__power.mask].tolist(),
+                                      "text": ___text[__power.mask].tolist(),
                                       "mode": 'markers',
                                       "visible": visible,
                                       "marker": {"color": "orange",
@@ -662,55 +637,16 @@ def main():
 
                     data_node.append(_power_offline)
         buttons = []
-        amp_button = {"args": [{"visible": amp_mask},
-                               {"title": '',
-                                "annotations": {}
-                                }
-                               ],
-                      "label": "Auto Corr",
-                      "method": "restyle"
-                      }
-        buttons.append(amp_button)
-
-        pam_button = {"args": [{"visible": pam_mask},
-                               {"title": '',
-                                "annotations": {}
-                                }
-                               ],
-                      "label": "Pam Power",
-                      "method": "restyle"
-                      }
-        buttons.append(pam_button)
-
-        adc_button = {"args": [{"visible": adc_mask},
-                               {"title": '',
-                                "annotations": {}
-                                }
-                               ],
-                      "label": "ADC Power",
-                      "method": "restyle"
-                      }
-        buttons.append(adc_button)
-
-        adc_rms_button = {"args": [{"visible": adc_rms_mask},
-                                   {"title": '',
-                                    "annotations": {}
-                                    }
-                                   ],
-                          "label": "ADC RMS",
-                          "method": "restyle"
-                          }
-        buttons.append(adc_rms_button)
-
-        eq_button = {"args": [{"visible": eq_mask},
-                              {"title": '',
-                               "annotations": {}
-                               }
-                              ],
-                     "label": "EQ Coeffs",
-                     "method": "restyle"
-                     }
-        buttons.append(eq_button)
+        for _name, mask in zip(names, masks):
+            _button = {"args": [{"visible": mask},
+                                {"title": '',
+                                 "annotations": {}
+                                 }
+                                ],
+                       "label": _name,
+                       "method": "restyle"
+                       }
+            buttons.append(_button)
 
         updatemenus_node = [{"buttons": buttons,
                              "showactive": True,

@@ -168,7 +168,7 @@ def main():
                 eq_coeffs = np.median(eq_coeffs)
                 auto /= eq_coeffs**2
 
-                auto[auto < 10 ** -5.0] = 10 ** -5.0
+                auto[auto < 10 ** -10.0] = 10 ** -10.0
                 auto = 10 * np.log10(auto)
                 _auto = {"x": frange_mhz.tolist(),
                          "y": auto.tolist(),
