@@ -294,28 +294,6 @@ def main():
         ]
         write_csv('ant_stats.csv', antnames, ants, pols, names, powers)
 
-        # _amps = np.ma.masked_invalid([[amps[ant, pol] for ant in ants]
-        #                               for pol in pols])
-        # _adc_power = np.ma.masked_invalid([[adc_power[ant, pol] for ant in ants]
-        #                                    for pol in pols])
-        # # conver adc power to dB
-        # _adc_power = 10 * np.log10(_adc_power)
-        #
-        # _adc_rms = np.ma.masked_invalid([[adc_rms[ant, pol] for ant in ants]
-        #                                  for pol in pols])
-        #
-        # _pam_power = np.ma.masked_invalid([[pam_power[ant, pol] for ant in ants]
-        #                                    for pol in pols])
-        # _eq_coeffs = np.ma.masked_invalid([[eq_coeffs[ant, pol] for ant in ants]
-        #                                    for pol in pols])
-        #
-        # _fem_imu_theta = np.ma.masked_invalid([[fem_imu_theta[ant, pol]
-        #                                         for ant in ants]
-        #                                        for pol in pols])
-        # _fem_imu_phi = np.ma.masked_invalid([[fem_imu_phi[ant, pol]
-        #                                       for ant in ants]
-        #                                      for pol in pols])
-
         time_array = np.array([[time_array[ant, pol].to('hour').value
                                for ant in ants] for pol in pols])
         xs = np.ma.masked_array(antpos[0, ants], mask=powers[0][0].mask)
@@ -589,17 +567,6 @@ def main():
             powers_node = [pow[:, node_index] for pow in powers]
             __text = _text[:, node_index]
 
-            # __amps = _amps[:, node_index]
-            # __adc = _adc_power[:, node_index]
-            # __adc_rms = _adc_rms[:, node_index]
-            # __pam = _pam_power[:, node_index]
-            # __eqs = _eq_coeffs[:, node_index]
-            # __text = _text[:, node_index]
-            # __fem_theta = _fem_imu_theta[:, node_index]
-            # __fem_phi = _fem_imu_phi[:, node_index]
-
-            # powers = [__amps, __pam, __adc, __adc_rms,
-            #           __fem_theta, __fem_phi, __eqs]
             for pow_ind, power in enumerate(powers_node):
                 cbar_title = 'dB'
                 if pow_ind == 4 or pow_ind == 5:
