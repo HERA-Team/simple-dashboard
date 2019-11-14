@@ -143,7 +143,7 @@ def main(pem_file, app_id_file):
     with open('issue_log.html', 'w') as h_file:
         h_file.write(rendered_html)
 
-    print("Took: ", (Time.now() - t1).to('min'))
+    print("Execution Length: ", (Time.now() - t1).to('min'))
     return
 
 
