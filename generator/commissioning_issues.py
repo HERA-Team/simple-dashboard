@@ -233,7 +233,7 @@ if __name__ == "__main__":
                         default='HERA_Commissioning',
                         help='Name of repository to pull issues'
                         )
-    parser.add_argument('--owner', dest='repo_owner', nargs=1,
+    parser.add_argument('--owner', dest='repo_owner', type=str,
                         default='HERA-Team',
                         help='Github Repository owner/organization.'
                         )
@@ -250,7 +250,7 @@ if __name__ == "__main__":
     main(
         pem_file=args.pem_file[0],
         app_id_file=args.app_id_file[0],
-        repo_owner=args.repo_owner[0],
+        repo_owner=args.repo_owner,
         repo_name=args.repo_name[0],
         time_window=args.time_window,
         all_issues=args.all_issues
