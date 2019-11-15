@@ -100,16 +100,14 @@ def main(pem_file, app_id_file, repo_owner, repo_name,
     )
     for cnt, issue in enumerate(issues):
         row = {}
-        jd = issue.title
-        # jd = int(np.floor(Time(issue.created_at, format='datetime').jd))
-        # jd = int(issue.title.split(' ')[-1])
         try:
+            jd = int(issue.title.split(' ')[-1])
             obs_date = Time(jd, format='jd')
         except ValueError:
             obs_date = Time(2458800 - cnt * 12, format='jd')
             jd = int(np.floor(obs_date.jd))
 
-        jd_list.append(jd)
+        jd_list.insert(0, jd)
 
         obs_date = dateparser.parse(obs_date.iso).astimezone(timezone.utc)
         obs_end = obs_date + timedelta(days=1)
@@ -162,7 +160,7 @@ def main(pem_file, app_id_file, repo_owner, repo_name,
                        num_opened,
                        num_open_on_day
                        ]
-        table["rows"].append(row)
+        table["rows"].insert(0, row)
 
     jd_list = np.sort(jd_list)
     full_jd_range = np.arange(jd_today - time_window, jd_today + 1)
