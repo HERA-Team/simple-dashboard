@@ -104,7 +104,7 @@ def main(pem_file, app_id_file, repo_owner, repo_name,
             jd = int(issue.title.split(' ')[-1])
             obs_date = Time(jd, format='jd')
         except ValueError:
-            obs_date = Time(2458800 - cnt * 12, format='jd')
+            obs_date = Time(2458750 + cnt * 5, format='jd')
             jd = int(np.floor(obs_date.jd))
 
         jd_list.insert(0, jd)
