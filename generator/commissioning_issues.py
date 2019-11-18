@@ -50,7 +50,7 @@ def main(pem_file, app_id_file, repo_owner, repo_name,
 
     table = {}
     table["title"] = "Commissioning Daily Logs"
-    table["div_style"] = 'style="max-height: 85vh;"'
+    table["div_style"] = 'style="max-height: 75vh;"'
     table["headers"] = [
         "Julian Date",
         "Related Issues",
