@@ -50,7 +50,7 @@ def main(pem_file, app_id_file, repo_owner, repo_name,
 
     table = {}
     table["title"] = "Commissioning Daily Logs"
-    table["div_style"] = 'style="max-height: 1500px;"'
+    table["div_style"] = 'style="max-height: 85vh;"'
     table["headers"] = [
         "Julian Date",
         "Related Issues",
@@ -67,44 +67,56 @@ def main(pem_file, app_id_file, repo_owner, repo_name,
         app_id = int(id_file.read())
 
     gh = github3.github.GitHub()
-    try:
+    if args.repo_name == "HERA_Commissioning":
         gh.login_as_app(key.encode(), app_id)
         app = gh.authenticated_app()
         inst = gh.app_installation_for_repository(repo_owner, repo_name)
         gh.login_as_app_installation(key.encode(), app.id, inst.id)
-    except:
+    else:
         gh = github3.github.GitHub()
     repo = gh.repository(repo_owner, repo_name)
 
     if all_issues:
-        # issues = repo.issues(
-        #     labels='Daily',
-        # )
-        issues = repo.issues(
-            state='open',
-        )
+        if args.repo_name == "HERA_Commissioning":
+            issues = repo.issues(
+                labels='Daily',
+            )
+        else:
+            issues = repo.issues(
+                state='open',
+            )
     else:
-        # issues = repo.issues(
-        #     labels='Daily', since=datetime.now(timezone.utc) - timedelta(days=30)
-        # )
-        issues = repo.issues(
-            state='open', since=datetime.now(timezone.utc) - timedelta(days=30)
-        )
+        if args.repo_name == "HERA_Commissioning":
+            issues = repo.issues(
+                labels='Daily',
+                since=datetime.now(timezone.utc) - timedelta(days=30)
+            )
+        else:
+            issues = repo.issues(
+                state='open',
+                since=datetime.now(timezone.utc) - timedelta(days=30)
+            )
 
     notebook_link = ("https://github.com/HERA-Team/H3C_plots"
                      "/blob/master/data_inspect_{}.ipynb")
+    label_issue_link = ("https://github.com/{owner}/{repo}"
+                        .format(owner=repo_owner, repo=repo_name)
+                        + '/issues?q=is%3Aissue+is%3Aopen+label%3A"{url}"'
+                        )
+
     # replace the github.com with nbviwer.juptyer.org/github for actual
     # viewing link
     notebook_view = notebook_link.replace(
         'github.com', 'nbviewer.jupyter.org/github'
     )
+    all_issues = repo.issues(state='all')
     for cnt, issue in enumerate(issues):
         row = {}
         try:
             jd = int(issue.title.split(' ')[-1])
             obs_date = Time(jd, format='jd')
         except ValueError:
-            obs_date = Time(2458750 + cnt * 5, format='jd')
+            obs_date = Time(2458750 - cnt * 5, format='jd')
             jd = int(np.floor(obs_date.jd))
 
         jd_list.insert(0, jd)
@@ -117,7 +129,7 @@ def main(pem_file, app_id_file, repo_owner, repo_name,
         num_opened = 0
         num_open_on_day = 0
 
-        for _iss in repo.issues(state='all'):
+        for _iss in all_issues:
             if obs_date <= _iss.created_at.astimezone(timezone.utc) <= obs_end:
                 num_opened += 1
             if _iss.created_at.astimezone(timezone.utc) <= obs_end:
@@ -139,6 +151,10 @@ def main(pem_file, app_id_file, repo_owner, repo_name,
 
         link = issue.url.replace('api.', '').replace('repos/', '')
         other_labels = [lab.name for lab in issue.labels() if lab.name != 'Daily']
+        other_labels = [('<a target="_blank" href=' + label_issue_link + '>{label}</a>'
+                         ).format(url=label.replace(' ', '+'), label=label)
+                        for label in other_labels
+                        ]
         display_text = ('<a target="_blank" href={url}>{number}</a>'
                         .format(url=link, number=jd)
                         )
@@ -155,12 +171,12 @@ def main(pem_file, app_id_file, repo_owner, repo_name,
 
         row["text"] = [display_text,
                        ' '.join(related_issues),
-                       ' '.join(other_labels),
+                       '<br>'.join(other_labels),
                        notebook,
                        num_opened,
                        num_open_on_day
                        ]
-        table["rows"].insert(0, row)
+        table["rows"].append(row)
 
     jd_list = np.sort(jd_list)
     full_jd_range = np.arange(jd_today - time_window, jd_today + 1)
