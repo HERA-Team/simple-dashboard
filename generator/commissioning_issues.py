@@ -110,7 +110,7 @@ def main(pem_file, app_id_file, repo_owner, repo_name,
     notebook_view = notebook_link.replace(
         'github.com', 'nbviewer.jupyter.org/github'
     )
-    all_issues = repo.issues(state='all')
+    full_issue_iter = repo.issues(state='all')
     for cnt, issue in enumerate(issues):
         row = {}
         try:
@@ -130,7 +130,7 @@ def main(pem_file, app_id_file, repo_owner, repo_name,
         num_opened = 0
         num_open_on_day = 0
 
-        for _iss in all_issues:
+        for _iss in full_issue_iter:
             if obs_date <= _iss.created_at.astimezone(timezone.utc) <= obs_end:
                 num_opened += 1
             if _iss.created_at.astimezone(timezone.utc) <= obs_end:
