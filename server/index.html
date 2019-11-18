@@ -34,6 +34,9 @@
          border-left: 5px solid white;
          border-right: 5px solid white;
        }
+       tr.noBorder td {
+         border: 0;
+       }
      </style>
 <script src="sidereal.js"></script><script>
 const clocks = document.getElementsByClassName("clock_sidereal");
@@ -145,14 +148,22 @@ setInterval(reloadradiosky, 30000);
  <a class="weatherwidget-io" href="https://forecast7.com/en/n30d9622d15/carnarvon/" data-label_1="HERA" data-label_2="WEATHER" data-theme="original" >HERA WEATHER</a>
 
 <div class="col-md-12">
-  <table class="table" border="0">
-    <tr>
+  <table border=0>
+    <tr class="noBorder">
+      <td style="width: 27.5vw;" border="0">
+      </td>
+      <td style="width: 27.5vw;" border="0">
+      </td>
+      <td style="width: 45vw;" border="0">
+      </td>
+    </tr>
+    <tr class="noBorder">
         <td><div class="dashboard-inset-titlebar">Autocorrelations -- <a target="_blank" href="http://heranow.reionization.org/spectra.html">(open in new tab)</a></div>
           <iframe src="http://heranow.reionization.org/spectra.html" width=100% height=400 frameborder="0"></iframe></td>
         <td><div class="dashboard-inset-titlebar">Power by Antenna -- <a target="_blank" href="http://heranow.reionization.org/hex_amp.html">(open in new tab)</a></div>
           <iframe src="http://heranow.reionization.org/hex_amp.html" width=100% height=400 frameborder="0"></iframe></td>
 
-      <td rowspan="2" colspan="2" style="width: 575px">
+      <td rowspan="2" style="width: 40vw">
         <div class="dashboard-inset-titlebar">
           Commissioning Daily Logs -- <a target="_blank" href="http://heranow.reionization.org/issue_log.html">(open in new tab)</a>
         </div>
@@ -163,14 +174,14 @@ setInterval(reloadradiosky, 30000);
       </td>
     </tr>
 
-    <tr>
+    <tr class="noBorder">
         <td><div class="dashboard-inset-titlebar">Power by Node -- <a target="_blank" href="http://heranow.reionization.org/node_amp.html">(open in new tab)</a></div>
           <iframe src="http://heranow.reionization.org/node_amp.html" width=100% height=400 frameborder="0"></iframe></td>
         <td><div class="dashboard-inset-titlebar">System Summary</div>
           <iframe src="http://heranow.reionization.org/mc_html_summary.html" width=100% height=400 frameborder="0"></iframe></td>
     </tr>
 
-    <tr>
+    <tr class="noBorder">
       <td>
         <div class="col-md-3 col-md-offset-3">
           <img align="middle" id="radiosky" src="http://heranow.reionization.org/radiosky.png">
