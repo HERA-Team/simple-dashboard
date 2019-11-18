@@ -145,9 +145,9 @@ def main(pem_file, app_id_file, repo_owner, repo_name,
         request = requests.get(notebook_link.format(jd))
         if request.status_code == 200:
             url = notebook_view.format(jd)
-            notebook = '<a href={url}>Available</a>'.format(url=url)
+            notebook = '<a href={url}>View</a>'.format(url=url)
         else:
-            notebook = "Unavaliable"
+            notebook = "N/A"
 
         link = issue.url.replace('api.', '').replace('repos/', '')
         other_labels = [lab.name for lab in issue.labels() if lab.name != 'Daily']
