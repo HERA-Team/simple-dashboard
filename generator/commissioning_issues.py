@@ -51,6 +51,8 @@ def main(pem_file, app_id_file, repo_owner, repo_name,
     table = {}
     table["title"] = "Commissioning Daily Logs"
     table["div_style"] = 'style="max-height: 75vh;"'
+    table["head_style"] = 'width: 5vw;'
+
     table["headers"] = [
         "Julian Date",
         "Related Issues",
@@ -155,8 +157,6 @@ def main(pem_file, app_id_file, repo_owner, repo_name,
                          ).format(url=label.replace(' ', '+'), label=label)
                         for label in other_labels
                         ]
-        other_labels = [l + '<br>' * (n % 3 == 2)
-                        for n, l in enumerate(other_labels)]
         display_text = ('<a target="_blank" href={url}>{number}</a>'
                         .format(url=link, number=jd)
                         )
@@ -170,6 +170,8 @@ def main(pem_file, app_id_file, repo_owner, repo_name,
                 '<a target="_blank" href={url}>{num}</a>'
                 .format(url=url, num=num)
             )
+        related_issues = [iss + '<br>' * (iss_cnt % 3 == 2)
+                          for iss_cnt, iss in enumerate(related_issues)]
 
         row["text"] = [display_text,
                        ' '.join(related_issues),
