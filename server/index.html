@@ -144,38 +144,54 @@ setInterval(reloadradiosky, 30000);
 
  <a class="weatherwidget-io" href="https://forecast7.com/en/n30d9622d15/carnarvon/" data-label_1="HERA" data-label_2="WEATHER" data-theme="original" >HERA WEATHER</a>
 
-<table>
-  <tr>
-      <td><div class="dashboard-inset-titlebar">Autocorrelations -- <a target="_blank" href="http://heranow.reionization.org/spectra.html">(open in new tab)</a></div>
-        <iframe src="http://heranow.reionization.org/spectra.html" width=500 height=400 frameborder="0"></iframe></td>
-      <td><div class="dashboard-inset-titlebar">Power by Antenna -- <a target="_blank" href="http://heranow.reionization.org/hex_amp.html">(open in new tab)</a></div>
-        <iframe src="http://heranow.reionization.org/hex_amp.html" width=500 height=400 frameborder="0"></iframe></td>
-      <td><iframe  id="radiosky" src="http://heranow.reionization.org/radiosky.png" width=100% height=400></iframe></td>
-
-  </tr>
-
-  <tr>
-      <td><div class="dashboard-inset-titlebar">Power by Node -- <a target="_blank" href="http://heranow.reionization.org/node_amp.html">(open in new tab)</a></div>
-        <iframe src="http://heranow.reionization.org/node_amp.html" width=500 height=400 frameborder="0"></iframe></td>
-      <td><div class="dashboard-inset-titlebar">System Summary</div>
-        <iframe src="http://heranow.reionization.org/mc_html_summary.html" width=500 height=400 frameborder="0"></iframe></td>
-      <td>
-        <iframe width="400" height="450" src="https://embed.windy.com/embed2.html?lat=-30.411&lon=21&zoom=5&level=surface&overlay=wind&menu=&message=&marker=true&calendar=&pressure=&type=map&location=coordinates&detail=&detailLat=-31.421&detailLon=21&metricWind=default&metricTemp=%C2%B0C&radarRange=-1" frameborder="0"></iframe></td>
-  </tr>
-
-</table>
-
 <div class="col-md-12">
-  <div class="dashboard-inset-titlebar">Commissioning Daily Logs -- <a target="_blank" href="http://heranow.reionization.org/issue_log.html">(open in new tab)</a>
-  </div>
-  <iframe src="http://heranow.reionization.org/issue_log.html" width=85vw height=500 frameborder="0">
-  </iframe>
+  <table class="table" border="0">
+    <tr>
+        <td><div class="dashboard-inset-titlebar">Autocorrelations -- <a target="_blank" href="http://heranow.reionization.org/spectra.html">(open in new tab)</a></div>
+          <iframe src="http://heranow.reionization.org/spectra.html" width=100% height=400 frameborder="0"></iframe></td>
+        <td><div class="dashboard-inset-titlebar">Power by Antenna -- <a target="_blank" href="http://heranow.reionization.org/hex_amp.html">(open in new tab)</a></div>
+          <iframe src="http://heranow.reionization.org/hex_amp.html" width=100% height=400 frameborder="0"></iframe></td>
+
+      <td rowspan="2" colspan="2" style="width: 575px">
+        <div class="dashboard-inset-titlebar">
+          Commissioning Daily Logs -- <a target="_blank" href="http://heranow.reionization.org/issue_log.html">(open in new tab)</a>
+        </div>
+        <div style="width: 100%; text-align: center; margin: 0px auto; border-left: 5px solid white; border-right: 5px solid white;">
+        <iframe src=http://heranow.reionization.org/issue_log.html width=100% height=800 frameborder="0">
+        </iframe>
+      </div>
+      </td>
+    </tr>
+
+    <tr>
+        <td><div class="dashboard-inset-titlebar">Power by Node -- <a target="_blank" href="http://heranow.reionization.org/node_amp.html">(open in new tab)</a></div>
+          <iframe src="http://heranow.reionization.org/node_amp.html" width=100% height=400 frameborder="0"></iframe></td>
+        <td><div class="dashboard-inset-titlebar">System Summary</div>
+          <iframe src="http://heranow.reionization.org/mc_html_summary.html" width=100% height=400 frameborder="0"></iframe></td>
+    </tr>
+
+    <tr>
+      <td>
+        <div class="col-md-3 col-md-offset-3">
+          <img align="middle" id="radiosky" src="http://heranow.reionization.org/radiosky.png">
+          </img>
+        </div>
+      </td>
+      <td>
+        <iframe width=100% height="450" src="https://embed.windy.com/embed2.html?lat=-30.411&lon=21&zoom=5&level=surface&overlay=wind&menu=&message=&marker=true&calendar=&pressure=&type=map&location=coordinates&detail=&detailLat=-31.421&detailLon=21&metricWind=default&metricTemp=%C2%B0C&radarRange=-1" frameborder="0">
+        </iframe>
+      </td>
+    </tr>
+
+  </table>
 </div>
 
-<iframe src="https://docs.google.com/spreadsheets/d/e/2PACX-1vTKxEegFZXTO-bMPmpmvBXfnSQ2ulbw0EvqkduPUKdGg4ZFFANQCHdJuVZqlqZjBlRhNMyIAoB1vw8J/pubhtml?gid=1055039091&amp;single=true&amp;widget=true&amp;headers=false" width=1200></iframe>
 
+  <div class="col-md-12" style="text-align: center;">
+     <iframe  width=1500 src="https://docs.google.com/spreadsheets/d/e/2PACX-1vTKxEegFZXTO-bMPmpmvBXfnSQ2ulbw0EvqkduPUKdGg4ZFFANQCHdJuVZqlqZjBlRhNMyIAoB1vw8J/pubhtml?gid=1055039091&amp;single=true&amp;widget=true&amp;headers=false"></iframe>
+  </div>
 
-  <footer class="footer navbar-default">
+  <footer class="footer navbar-default col-md-12">
     <p class="text-muted text-center"><small><small>(c) HERA Collaboration 2019</small></small></p>
   </footer>
 
