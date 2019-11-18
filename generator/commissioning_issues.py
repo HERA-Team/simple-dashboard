@@ -265,7 +265,7 @@ if __name__ == "__main__":
         pem_file=args.pem_file[0],
         app_id_file=args.app_id_file[0],
         repo_owner=args.repo_owner,
-        repo_name=args.repo_name[0],
+        repo_name=args.repo_name,
         time_window=args.time_window,
         all_issues=args.all_issues
     )
