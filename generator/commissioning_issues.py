@@ -190,11 +190,11 @@ def main(pem_file, app_id_file, repo_owner, repo_name,
             request = requests.get(notebook_link.format(jd))
             if request.status_code == 200:
                 url = notebook_view.format(jd)
-                notebook = ('<a target="_blank" href={url}>Available</a>'
+                notebook = ('<a target="_blank" href={url}>View</a>'
                             .format(url=url)
                             )
             else:
-                notebook = "Unavaliable"
+                notebook = "N/A"
             log_url = (
                 "https://github.com/HERA-Team/HERA_Commissioning/issues"
                 "/new?assignees=&labels=Daily&template=daily-log.md"
