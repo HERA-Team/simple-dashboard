@@ -57,6 +57,7 @@ def main(pem_file, app_id_file, repo_owner, repo_name,
         "Related Issues",
         "Log Labels",
         "Nightly Notebook",
+        "RFI Notebook",
         "New Issues Opened<br>On This Day",
         "Total Open Issues<br>On This Day"
     ]
@@ -100,6 +101,10 @@ def main(pem_file, app_id_file, repo_owner, repo_name,
 
     notebook_link = ("https://github.com/HERA-Team/H3C_plots"
                      "/blob/master/data_inspect_{}.ipynb")
+
+    rfi_link = ("https://github.com/alphatangojuliett/HERA_daily_RFI"
+                "/blob/herapost-master/daily_RFI_report_{}.ipynb")
+
     label_issue_link = ("https://github.com/{owner}/{repo}"
                         .format(owner=repo_owner, repo=repo_name)
                         + '/issues?q=is%3Aissue+is%3Aopen+label%3A"{url}"'
@@ -108,6 +113,9 @@ def main(pem_file, app_id_file, repo_owner, repo_name,
     # replace the github.com with nbviwer.juptyer.org/github for actual
     # viewing link
     notebook_view = notebook_link.replace(
+        'github.com', 'nbviewer.jupyter.org/github'
+    )
+    rfi_view = rfi_link.replace(
         'github.com', 'nbviewer.jupyter.org/github'
     )
     full_issue_iter = repo.issues(state='all')
@@ -150,6 +158,15 @@ def main(pem_file, app_id_file, repo_owner, repo_name,
         else:
             notebook = "N/A"
 
+        request_date = obs_date.isoformat().split('T')[0].replace('-', '')
+        # See if the RFI notebook is up for that day
+        request = requests.get(rfi_link.format(request_date))
+        if request.status_code == 200:
+            url = rfi_view.format(request_date)
+            rfi_notebook = '<a href={url}>View</a>'.format(url=url)
+        else:
+            rfi_notebook = "N/A"
+
         link = issue.url.replace('api.', '').replace('repos/', '')
         other_labels = [lab.name for lab in issue.labels() if lab.name != 'Daily']
         other_labels = [('<a target="_blank" href=' + label_issue_link + '>{label}</a>'
@@ -176,6 +193,7 @@ def main(pem_file, app_id_file, repo_owner, repo_name,
                        ' '.join(related_issues),
                        '<br>'.join(other_labels),
                        notebook,
+                       rfi_notebook,
                        num_opened,
                        num_open_on_day
                        ]
@@ -195,6 +213,17 @@ def main(pem_file, app_id_file, repo_owner, repo_name,
                             )
             else:
                 notebook = "N/A"
+
+            obs_date = Time(jd, format='jd')
+            request_date = obs_date.isot.split('T')[0].replace('-', '')
+            # See if the RFI notebook is up for that day
+            request = requests.get(rfi_link.format(request_date))
+            if request.status_code == 200:
+                url = rfi_view.format(request_date)
+                rfi_notebook = '<a href={url}>View</a>'.format(url=url)
+            else:
+                rfi_notebook = "N/A"
+
             log_url = (
                 "https://github.com/HERA-Team/HERA_Commissioning/issues"
                 "/new?assignees=&labels=Daily&template=daily-log.md"
@@ -209,6 +238,7 @@ def main(pem_file, app_id_file, repo_owner, repo_name,
                            '',
                            '',
                            notebook,
+                           rfi_notebook,
                            '-',
                            '-'
                            ]
@@ -246,7 +276,7 @@ if __name__ == "__main__":
                         )
     parser.add_argument('app_id_file', type=str, nargs=1,
                         help='A text file with the app_id inside')
-    parser.add_argument('--repo', dest='repo_name', nargs=1,
+    parser.add_argument('--repo', dest='repo_name',
                         default='HERA_Commissioning',
                         help='Name of repository to pull issues'
                         )
