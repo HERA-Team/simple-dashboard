@@ -173,6 +173,7 @@ def main():
             elif antnum in built_but_not_on:
                 full_info_string += "Contructed but not Online<br>"
 
+            full_info_string += "{}<br>".format(hdr)
             notes_key = [key for key in hu_notes if antname in key]
             if len(notes_key) > 0:
                 notes_key = notes_key[0]
@@ -190,7 +191,7 @@ def main():
                         atime = cm_utils.get_time_for_display(gtime)
                         entry_info += "    {} ({})  {}<br>".format(ikey, atime, hu_notes[notes_key][ikey][gtime])
                 if len(entry_info):
-                    full_info_string += "{}<br>{}<br>".format(hdr, entry_info)
+                    full_info_string += "{}<br>".format(entry_info)
             else:
                 full_info_string = "No Notes Information"
 
@@ -252,7 +253,7 @@ def main():
             data_date_iso=latest.iso,
             data_date_jd=latest.jd,
             data_date_unix_ms=latest.unix * 1000,
-            js_name="hex_notes",
+            js_name="hookup_notes",
             gen_time_unix_ms=now.unix * 1000,
             scriptname=os.path.basename(__file__),
             hostname=computer_hostname,
