@@ -18,11 +18,14 @@ from jinja2 import Environment, FileSystemLoader
 
 
 def process_string(input_str):
-    if len(input_str) > 80:
-        space_ind = 79
+    # the header is already 37 characters long
+    # take this offset into account
+    time_string_offset = 37
+    if len(input_str) > 80 - time_string_offset:
+        space_ind = 79 - time_string_offset
 
-        if ' ' in input_str[79:]:
-            space_ind += input_str[79:].index(' ')
+        if ' ' in input_str[space_ind:]:
+            space_ind += input_str[space_ind:].index(' ')
 
             input_str = (
                 input_str[:space_ind]
