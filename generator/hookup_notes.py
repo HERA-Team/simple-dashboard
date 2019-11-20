@@ -157,8 +157,8 @@ def main():
 
         #  get all the data
 
-        xs = np.ma.masked_array(antpos[0, :])
-        ys = np.ma.masked_array(antpos[1, :], mask=xs.mask)
+        xs = np.array(antpos[0, :])
+        ys = np.array(antpos[1, :])
 
         _text = np.empty_like(xs, dtype=object)
 
@@ -198,13 +198,13 @@ def main():
 
         data_hex = []
         ants = {
-            "x": xs.compressed().tolist(),
-            "y": ys.compressed().tolist(),
-            "text": _text,
+            "x": xs.tolist(),
+            "y": ys.tolist(),
+            "text": _text.tolist(),
             "mode": "markers",
             "visible": True,
             "marker": {
-                "color": ["black"] * xs.compressed().size,
+                "color": np.array(["black"] * xs.size, dtype=object),
                 "size": 14,
                 "opacity": 0.5,
                 "symbol": "hexagon",
@@ -218,7 +218,6 @@ def main():
         ants["marker"]["color"] = (
             ants["marker"]["color"].compressed().tolist()
         )
-        ants["text"] = ants["text"].compressed().tolist()
         data_hex.append(ants)
 
         layout_hex = {
