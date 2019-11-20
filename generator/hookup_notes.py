@@ -172,9 +172,8 @@ def main():
             elif antnum in built_but_not_on:
                 full_info_string += "Contructed but not Online<br>"
 
-            notes_key = [key for key in hu_notes if antname in key]
-            if len(notes_key) > 0:
-                notes_key = notes_key[0]
+            notes_key = antname + ":A"
+            if notes_key in hu_notes:
                 entry_info = ''
                 part_hu_hpn = cm_utils.put_keys_in_order(
                     list(hu_notes[notes_key].keys()),
@@ -192,8 +191,10 @@ def main():
                     full_info_string += "{}<br>".format(entry_info)
             else:
                 full_info_string += "No Notes Information"
-
-            _text[ant_cnt] = full_info_string.replace(" ", "\t")
+            # replace spaces with \t and - with non-breaking hyphenx
+            _text[ant_cnt] = (
+                full_info_string.replace(" ", "\t").replace('-', u"\u2011")
+            )
 
         data_hex = []
         ants = {
