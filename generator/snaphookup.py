@@ -60,6 +60,7 @@ def main():
     # make a table of the antenna to snap mapping
     table_a_to_s = {}
     table_a_to_s["title"] = "Antenna -> SNAP mappings"
+    table_a_to_s["tab_style"] = "float: left"
     rows_a = []
     ant_to_snap = json.loads(corr_map[b'ant_to_snap'])
     for ant in sorted(map(int, ant_to_snap)):
@@ -81,12 +82,13 @@ def main():
                            )
             rows_a.append(row)
     table_a_to_s["rows"] = rows_a
-    table_a_to_s["style"] = 'style="max-height: 2500px;"'
+    table_a_to_s["div_style"] = 'style="max-height: 2500px;"'
     all_tables.append(table_a_to_s)
 
     # make a table of the snap to antenna mapping
     table_s_to_a = {}
     table_s_to_a["title"] = "SNAP -> Antenna mappings"
+    table_s_to_a["style"] = "float: right"
     rows_s = []
 
     snap_to_ant = json.loads(corr_map[b'snap_to_ant'])
@@ -127,7 +129,7 @@ def main():
         rows_ant_ind.append(row)
 
     table_ant_ind["rows"] = rows_ant_ind
-    table_ant_ind["float"] = "right"
+    table_ant_ind["style"] = "float: right"
     all_tables.append(table_ant_ind)
 
     # Make a table of the XENG channel indices
@@ -149,7 +151,7 @@ def main():
                        )
         rows_xeng.append(row)
     table_xeng["rows"] = rows_xeng
-    table_xeng["float"] = "right"
+    table_xeng["style"] = "float: right"
 
     all_tables.append(table_xeng)
 

@@ -4,22 +4,33 @@
 {% block prebody %}{% endblock %}
 
     {% for table in tables %}
-    <div class="table-responsive col-md-{{ colsize or 6 }}" {{ table.style or '' }}>
-      <h2 style="position: -webkit-sticky; position: sticky; top: 0;background-color: white;"> {{ table.title }} </h2>
-    <table class="table table-striped" style="float: {{ table.float or 'left' }}">
+    <div class="table-responsive col-md-{{ colsize or 6 }}" {{ table.div_style or '' }}>
+      <h2 style="position: -webkit-sticky; position: sticky; top: 0px;background-color: white;"> {{ table.title }} </h2>
+    <table class="table table-striped" style="{{ table.style or '' }}">
       <thead>
+      <tr>
       {% for head in table.headers %}
-      <th>{{ head }}</th>
+      <th class="text-center" style="position: -webkit-sticky; position: sticky; top: 32px;background-color: white;">{{ head }}</th>
       {% endfor %}
+      </tr>
       </thead>
       <tbody>
-        {% if table.rows|length > 0 %}
-        {% for row in table.rows %}
-        <tr>
-           <td>{{ row.text }}</td>
-        </tr>
+      {% if table.rows|length > 0 %}
+      {% for row in table.rows %}
+      {% if row.text is iterable and row.text is not string %}
+      <tr>
+        {% for col in row.text %}
+        <td style="vertical-align: middle;">{{ col }}
         {% endfor %}
-        {% endif %}
+        </td>
+      </tr>
+      {% else %}
+      <tr>
+         <td>{{ row.text }}</td>
+      </tr>
+      {% endif %}
+      {% endfor %}
+      {% endif %}
 
       </tbody>
     </table>
