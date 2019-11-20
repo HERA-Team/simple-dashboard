@@ -17,7 +17,9 @@ from astropy.time import Time
 from jinja2 import Environment, FileSystemLoader
 
 
-def write_csv(filename, antnames, ants, pols, stat_names, stats):
+def write_csv(
+    filename, antnames, ants, pols, stat_names, stats, built_but_not_on
+):
     """Write out antenna stats to csv file.
 
     Parameters
@@ -34,6 +36,8 @@ def write_csv(filename, antnames, ants, pols, stat_names, stats):
         array of names of antenna statistics to write to file
     stats : array_like
         list of arrays of statistics to write to file
+    built_but_not_on : array_like int
+        list of antenna numbers which are constructed but not on.
 
     Returns
     -------
@@ -63,13 +67,18 @@ def write_csv(filename, antnames, ants, pols, stat_names, stats):
                         + ','.join([float_format_string] * len(stats))
                         .format(*[p.filled(np.nan)[pol_cnt, ant_ind] for p in stats])
                     )
-                else:
+                elif antnum in built_but_not_on:
                     csv_file.write(
                         format_string.format(_name) + ',CONST' + ','
                         + ','.join(["nan"] * (len(stats) - 1))
                     )
-                csv_file.write('\n')
+                else:
+                    csv_file.write(
+                        format_string.format(_name) + ',OFF' + ','
+                        + ','.join(["nan"] * (len(stats) - 1))
+                    )
 
+                csv_file.write('\n')
     return
 
 
@@ -171,7 +180,7 @@ def main():
 
         # stations is a list of HH??? numbers we just want the ints
         stations = list(map(int, [j[2:] for j in stations]))
-        build_but_not_on = np.setdiff1d(stations, ants)
+        built_but_not_on = np.setdiff1d(stations, ants)
         # Get node and PAM info
         node_ind = np.zeros_like(ants, dtype=np.int)
         pam_ind = np.zeros_like(ants, dtype=np.int)
@@ -300,7 +309,15 @@ def main():
             )
             for p in powers
         ]
-        write_csv('ant_stats.csv', antnames, ants, pols, names, powers)
+        write_csv(
+            'ant_stats.csv',
+            antnames,
+            ants,
+            pols,
+            names,
+            powers,
+            built_but_not_on
+        )
 
         time_array = np.array([[time_array[ant, pol].to('hour').value
                                for ant in ants] for pol in pols])
@@ -352,10 +369,10 @@ def main():
                             "symbol": 'hexagon'},
                         "hovertemplate": "%{text}<extra></extra>"}
         # now we want to Fill in the conneted ones
-        offline_ants["marker"]["color"][build_but_not_on] = 'red'
-        offline_ants["text"].data[build_but_not_on] = [offline_ants["text"].data[ant].split('<br>')[0]
+        offline_ants["marker"]["color"][built_but_not_on] = 'red'
+        offline_ants["text"].data[built_but_not_on] = [offline_ants["text"].data[ant].split('<br>')[0]
                                                        + '<br>Constructed<br>Not\tOnline'
-                                                       for ant in build_but_not_on]
+                                                       for ant in built_but_not_on]
 
         offline_ants["marker"]["color"] = offline_ants["marker"]["color"].compressed().tolist()
         offline_ants["text"] = offline_ants["text"].compressed().tolist()
