@@ -530,7 +530,7 @@ def main():
             "yaxis": {"title": "North-South Position [m]"},
             "title": {
                 "text": "Per Antpol Stats vs Hex position",
-                "font": {"size": 24,},
+                "font": {"size": 24},
             },
             "hoverlabel": {"align": "left"},
             "margin": {"t": 40},
@@ -740,7 +740,7 @@ def main():
                 "zeroline": False,
             },
             "yaxis": {"showticklabels": False, "showgrid": False, "zeroline": False},
-            "title": {"text": "Per Antpol Stats vs Node #", "font": {"size": 24,}},
+            "title": {"text": "Per Antpol Stats vs Node #", "font": {"size": 24}},
             "hoverlabel": {"align": "left"},
             "margin": {"t": 40},
             "autosize": True,
