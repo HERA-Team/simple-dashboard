@@ -25,7 +25,7 @@ class row(object):
 
 
 def main():
-    if platform.python_version().startswith('3'):
+    if platform.python_version().startswith("3"):
         hostname = os.uname().nodename
     else:
         hostname = os.uname()[1]
@@ -35,10 +35,9 @@ def main():
     # and split the parent directory away
     script_dir = os.path.dirname(os.path.realpath(__file__))
     split_dir = os.path.split(script_dir)
-    template_dir = os.path.join(split_dir[0], 'templates')
+    template_dir = os.path.join(split_dir[0], "templates")
 
-    env = Environment(loader=FileSystemLoader(template_dir),
-                      trim_blocks=True)
+    env = Environment(loader=FileSystemLoader(template_dir), trim_blocks=True)
 
     parser = mc.get_mc_argument_parser()
     args = parser.parse_args()
@@ -53,65 +52,70 @@ def main():
 
     table = []
 
-    dt = (Time.now().gps
-          - Time(most_recent_obs.starttime, format='gps', scale='utc').gps
-          )
-    dt_days = int(floor((dt / 3600.) / 24))
-    dt_hours = (dt - dt_days * 3600 * 24) / 3600.
-    last_obs_row = row(label="Time Since Last Obs",
-                       text="{dt_days} days {dt_hours} hours".format(dt_days=dt_days,
-                                                                     dt_hours=int(dt_hours)))
+    dt = Time.now().gps - Time(most_recent_obs.starttime, format="gps", scale="utc").gps
+    dt_days = int(floor((dt / 3600.0) / 24))
+    dt_hours = (dt - dt_days * 3600 * 24) / 3600.0
+    last_obs_row = row(
+        label="Time Since Last Obs",
+        text="{dt_days} days {dt_hours} hours".format(
+            dt_days=dt_days, dt_hours=int(dt_hours)
+        ),
+    )
     table.append(last_obs_row)
 
     # get the number of raw files in the last 24 hours
-    numfiles = (session.query(LibFiles)
-                .filter(LibFiles.time
-                        > (Time.now() - TimeDelta(Quantity(1, 'day'))).gps)
-                .filter(LibFiles.filename.like('%uvh5')).count()
-                )
-    nfiles_row = row(label='Raw Files Recorded (last 24 hours)', text=numfiles)
+    numfiles = (
+        session.query(LibFiles)
+        .filter(LibFiles.time > (Time.now() - TimeDelta(Quantity(1, "day"))).gps)
+        .filter(LibFiles.filename.like("%uvh5"))
+        .count()
+    )
+    nfiles_row = row(label="Raw Files Recorded (last 24 hours)", text=numfiles)
     table.append(nfiles_row)
 
     # get the number of samples recorded by each node in the last 24 hours
-    result = (session.query(NodeSensor.node,
-                            func.count(NodeSensor.time))
-              .filter(NodeSensor.time
-                      > (Time.now() - TimeDelta(Quantity(1, 'day'))).gps)
-              .group_by(NodeSensor.node)
-              )
-    node_pings = ''
+    result = (
+        session.query(NodeSensor.node, func.count(NodeSensor.time))
+        .filter(NodeSensor.time > (Time.now() - TimeDelta(Quantity(1, "day"))).gps)
+        .group_by(NodeSensor.node)
+    )
+    node_pings = ""
     for l in result:
         node_pings += "Node{node}:{pings}   ".format(node=l[0], pings=l[1])
-    ping_row = row(label='Node Sensor Readings (last 24 hours)', text=node_pings)
+    ping_row = row(label="Node Sensor Readings (last 24 hours)", text=node_pings)
     table.append(ping_row)
     # get the current state of is_recording()
-    result = (session.query(CorrelatorControlState.state,
-                            CorrelatorControlState.time)
-              .filter(CorrelatorControlState.state_type.like('taking_data'))
-              .order_by(CorrelatorControlState.time.desc()).limit(1).one()
-              )
+    result = (
+        session.query(CorrelatorControlState.state, CorrelatorControlState.time)
+        .filter(CorrelatorControlState.state_type.like("taking_data"))
+        .order_by(CorrelatorControlState.time.desc())
+        .limit(1)
+        .one()
+    )
     is_recording = result[0]
-    last_update = Time(result[1], scale='utc', format='gps')
-    on_off_row = row(label='Correlator is')
+    last_update = Time(result[1], scale="utc", format="gps")
+    on_off_row = row(label="Correlator is")
     # retro palette from https://venngage.com/blog/color-blind-friendly-palette/
     if is_recording:
         on_off_row.text = "ON"
-        on_off_row.color = '#63ACBE'
+        on_off_row.color = "#63ACBE"
     else:
         on_off_row.text = "OFF"
-        on_off_row.color = '#EE442f'
+        on_off_row.color = "#EE442f"
     on_off_row.text += "     (last change: {})".format(last_update.iso)
     table.append(on_off_row)
 
     html_template = env.get_template("mc_stat_table.html")
 
-    rendered_html = html_template.render(table=table,
-                                         gen_date=Time.now().iso,
-                                         gen_time_unix_ms=Time.now().unix * 1000,
-                                         scriptname=os.path.basename(__file__),
-                                         hostname=hostname)
+    rendered_html = html_template.render(
+        table=table,
+        gen_date=Time.now().iso,
+        gen_time_unix_ms=Time.now().unix * 1000,
+        scriptname=os.path.basename(__file__),
+        hostname=hostname,
+    )
 
-    with open("mc_html_summary.html", 'w') as h_file:
+    with open("mc_html_summary.html", "w") as h_file:
         h_file.write(rendered_html)
 
 
