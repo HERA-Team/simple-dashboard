@@ -17,6 +17,16 @@ from astropy.time import Time
 from jinja2 import Environment, FileSystemLoader
 
 
+def process_string(input_str):
+    if len(input_str) > 79:
+        input_str = (
+            input_str[79:]
+            + "<br>\t\t\t\t\t\t\t\t"
+            + process_string(input_str[:79])
+        )
+    return input_str
+
+
 def main():
     # templates are stored relative to the script dir
     # stored one level up, find the parent directory
@@ -186,7 +196,8 @@ def main():
                     gps_times = sorted(list(hu_notes[notes_key][ikey].keys()))
                     for gtime in gps_times:
                         atime = cm_utils.get_time_for_display(gtime)
-                        entry_info += "    {} ({})  {}<br>".format(ikey, atime, hu_notes[notes_key][ikey][gtime])
+                        notes = process_string(hu_notes[notes_key][ikey][gtime])
+                        entry_info += "    {} ({})  {}<br>".format(ikey, atime, notes)
                 if len(entry_info):
                     full_info_string += "{}<br>".format(entry_info)
             else:
