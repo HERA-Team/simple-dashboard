@@ -29,10 +29,9 @@ def main():
     # and split the parent directory away
     script_dir = os.path.dirname(os.path.realpath(__file__))
     split_dir = os.path.split(script_dir)
-    template_dir = os.path.join(split_dir[0], 'templates')
+    template_dir = os.path.join(split_dir[0], "templates")
 
-    env = Environment(loader=FileSystemLoader(template_dir),
-                      trim_blocks=True)
+    env = Environment(loader=FileSystemLoader(template_dir), trim_blocks=True)
 
     if sys.version_info[0] < 3:
         # py2
@@ -42,19 +41,24 @@ def main():
         computer_hostname = os.uname().nodename
 
     parser = argparse.ArgumentParser(
-        description=('Create snap hookup tables for heranow dashboard')
+        description=("Create snap hookup tables for heranow dashboard")
     )
-    parser.add_argument('--redishost', dest='redishost', type=str,
-                        default='redishost',
-                        help=('The host name for redis to connect to, defaults to "redishost"'))
-    parser.add_argument('--port', dest='port', type=int, default=6379,
-                        help='Redis port to connect.')
+    parser.add_argument(
+        "--redishost",
+        dest="redishost",
+        type=str,
+        default="redishost",
+        help=('The host name for redis to connect to, defaults to "redishost"'),
+    )
+    parser.add_argument(
+        "--port", dest="port", type=int, default=6379, help="Redis port to connect."
+    )
     args = parser.parse_args()
 
     redis_db = redis.Redis(args.redishost, port=args.port)
-    corr_map = redis_db.hgetall('corr:map')
+    corr_map = redis_db.hgetall("corr:map")
 
-    update_time = Time(float(corr_map[b'update_time']), format='unix')
+    update_time = Time(float(corr_map[b"update_time"]), format="unix")
     all_tables = []
 
     # make a table of the antenna to snap mapping
@@ -62,24 +66,22 @@ def main():
     table_a_to_s["title"] = "Antenna -> SNAP mappings"
     table_a_to_s["tab_style"] = "float: left"
     rows_a = []
-    ant_to_snap = json.loads(corr_map[b'ant_to_snap'])
+    ant_to_snap = json.loads(corr_map[b"ant_to_snap"])
     for ant in sorted(map(int, ant_to_snap)):
         ant = str(ant)
         pol = ant_to_snap[ant]
         for p in pol:
             vals = pol[p]
             row = {}
-            host = vals['host']
-            chan = vals['channel']
+            host = vals["host"]
+            chan = vals["channel"]
             if isinstance(host, bytes):
-                host = host.decode('utf-8')
+                host = host.decode("utf-8")
             if isinstance(chan, bytes):
-                chan = chan.decode('utf-8')
-            row["text"] = ("{ant}:{pol} -> {host}:{chan}"
-                           .format(ant=ant, pol=p,
-                                   host=host,
-                                   chan=chan)
-                           )
+                chan = chan.decode("utf-8")
+            row["text"] = "{ant}:{pol} -> {host}:{chan}".format(
+                ant=ant, pol=p, host=host, chan=chan
+            )
             rows_a.append(row)
     table_a_to_s["rows"] = rows_a
     table_a_to_s["div_style"] = 'style="max-height: 2500px;"'
@@ -91,22 +93,19 @@ def main():
     table_s_to_a["style"] = "float: right"
     rows_s = []
 
-    snap_to_ant = json.loads(corr_map[b'snap_to_ant'])
+    snap_to_ant = json.loads(corr_map[b"snap_to_ant"])
     for snap in sorted(snap_to_ant):
         ant = snap_to_ant[snap]
         for i in range(6):
             if ant[i] is None:
                 ant[i] = "n/c"
             if isinstance(ant[i], bytes):
-                ant[i] = ant[i].decode('utf-8')
+                ant[i] = ant[i].decode("utf-8")
 
         if isinstance(snap, bytes):
-            snap = snap.decode('utf-8')
+            snap = snap.decode("utf-8")
         row = {}
-        row["text"] = ("{snap} -> {ants}"
-                       .format(snap=snap,
-                               ants=', '.join(ant))
-                       )
+        row["text"] = "{snap} -> {ants}".format(snap=snap, ants=", ".join(ant))
         rows_s.append(row)
 
     table_s_to_a["rows"] = rows_s
@@ -122,9 +121,9 @@ def main():
         ant = snap_to_ant_i[snap]
         row = {}
         if isinstance(snap, bytes):
-            snap = snap.decode('utf-8')
+            snap = snap.decode("utf-8")
         if isinstance(ant, bytes):
-            ant = ant.decode('utf-8')
+            ant = ant.decode("utf-8")
         row["text"] = "{snap} -> {ant}".format(snap=snap, ant=str(ant))
         rows_ant_ind.append(row)
 
@@ -143,12 +142,10 @@ def main():
         chans = xeng_to_chan_i[xeng]
         row = {}
         if isinstance(xeng, bytes):
-            xeng = xeng.decode('utf-8')
+            xeng = xeng.decode("utf-8")
         if isinstance(chans, bytes):
-            chans = chans.decode('utf-8')
-        row["text"] = ("{xeng} -> {chans}...".format(xeng=xeng,
-                                                     chans=chans[0:5])
-                       )
+            chans = chans.decode("utf-8")
+        row["text"] = "{xeng} -> {chans}...".format(xeng=xeng, chans=chans[0:5])
         rows_xeng.append(row)
     table_xeng["rows"] = rows_xeng
     table_xeng["style"] = "float: right"
@@ -157,18 +154,20 @@ def main():
 
     html_template = env.get_template("tables_with_footer.html")
 
-    rendered_html = html_template.render(tables=all_tables,
-                                         data_type="Hookup information",
-                                         data_date_iso=update_time.iso,
-                                         data_date_jd=update_time.jd,
-                                         data_date_unix_ms=update_time.unix * 1000,
-                                         gen_date=Time.now().iso,
-                                         gen_time_unix_ms=Time.now().unix * 1000,
-                                         scriptname=os.path.basename(__file__),
-                                         hostname=computer_hostname,
-                                         colsize=6)
+    rendered_html = html_template.render(
+        tables=all_tables,
+        data_type="Hookup information",
+        data_date_iso=update_time.iso,
+        data_date_jd=update_time.jd,
+        data_date_unix_ms=update_time.unix * 1000,
+        gen_date=Time.now().iso,
+        gen_time_unix_ms=Time.now().unix * 1000,
+        scriptname=os.path.basename(__file__),
+        hostname=computer_hostname,
+        colsize=6,
+    )
 
-    with open('snaphookup.html', 'w') as h_file:
+    with open("snaphookup.html", "w") as h_file:
         h_file.write(rendered_html)
 
 
