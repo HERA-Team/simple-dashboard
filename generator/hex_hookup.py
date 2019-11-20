@@ -58,18 +58,14 @@ def main():
         action="store_true",
     )
     parser.add_argument(
-        "--hookup-cols",
-        dest="hookup_cols",
-        default="all",
-        help=(
-            "Specify a subset of parts to show in hookup, "
-            "comma-delimited no-space list. (all])"
-        ),
+        "--hookup-type",
+        dest="hookup_type",
+        help="Force use of specified hookup type.",
+        default=None,
     )
 
     args = parser.parse_args()
 
-    args.hookup_cols = cm_utils.listify(args.hookup_cols)
     if args.hpn == "default":
         args.hpn = cm_sysdef.hera_zone_prefixes
     else:
