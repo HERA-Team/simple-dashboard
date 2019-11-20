@@ -17,10 +17,9 @@ from astropy.time import Time
 from jinja2 import Environment, FileSystemLoader
 
 
-def process_string(input_str):
+def process_string(input_str, time_string_offset=37):
     # the header is already 37 characters long
-    # take this offset into account
-    time_string_offset = 37
+    # take this offset into account but only on the first iteration
     if len(input_str) > 80 - time_string_offset:
         space_ind = 79 - time_string_offset
 
@@ -30,7 +29,7 @@ def process_string(input_str):
             input_str = (
                 input_str[:space_ind]
                 + "<br>\t\t\t\t\t\t\t\t"
-                + process_string(input_str[space_ind:])
+                + process_string(input_str[space_ind:], time_string_offset=8)
             )
     return input_str
 
