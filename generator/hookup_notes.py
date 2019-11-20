@@ -164,8 +164,7 @@ def main():
 
         #  want to format No Data where data was not retrieved for each type of power
         for ant_cnt, antname in enumerate(antnames):
-            full_info_string = ''
-            hdr = "---{}---<br>".format(antname)
+            full_info_string = "{}<br><br>".format(antname)
 
             antnum = int(antname[2:])
             if antnum in online_ants:
@@ -173,7 +172,6 @@ def main():
             elif antnum in built_but_not_on:
                 full_info_string += "Contructed but not Online<br>"
 
-            full_info_string += "{}<br>".format(hdr)
             notes_key = [key for key in hu_notes if antname in key]
             if len(notes_key) > 0:
                 notes_key = notes_key[0]
@@ -193,7 +191,7 @@ def main():
                 if len(entry_info):
                     full_info_string += "{}<br>".format(entry_info)
             else:
-                full_info_string = "No Notes Information"
+                full_info_string += "No Notes Information"
 
             _text[ant_cnt] = full_info_string.replace(" ", "\t")
 
