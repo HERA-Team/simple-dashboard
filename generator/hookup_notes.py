@@ -216,7 +216,7 @@ def main():
         ants["marker"]["color"][online_ants] = 'green'
 
         ants["marker"]["color"] = (
-            ants["marker"]["color"].compressed().tolist()
+            ants["marker"]["color"].tolist()
         )
         data_hex.append(ants)
 
