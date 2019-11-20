@@ -266,10 +266,10 @@ def main():
             plotname=plotname,
         )
 
-        with open("hex_notes.html", "w") as h_file:
+        with open("hookup_notes.html", "w") as h_file:
             h_file.write(rendered_hex_html)
 
-        with open("hex_notes.js", "w") as js_file:
+        with open("hookup_notes.js", "w") as js_file:
             js_file.write(rendered_hex_js)
 
 
