@@ -19,10 +19,11 @@ from jinja2 import Environment, FileSystemLoader
 
 def process_string(input_str):
     if len(input_str) > 79:
+        space_ind = 79 + input_str[79:].index(' ')
         input_str = (
-            input_str[79:]
+            input_str[:space_ind]
             + "<br>\t\t\t\t\t\t\t\t"
-            + process_string(input_str[:79])
+            + process_string(input_str[space_ind:])
         )
     return input_str
 
