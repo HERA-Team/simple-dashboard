@@ -181,7 +181,7 @@ def main():
 
         #  want to format No Data where data was not retrieved for each type of power
         for ant_cnt, antname in enumerate(antnames):
-            full_info_string = "{}<br><br>".format(antname)
+            full_info_string = "{}<br>".format(antname)
 
             antnum = int(antname[2:])
             if antnum in online_ants:
