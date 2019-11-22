@@ -187,7 +187,7 @@ def main():
             if antnum in online_ants:
                 full_info_string += "Online<br>"
             elif antnum in built_but_not_on:
-                full_info_string += "Contructed but not Online<br>"
+                full_info_string += "Constructed but not Online<br>"
 
             notes_key = antname + ":A"
             if notes_key in hu_notes:
