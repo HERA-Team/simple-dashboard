@@ -155,7 +155,7 @@ def main():
         antpos -= array_center
         antpos = np.take(antpos, inds, axis=1)
 
-        stations = hsession.get_all_fully_connected_at_date(at_date="now")
+        stations = hsession.get_connected_stations(at_date="now")
 
         for station in stations:
             if station.antenna_number not in online_ants:
