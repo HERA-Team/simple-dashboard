@@ -254,7 +254,13 @@ def main():
         caption = {}
         caption["title"] = "Hookup Notes"
         caption["text"] = (
-            "A hookup table in interactive form"
+            "Prints any notes generated through hera_mc/hookup.py for any "
+            "parts connected to each antenna.<br>"
+            "Green antenna are 'online' meaning there are current autocorrelation "
+            "entries in redis.<br>"
+            "Red antennas are constructed and registered as fully connected but "
+            "do not have any data in redis.<br>"
+            "Black antennas are not yet constructed or have no information available."
         )
 
         # Render all the power vs position files
@@ -274,7 +280,7 @@ def main():
             gen_time_unix_ms=now.unix * 1000,
             scriptname=os.path.basename(__file__),
             hostname=computer_hostname,
-            caption=caption,
+            caption=caAntennaption,
         )
 
         rendered_hex_js = js_template.render(
