@@ -280,7 +280,7 @@ def main():
             gen_time_unix_ms=now.unix * 1000,
             scriptname=os.path.basename(__file__),
             hostname=computer_hostname,
-            caption=caAntennaption,
+            caption=caption,
         )
 
         rendered_hex_js = js_template.render(
