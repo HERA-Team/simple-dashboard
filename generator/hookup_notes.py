@@ -189,6 +189,8 @@ def main():
 
         #  want to format No Data where data was not retrieved for each type of power
         for ant_cnt, antname in enumerate(antnames):
+            row = {}
+
             _stat = []
             full_info_string = "{}<br>".format(antname)
             _stat.append(antname)
@@ -238,7 +240,8 @@ def main():
 
             _text[ant_cnt] = full_info_string
 
-            table["rows"].append(_stat)
+            row["text"] = _stat
+            table["rows"].append(row)
 
         all_tables.append(table)
         html_template = env.get_template("tables_with_footer.html")
