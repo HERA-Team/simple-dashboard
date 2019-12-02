@@ -223,7 +223,8 @@ def main():
                         atime = cm_utils.get_time_for_display(gtime)
                         notes = process_string(hu_notes[notes_key][ikey][gtime])
                         entry_info += "    {} ({})  {}<br>".format(ikey, atime, notes)
-                        no_space_info += "{} ({})  {}<br>".format(ikey, atime, notes)
+                        # we don't need the fancy line breaks because HTML will do it for us
+                        no_space_info += "{} ({})  {}<br>".format(ikey, atime, hu_notes[notes_key][ikey][gtime])
                 if len(entry_info):
                     full_info_string += "{}<br>".format(entry_info)
                     # Replace all the spaces with \t and hyphens with non-breaking hyphens
