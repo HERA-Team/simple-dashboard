@@ -208,6 +208,8 @@ def main():
             notes_key = antname + ":A"
             if notes_key in hu_notes:
                 entry_info = ''
+                # used for the html table version
+                no_space_info = ''
                 part_hu_hpn = cm_utils.put_keys_in_order(
                     list(hu_notes[notes_key].keys()),
                     sort_order="PNR"
@@ -221,15 +223,14 @@ def main():
                         atime = cm_utils.get_time_for_display(gtime)
                         notes = process_string(hu_notes[notes_key][ikey][gtime])
                         entry_info += "    {} ({})  {}<br>".format(ikey, atime, notes)
+                        no_space_info += "{} ({})  {}<br>".format(ikey, atime, notes)
                 if len(entry_info):
                     full_info_string += "{}<br>".format(entry_info)
+                    # Replace all the spaces with \t and hyphens with non-breaking hyphens
                     _stat.append(
-                        (
-                            entry_info
-                            .replace(" ", "\t")
-                            .replace('-', u"\u2011")
-                            .replace("\t\t\t\t", "")
-                        )
+                        no_space_info
+                        .replace(" ", "\t")
+                        .replace('-', u"\u2011")
                     )
                 else:
                     _stat.append("N/A")
