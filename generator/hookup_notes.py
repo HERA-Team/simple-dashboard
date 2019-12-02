@@ -178,16 +178,28 @@ def main():
         ys = np.array(antpos[1, :])
 
         _text = np.empty_like(xs, dtype=object)
+        all_tables = []
+
+        table = {}
+        table["title"] = "Commissioning Daily Logs"
+        table["div_style"] = 'style="max-height: 75vh;"'
+
+        table["headers"] = ["Antenna", "Status", "Notes"]
+        table["rows"] = []
 
         #  want to format No Data where data was not retrieved for each type of power
         for ant_cnt, antname in enumerate(antnames):
+            _stat = []
             full_info_string = "{}<br>".format(antname)
+            _stat.append(antname)
 
             antnum = int(antname[2:])
             if antnum in online_ants:
                 full_info_string += "Online<br>"
+                _stat.append("Online")
             elif antnum in built_but_not_on:
                 full_info_string += "Constructed but not Online<br>"
+                _stat.append("Constructed but not Online")
 
             notes_key = antname + ":A"
             if notes_key in hu_notes:
@@ -209,10 +221,30 @@ def main():
                     full_info_string += "{}<br>".format(entry_info)
             else:
                 full_info_string += "No Notes Information"
-            # replace spaces with \t and - with non-breaking hyphenx
-            _text[ant_cnt] = (
-                full_info_string.replace(" ", "\t").replace('-', u"\u2011")
-            )
+            # replace spaces with \t and - with non-breaking hyphen
+            full_info_string = full_info_string.replace(" ", "\t").replace('-', u"\u2011")
+
+            _text[ant_cnt] = full_info_string
+            
+            # do not need the tab alignments in the table
+            _stat.append(full_info_string.replace("\t\t\t\t", ""))
+
+            table["rows"].append(_stat)
+
+        all_tables.append(table)
+        html_template = env.get_template("tables_with_footer.html")
+
+        rendered_html = html_template.render(
+            tables=all_tables,
+            gen_date=Time.now().iso,
+            gen_time_unix_ms=Time.now().unix * 1000,
+            scriptname=os.path.basename(__file__),
+            hostname=computer_hostname,
+            colsize="6  col-md-offset-3",
+        )
+
+        with open("hookup_notes_table.html", "w") as h_file:
+            h_file.write(rendered_html)
 
         data_hex = []
         ants = {
