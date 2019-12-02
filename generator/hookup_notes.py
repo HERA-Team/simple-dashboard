@@ -231,9 +231,11 @@ def main():
                             .replace("\t\t\t\t", "")
                         )
                     )
+                else:
+                    _stat.append("N/A")
             else:
                 full_info_string += "No Notes Information"
-                _stat.append("No Notes Information".replace("", "\t"))
+                _stat.append("N/A")
 
             # replace spaces with \t and - with non-breaking hyphen
             full_info_string = full_info_string.replace(" ", "\t").replace('-', u"\u2011")
@@ -241,6 +243,7 @@ def main():
             _text[ant_cnt] = full_info_string
 
             row["text"] = _stat
+            row["style"] = "text-align: left;"
             table["rows"].append(row)
 
         all_tables.append(table)
