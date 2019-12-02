@@ -181,7 +181,7 @@ def main():
         all_tables = []
 
         table = {}
-        table["title"] = "Commissioning Daily Logs"
+        table["title"] = "Hookup Notes"
         table["div_style"] = 'style="max-height: 75vh;"'
 
         table["headers"] = ["Antenna", "Status", "Notes"]
