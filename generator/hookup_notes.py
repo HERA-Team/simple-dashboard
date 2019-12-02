@@ -200,6 +200,8 @@ def main():
             elif antnum in built_but_not_on:
                 full_info_string += "Constructed but not Online<br>"
                 _stat.append("Constructed but not Online")
+            else:
+                _stat.append('Offline')
 
             notes_key = antname + ":A"
             if notes_key in hu_notes:
@@ -219,15 +221,22 @@ def main():
                         entry_info += "    {} ({})  {}<br>".format(ikey, atime, notes)
                 if len(entry_info):
                     full_info_string += "{}<br>".format(entry_info)
+                    _stat.append(
+                        (
+                            entry_info
+                            .replace(" ", "\t")
+                            .replace('-', u"\u2011")
+                            .replace("\t\t\t\t", "")
+                        )
+                    )
             else:
                 full_info_string += "No Notes Information"
+                _stat.append("No Notes Information".replace("", "\t"))
+
             # replace spaces with \t and - with non-breaking hyphen
             full_info_string = full_info_string.replace(" ", "\t").replace('-', u"\u2011")
 
             _text[ant_cnt] = full_info_string
-            
-            # do not need the tab alignments in the table
-            _stat.append(full_info_string.replace("\t\t\t\t", ""))
 
             table["rows"].append(_stat)
 
