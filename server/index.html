@@ -37,6 +37,9 @@
        tr.noBorder td {
          border: 0;
        }
+       iframe {
+        overflow:hidden;
+    }
      </style>
 <script src="sidereal.js"></script><script>
 const clocks = document.getElementsByClassName("clock_sidereal");
@@ -164,24 +167,24 @@ setInterval(reloadradiosky, 30000);
     </tr>
     <tr class="noBorder">
         <td><div class="dashboard-inset-titlebar">Autocorrelations -- <a target="_blank" href="http://heranow.reionization.org/spectra.html">(open in new tab)</a></div>
-          <iframe src="http://heranow.reionization.org/spectra.html" width=100% height=400 frameborder="0"></iframe></td>
+          <iframe scrolling="no" src="http://heranow.reionization.org/spectra.html" width=100% height=400 frameborder="0"></iframe></td>
         <td><div class="dashboard-inset-titlebar">Power by Antenna -- <a target="_blank" href="http://heranow.reionization.org/hex_amp.html">(open in new tab)</a></div>
-          <iframe src="http://heranow.reionization.org/hex_amp.html" width=100% height=400 frameborder="0"></iframe></td>
+          <iframe scrolling="no" src="http://heranow.reionization.org/hex_amp.html" width=100% height=400 frameborder="0"></iframe></td>
 
       <td rowspan="3">
         <div class="dashboard-inset-titlebar">
           Commissioning Daily Logs -- <a target="_blank" href="http://heranow.reionization.org/issue_log.html">(open in new tab)</a>
         </div>
-        <iframe height=1280 width=100% src=http://heranow.reionization.org/issue_log.html frameborder="0">
+        <iframe  scrolling="no" height=1280 width=100% src=http://heranow.reionization.org/issue_log.html frameborder="0">
         </iframe>
       </td>
     </tr>
 
     <tr class="noBorder">
         <td><div class="dashboard-inset-titlebar">Power by Node -- <a target="_blank" href="http://heranow.reionization.org/node_amp.html">(open in new tab)</a></div>
-          <iframe src="http://heranow.reionization.org/node_amp.html" width=100% height=400 frameborder="0"></iframe></td>
+          <iframe scrolling="no" src="http://heranow.reionization.org/node_amp.html" width=100% height=400 frameborder="0"></iframe></td>
         <td><div class="dashboard-inset-titlebar">System Summary</div>
-          <iframe src="http://heranow.reionization.org/mc_html_summary.html" width=100% height=400 frameborder="0"></iframe></td>
+          <iframe scrolling="no" src="http://heranow.reionization.org/mc_html_summary.html" width=100% height=400 frameborder="0"></iframe></td>
     </tr>
 
     <tr class="noBorder">
