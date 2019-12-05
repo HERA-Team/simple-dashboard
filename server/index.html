@@ -49,7 +49,7 @@
     }
 
      </style>
-<script src="sidereal.js"></script><script>
+<script>
 const clocks = document.getElementsByClassName("clock_sidereal");
 const dates = document.getElementsByClassName("date");
 
@@ -81,6 +81,8 @@ updateClocks();
 setInterval(updateDates, 1000);
 updateDates();
 </script>
+
+<script src="sidereal.js"></script>
 
 <script>
 !function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(!d.getElementById(id)){js=d.createElement(s);js.id=id;js.src='https://weatherwidget.io/js/widget.min.js';fjs.parentNode.insertBefore(js,fjs);}}(document,'script','weatherwidget-io-js');
