@@ -183,7 +183,7 @@ def main():
 
         table = {}
         table["title"] = "Hookup Notes"
-        table["div_style"] = 'style="max-height: 75%; text-align: center; overflow-x: auto; overflow-y: scroll;"'
+        table["div_style"] = 'style="max-height: 75vh; text-align: center; overflow-x: auto; overflow-y: scroll;"'
 
         table["headers"] = ["Antenna", "Status", "Notes"]
         table["rows"] = []
@@ -258,7 +258,7 @@ def main():
             gen_time_unix_ms=Time.now().unix * 1000,
             scriptname=os.path.basename(__file__),
             hostname=computer_hostname,
-            colsize="6  col-md-offset-3",
+            colsize="12",
         )
 
         with open("hookup_notes_table.html", "w") as h_file:
