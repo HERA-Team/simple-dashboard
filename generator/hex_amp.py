@@ -135,6 +135,7 @@ def main():
             np.frombuffer(redis_db.get("auto:timestamp"), dtype=np.float64).item(),
             format="jd",
         )
+        latest.out_subfmt =  u"date_hm"
 
         now = Time.now()
         autos = {}
@@ -591,7 +592,7 @@ def main():
             plotstyle="height: 85vh",
             gen_date=now.iso,
             data_date_iso=latest.iso,
-            data_date_jd=latest.jd,
+            data_date_jd="{:.3f}".format(latest.jd),
             data_date_unix_ms=latest.unix * 1000,
             js_name="hex_amp",
             gen_time_unix_ms=now.unix * 1000,
@@ -795,7 +796,7 @@ def main():
             gen_date=now.iso,
             gen_time_unix_ms=now.unix * 1000,
             data_date_iso=latest.iso,
-            data_date_jd=latest.jd,
+            data_date_jd="{:.3f}".format(latest.jd),
             data_date_unix_ms=latest.unix * 1000,
             js_name="node_amp",
             scriptname=os.path.basename(__file__),

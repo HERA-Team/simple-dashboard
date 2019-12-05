@@ -59,6 +59,7 @@ def main():
     corr_map = redis_db.hgetall("corr:map")
 
     update_time = Time(float(corr_map[b"update_time"]), format="unix")
+    update_time.out_subfmt =  u"date_hm"
     all_tables = []
 
     # make a table of the antenna to snap mapping
@@ -158,7 +159,7 @@ def main():
         tables=all_tables,
         data_type="Hookup information",
         data_date_iso=update_time.iso,
-        data_date_jd=update_time.jd,
+        data_date_jd="{:.3f}".format(update_time.jd),
         data_date_unix_ms=update_time.unix * 1000,
         gen_date=Time.now().iso,
         gen_time_unix_ms=Time.now().unix * 1000,

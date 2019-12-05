@@ -108,7 +108,7 @@ def main():
     try:
         t_plot_jd = np.frombuffer(r["auto:timestamp"], dtype=np.float64)[0]
         t_plot = Time(t_plot_jd, format="jd")
-        t_plot.out_subfmt = u'date_hm'
+        t_plot.out_subfmt = u"date_hm"
         got_time = True
     except:
         pass
@@ -257,12 +257,12 @@ def main():
             "x": 0.5,
             "yref": "paper",
             "y": 1.5,
-            "font": {"size": 24,},
+            "font": {"size": 24},
         },
         "autosize": True,
         "showlegend": True,
         "legend": {"x": 1, "y": 1},
-        "margin": {"l": 40, "b": 30, "r": 40, "t": 75},
+        "margin": {"l": 40, "b": 30, "r": 40, "t": 46},
         "hovermode": "closest",
     }
     plotname = "plotly-autos"
