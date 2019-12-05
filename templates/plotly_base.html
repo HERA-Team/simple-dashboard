@@ -59,22 +59,13 @@
 {% endblock %}
 
 {% block footer %}
-      {% if data_type is defined %}
-      <p class="text-muted text-center">
-        <b>{{ data_type }} observed <span id="data_age">???</span> ago ({{data_date_iso}} JD: {{ data_date_jd }})</b><br>
-        <small><small>Last updated: <span id="age">???</span> ago at {{ gen_date }}<br>
-        Script name: {{ scriptname }}
-        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-        Executing host: {{ hostname }}
-      </small></small></p>
-      {% else %}
+
       <p class="text-muted text-center"><small><small>
         Last updated: <span id="age">???</span> ago at {{ gen_date }}<br>
         Script name: {{ scriptname }}
         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
         Executing host: {{ hostname }}
       </small></small></p>
-      {% endif %}
     <script src="{{js_name}}.js"></script>
 {% endblock %}
 
