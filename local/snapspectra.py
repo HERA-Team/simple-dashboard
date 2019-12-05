@@ -333,7 +333,7 @@ def main():
                   "autosize": True,
                   "showlegend": True,
                   "hovermode": 'closest',
-                  "annotations": [{"x": 1.05,
+                  "annotations": [{"x": 1.03,
                                    "y": 1.03,
                                    "align": "right",
                                    "valign": "top",
