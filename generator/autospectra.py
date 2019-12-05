@@ -290,7 +290,7 @@ def main():
         plotstyle="height: 85vh",
         gen_date=Time.now().iso,
         data_date_iso=t_plot.iso,
-        data_date_jd=t_plot.jd,
+        data_date_jd="{.3f}".format(t_plot.jd),
         data_date_unix_ms=t_plot.unix * 1000,
         js_name="spectra",
         gen_time_unix_ms=Time.now().unix * 1000,
