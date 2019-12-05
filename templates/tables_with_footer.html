@@ -4,7 +4,7 @@
 {% block prebody %}{% endblock %}
 
     {% for table in tables %}
-    <div class="table-responsive col-{{ colsize or 6 }}" {{ table.div_style or '' }}>
+    <div class="table-responsive col-xs-{{ colsize or 6 }}" {{ table.div_style or '' }}>
       <h2 style="position: -webkit-sticky; position: sticky; top: 0px;background-color: white;"> {{ table.title }} </h2>
     <table class="table table-striped" style="{{ table.style or '' }}">
       <thead>
