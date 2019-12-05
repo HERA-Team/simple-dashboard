@@ -22,9 +22,15 @@
        .footer {
          margin-top: 20px;
        }
-
+       html {
+         height: 100%
+       }
+       body {
+         height: 100%;
+       }
        .wrapper {
          display: flex;
+         height: 100%;
          width: 100%;
          align-items: stretch;
          margin-right: auto; /* 1 */
@@ -32,13 +38,13 @@
        }
 
        #sidebar {
-         min-height: 100vh;
+         height: 100%;
+         min-height: 100%;
          max-width: 350px;
          width: 25%;
          position: fixed;
          top: 0;
          left: 0;
-         height: 100vh;
          z-index: 999;
          background: #cccccc;
          color: #000000;
@@ -51,6 +57,7 @@
        #content {
          position: flex;
          width: 100%;
+         height: 100%;
          float:none;
          text-align:center;
        }
