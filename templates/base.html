@@ -76,12 +76,12 @@
     <div id='content' class="container-fluid d-flex">
       <nav class="navbar navbar-expand-lg navbar-light bg-light" style="margin-bottom: 0;">
          {% block button %}
-         <div class='col--1 col--offset-2'>
+         <div class='col-1 col-offset-2'>
          </div>
          {% endblock %}
          {% if caption is defined %}
          <div class="custom-control">
-         <div class='col--1' style="padding: 0; margin: 0;">
+         <div class='col-1' style="padding: 0; margin: 0;">
            <button type="button" id="sidebarCollapse" class="btn btn-danger btn-lg">
                <span>Toggle Help</span>
            </button>
@@ -89,14 +89,14 @@
          </div>
          {% endif %}
          {% if data_type is defined %}
-         <div class='col--6' style="text-align: left; padding: 0; margin: 0;">
+         <div class='col-6' style="text-align: left; padding: 0; margin: 0;">
            <b>{{ data_type }} from <span id="data_age">???</span>&nbspago ({{ data_date_iso }} JD: {{ data_date_jd }})</b><br>
            <small><small>Last updated:&nbsp<span id="age">???</span>&nbspago at {{ gen_date }}</small></small>
          </div>
          {% endif %}
       </nav>
       {% block body %}{% endblock %}
-      <footer class="footer navbar-default col--12">
+      <footer class="footer navbar-default col-12">
         {% block footer %}{% endblock %}
         <p class="text-muted text-center"><small><small>
           (c) HERA Collaboration 2019
