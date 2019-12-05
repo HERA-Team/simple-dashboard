@@ -31,9 +31,9 @@
       {# if not a list assume a single string as a name #}
 
       {% if plotname is iterable and plotname is not string %}
+      <div class="col-md-12" style="height: 84%">
       {% for namelist in plotname %}
 
-      <div class="col-md-12" style="height: 84%">
         {# if the first item is a list, make a grid of plots #}
         {# otherwise assume item is a string of a single plot #}
         {% if namelist is iterable and namelist is not string %}
@@ -45,8 +45,8 @@
         <div id="{{ namelist }}" class="col-md-{{ colsize or 12 }}" style="{{ plotstyle or 'height: 85%'}}; max-height: 400em"></div>
         {% endif %}
 
-      </div>
       {% endfor %}
+    </div>
       {% else %}
 
       <div class="col-md-12" style="height: 84%;">
