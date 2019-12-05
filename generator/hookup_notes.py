@@ -320,7 +320,7 @@ def main():
 
         rendered_hex_html = html_template.render(
             plotname=plotname,
-            plotstyle="height: 85vh",
+            plotstyle="height: 100%",
             data_type="Online Antennas",
             gen_date=now.iso,
             data_date_iso=latest.iso,

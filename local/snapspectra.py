@@ -379,7 +379,7 @@ def main():
         js_template = env.get_template("plotly_base.js")
 
         rendered_html = html_template.render(plotname=plotname,
-                                             plotstyle="height: 85vh",
+                                             plotstyle="height: 100%",
                                              gen_date=Time.now().iso,
                                              js_name='snapspectra',
                                              gen_time_unix_ms=Time.now().unix * 1000,

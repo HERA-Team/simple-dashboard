@@ -27,34 +27,32 @@
 {% block body %}
 {% block prebody %}{% endblock %}
 
-    <div class="container">
       {# Want to be able to support a list of names as input #}
       {# if not a list assume a single string as a name #}
 
       {% if plotname is iterable and plotname is not string %}
       {% for namelist in plotname %}
 
-      <div class="row">
+      <div class="col-md-12" style="height: 84%">
         {# if the first item is a list, make a grid of plots #}
         {# otherwise assume item is a string of a single plot #}
         {% if namelist is iterable and namelist is not string %}
         {% for name in namelist %}
 
-        <div id="{{ name }}" class="col-md-{{ colsize or 6 }}" style="{{ plotstyle or 'height: 85vh'}}; max-height: 950px"></div>
+        <div id="{{ name }}" class="col-md-{{ colsize or 6 }}" style="{{ plotstyle or 'height: 85%'}}; max-height: 400em"></div>
         {% endfor %}
         {% else %}
-        <div id="{{ namelist }}" class="col-md-{{ colsize or 12 }}" style="{{ plotstyle or 'height: 85vh'}}; max-height: 950px"></div>
+        <div id="{{ namelist }}" class="col-md-{{ colsize or 12 }}" style="{{ plotstyle or 'height: 85%'}}; max-height: 400em"></div>
         {% endif %}
 
       </div>
       {% endfor %}
       {% else %}
 
-      <div class="row">
-        <div id="{{ plotname }}" class="col-md-{{ colsize or 12 }}" style="{{ plotstyle or 'height: 85vh'}}; max-height: 950px"></div>
+      <div class="col-md-12" style="height: 84%;">
+        <div id="{{ plotname }}" class="col-md-{{ colsize or 12 }}" style="{{ plotstyle or 'height: 100%'}}; max-height: 400em"></div>
       </div>
       {% endif %}
-
       {% block postbody %}{% endblock %}
 {% endblock %}
 

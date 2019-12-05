@@ -589,7 +589,7 @@ def main():
         rendered_hex_html = html_template.render(
             plotname=plotname,
             data_type="Auto correlations",
-            plotstyle="height: 85vh",
+            plotstyle="height: 100%",
             gen_date=now.iso,
             data_date_iso=latest.iso,
             data_date_jd="{:.3f}".format(latest.jd),
@@ -792,7 +792,7 @@ def main():
         rendered_node_html = html_template.render(
             plotname=plotname,
             data_type="Auto correlations",
-            plotstyle="height: 85vh",
+            plotstyle="height: 100%",
             gen_date=now.iso,
             gen_time_unix_ms=now.unix * 1000,
             data_date_iso=latest.iso,

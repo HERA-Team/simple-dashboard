@@ -288,7 +288,7 @@ def main():
     rendered_html = html_template.render(
         plotname=plotname,
         data_type="Auto correlations",
-        plotstyle="height: 85vh",
+        plotstyle="height: 100%",
         gen_date=Time.now().iso,
         data_date_iso=t_plot.iso,
         data_date_jd="{:.3f}".format(t_plot.jd),

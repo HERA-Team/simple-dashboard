@@ -155,7 +155,7 @@ def main():
     html_template = env.get_template("plotly_base.html")
     rendered_html = html_template.render(
         plotname=plotnames,
-        plotstyle="height: 220",
+        plotstyle="height: 24.5%",
         colsize=colsize,
         gen_date=now.iso,
         gen_time_unix_ms=now.unix * 1000,
