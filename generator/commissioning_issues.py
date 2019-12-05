@@ -48,7 +48,7 @@ def main(pem_file, app_id_file, repo_owner, repo_name, time_window, all_issues=F
 
     table = {}
     table["title"] = "Commissioning Daily Logs"
-    table["div_style"] = 'style="max-height: 75%; text-align: center; overflow-x: auto; overflow-y: scroll;"'
+    table["div_style"] = 'style="max-height: 82%; text-align: center; overflow-x: auto; overflow-y: scroll;"'
 
     table["headers"] = [
         "Julian Date",
