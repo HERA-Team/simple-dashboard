@@ -183,7 +183,7 @@ def main():
 
         table = {}
         table["title"] = "Hookup Notes"
-        table["div_style"] = 'style="max-height: 75vh;"'
+        table["div_style"] = 'style="max-height: 75%; text-align: center; overflow-x: auto; overflow-y: scroll;"'
 
         table["headers"] = ["Antenna", "Status", "Notes"]
         table["rows"] = []
