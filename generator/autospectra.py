@@ -108,6 +108,7 @@ def main():
     try:
         t_plot_jd = np.frombuffer(r["auto:timestamp"], dtype=np.float64)[0]
         t_plot = Time(t_plot_jd, format="jd")
+        t_plot.out_subfmt = u'date_hm'
         got_time = True
     except:
         pass
