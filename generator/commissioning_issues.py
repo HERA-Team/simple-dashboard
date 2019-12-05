@@ -48,7 +48,7 @@ def main(pem_file, app_id_file, repo_owner, repo_name, time_window, all_issues=F
 
     table = {}
     table["title"] = "Commissioning Daily Logs"
-    table["div_style"] = 'style="max-height: 75vh;"'
+    table["div_style"] = 'style="max-height: 75%; text-align: center; overflow-x: auto; overflow-y: scroll;"'
 
     table["headers"] = [
         "Julian Date",
@@ -245,7 +245,7 @@ def main(pem_file, app_id_file, repo_owner, repo_name, time_window, all_issues=F
         gen_time_unix_ms=Time.now().unix * 1000,
         scriptname=os.path.basename(__file__),
         hostname=computer_hostname,
-        colsize="6  col-md-offset-3",
+        colsize="12",
     )
 
     with open("issue_log.html", "w") as h_file:
