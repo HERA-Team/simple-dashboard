@@ -289,6 +289,7 @@ def main():
         plotname=plotname,
         data_type="Auto correlations",
         plotstyle="height: 100%",
+        div_height="height: 73%",
         gen_date=Time.now().iso,
         data_date_iso=t_plot.iso,
         data_date_jd="{:.3f}".format(t_plot.jd),
