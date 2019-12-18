@@ -531,7 +531,7 @@ def main():
             "yaxis": {
                 "title": "North-South Position [m]",
                 "scaleanchor": "x"
-                      },
+            },
             "title": {
                 "text": "Per Antpol Stats vs Hex position",
                 "font": {"size": 24},
@@ -595,8 +595,8 @@ def main():
             plotstyle="height: 100%",
             gen_date=now.iso,
             data_date_iso=latest.iso,
-            data_date_jd="{:.3f}".format(latest.jd),
-            data_date_unix_ms=latest.unix * 1000,
+            data_date_jd="{:.3f}".format(latest.to_value('jd', subfmt='float')),
+            data_date_unix_ms=latest.to_value('unix') * 1000,
             js_name="hex_amp",
             gen_time_unix_ms=now.unix * 1000,
             scriptname=os.path.basename(__file__),
@@ -799,8 +799,8 @@ def main():
             gen_date=now.iso,
             gen_time_unix_ms=now.unix * 1000,
             data_date_iso=latest.iso,
-            data_date_jd="{:.3f}".format(latest.jd),
-            data_date_unix_ms=latest.unix * 1000,
+            data_date_jd="{:.3f}".format(latest.to_value('jd', subfmt='float')),
+            data_date_unix_ms=latest.to_value('unix') * 1000,
             js_name="node_amp",
             scriptname=os.path.basename(__file__),
             hostname=computer_hostname,
