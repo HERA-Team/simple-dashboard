@@ -20,7 +20,7 @@
       {% if row.text is iterable and row.text is not string %}
       <tr>
         {% for col in row.text %}
-        <td style="vertical-align: middle;">{{ col }}
+        <td style="vertical-align: middle; {{ row.style or '' }}">{{ col }}
         {% endfor %}
         </td>
       </tr>

@@ -71,7 +71,7 @@ def main():
         now = Time.now()
 
         hsession = cm_sysutils.Handling(session)
-        stations = hsession.get_all_fully_connected_at_date(at_date="now")
+        stations = hsession.get_connected_stations(at_date="now")
 
         ants = []
         for station in stations:

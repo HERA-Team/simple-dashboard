@@ -470,10 +470,10 @@ def main():
             js_file.write("\n\n")
 
         data = do_disk_space(session, cutoff)
-        layout["yaxis"]["title"] = "Data Volume [Gb]"
+        layout["yaxis"]["title"] = "Data Volume [GiB]"
         layout["yaxis"]["zeroline"] = True
         layout["yaxis2"] = {
-            "title": "Free Space [Gb]",
+            "title": "Free Space [GiB]",
             "overlaying": "y",
             "side": "right",
         }
