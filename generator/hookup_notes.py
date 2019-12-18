@@ -290,7 +290,10 @@ def main():
 
         layout_hex = {
             "xaxis": {"title": "East-West Position [m]"},
-            "yaxis": {"title": "North-South Position [m]"},
+            "yaxis": {
+                "title": "North-South Position [m]",
+                "scaleanchor": "x"
+            },
             "title": {
                 "text": "Per Ant Notes vs Hex position",
                 "font": {"size": 24},
