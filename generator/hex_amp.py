@@ -589,14 +589,21 @@ def main():
         html_template = env.get_template("plotly_base.html")
         js_template = env.get_template("plotly_base.js")
 
+        if sys.version_info.minor >= 8 and sys.version_info.major > 2:
+            time_jd = latest.to_value('jd', subfmt='float')
+            time_unix = latest.to_value('unix')
+        else:
+            time_jd = latest.jd
+            time_unix = latest.unix
+
         rendered_hex_html = html_template.render(
             plotname=plotname,
             data_type="Auto correlations",
             plotstyle="height: 100%",
             gen_date=now.iso,
             data_date_iso=latest.iso,
-            data_date_jd="{:.3f}".format(latest.to_value('jd', subfmt='float')),
-            data_date_unix_ms=latest.to_value('unix') * 1000,
+            data_date_jd="{:.3f}".format(time_jd),
+            data_date_unix_ms=time_unix * 1000,
             js_name="hex_amp",
             gen_time_unix_ms=now.unix * 1000,
             scriptname=os.path.basename(__file__),
@@ -792,6 +799,13 @@ def main():
         html_template = env.get_template("plotly_base.html")
         js_template = env.get_template("plotly_base.js")
 
+        if sys.version_info.minor >= 8 and sys.version_info.major > 2:
+            time_jd = latest.to_value('jd', subfmt='float')
+            time_unix = latest.to_value('unix')
+        else:
+            time_jd = latest.jd
+            time_unix = latest.unix
+
         rendered_node_html = html_template.render(
             plotname=plotname,
             data_type="Auto correlations",
@@ -799,8 +813,8 @@ def main():
             gen_date=now.iso,
             gen_time_unix_ms=now.unix * 1000,
             data_date_iso=latest.iso,
-            data_date_jd="{:.3f}".format(latest.to_value('jd', subfmt='float')),
-            data_date_unix_ms=latest.to_value('unix') * 1000,
+            data_date_jd="{:.3f}".format(time_jd),
+            data_date_unix_ms=time_unix * 1000,
             js_name="node_amp",
             scriptname=os.path.basename(__file__),
             hostname=computer_hostname,

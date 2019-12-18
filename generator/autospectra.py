@@ -285,6 +285,13 @@ def main():
     html_template = env.get_template("refresh_with_table.html")
     js_template = env.get_template("plotly_base.js")
 
+    if sys.version_info.minor >= 8 and sys.version_info.major > 2:
+        time_jd = t_plot.to_value('jd', subfmt='float')
+        time_unix = t_plot.to_value('unix')
+    else:
+        time_jd = t_plot.jd
+        time_unix = t_plot.unix
+
     rendered_html = html_template.render(
         plotname=plotname,
         data_type="Auto correlations",
@@ -292,8 +299,8 @@ def main():
         div_height="height: 73%",
         gen_date=Time.now().iso,
         data_date_iso=t_plot.iso,
-        data_date_jd="{:.3f}".format(t_plot.to_value('jd', subfmt='float')),
-        data_date_unix_ms=t_plot.to_value('unix') * 1000,
+        data_date_jd="{:.3f}".format(time_jd),
+        data_date_unix_ms=time_unix * 1000,
         js_name="spectra",
         gen_time_unix_ms=Time.now().unix * 1000,
         scriptname=os.path.basename(__file__),
