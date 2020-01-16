@@ -151,7 +151,8 @@ def main():
                 ant, pol = int(match.group("ant")), match.group("pol")
                 d = redis_db.get(key)
                 if d is not None:
-                    auto = np.frombuffer(d, dtype=np.float32)
+                    # need to copy because frombuffer creates a read-only array
+                    auto = np.frombuffer(d, dtype=np.float32).copy()
 
                     eq_coeff = redis_db.hget(
                         bytes("eq:ant:{ant}:{pol}".format(ant=ant, pol=pol).encode()),
