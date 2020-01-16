@@ -105,6 +105,7 @@ def main():
             np.frombuffer(redis_db.get("auto:timestamp"), dtype=np.float64).item(),
             format="jd",
         )
+        latest.out_subfmt = u"date_hm"
 
         now = Time.now()
         online_ants = []
@@ -182,7 +183,7 @@ def main():
 
         table = {}
         table["title"] = "Hookup Notes"
-        table["div_style"] = 'style="max-height: 75vh;"'
+        table["div_style"] = 'style="max-height: 75vh; text-align: center; overflow-x: auto; overflow-y: scroll;"'
 
         table["headers"] = ["Antenna", "Status", "Notes"]
         table["rows"] = []
@@ -257,7 +258,7 @@ def main():
             gen_time_unix_ms=Time.now().unix * 1000,
             scriptname=os.path.basename(__file__),
             hostname=computer_hostname,
-            colsize="6  col-md-offset-3",
+            colsize="12",
         )
 
         with open("hookup_notes_table.html", "w") as h_file:
@@ -289,7 +290,10 @@ def main():
 
         layout_hex = {
             "xaxis": {"title": "East-West Position [m]"},
-            "yaxis": {"title": "North-South Position [m]"},
+            "yaxis": {
+                "title": "North-South Position [m]",
+                "scaleanchor": "x"
+            },
             "title": {
                 "text": "Per Ant Notes vs Hex position",
                 "font": {"size": 24},
@@ -317,14 +321,21 @@ def main():
         html_template = env.get_template("plotly_base.html")
         js_template = env.get_template("plotly_base.js")
 
+        if sys.version_info.minor >= 8 and sys.version_info.major > 2:
+            time_jd = latest.to_value('jd', subfmt='float')
+            time_unix = latest.to_value('unix')
+        else:
+            time_jd = latest.jd
+            time_unix = latest.unix
+
         rendered_hex_html = html_template.render(
             plotname=plotname,
-            plotstyle="height: 85vh",
+            plotstyle="height: 100%",
             data_type="Online Antennas",
             gen_date=now.iso,
             data_date_iso=latest.iso,
-            data_date_jd=latest.jd,
-            data_date_unix_ms=latest.unix * 1000,
+            data_date_jd="{:.3f}".format(time_jd),
+            data_date_unix_ms=time_unix * 1000,
             js_name="hookup_notes",
             gen_time_unix_ms=now.unix * 1000,
             scriptname=os.path.basename(__file__),

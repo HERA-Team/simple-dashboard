@@ -108,6 +108,7 @@ def main():
     try:
         t_plot_jd = np.frombuffer(r["auto:timestamp"], dtype=np.float64)[0]
         t_plot = Time(t_plot_jd, format="jd")
+        t_plot.out_subfmt = u"date_hm"
         got_time = True
     except:
         pass
@@ -256,12 +257,12 @@ def main():
             "x": 0.5,
             "yref": "paper",
             "y": 1.5,
-            "font": {"size": 24,},
+            "font": {"size": 24},
         },
         "autosize": True,
         "showlegend": True,
         "legend": {"x": 1, "y": 1},
-        "margin": {"l": 40, "b": 30, "r": 40, "t": 75},
+        "margin": {"l": 40, "b": 30, "r": 40, "t": 46},
         "hovermode": "closest",
     }
     plotname = "plotly-autos"
@@ -284,14 +285,22 @@ def main():
     html_template = env.get_template("refresh_with_table.html")
     js_template = env.get_template("plotly_base.js")
 
+    if sys.version_info.minor >= 8 and sys.version_info.major > 2:
+        time_jd = t_plot.to_value('jd', subfmt='float')
+        time_unix = t_plot.to_value('unix')
+    else:
+        time_jd = t_plot.jd
+        time_unix = t_plot.unix
+
     rendered_html = html_template.render(
         plotname=plotname,
         data_type="Auto correlations",
-        plotstyle="height: 85vh",
+        plotstyle="height: 100%",
+        div_height="height: 73%",
         gen_date=Time.now().iso,
         data_date_iso=t_plot.iso,
-        data_date_jd=t_plot.jd,
-        data_date_unix_ms=t_plot.unix * 1000,
+        data_date_jd="{:.3f}".format(time_jd),
+        data_date_unix_ms=time_unix * 1000,
         js_name="spectra",
         gen_time_unix_ms=Time.now().unix * 1000,
         scriptname=os.path.basename(__file__),

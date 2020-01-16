@@ -305,7 +305,7 @@ def main():
 
         rendered_html = html_template.render(
             plotname=plotname,
-            plotstyle="height: 85vh",
+            plotstyle="height: 100%",
             gen_date=now.iso,
             js_name="adchist",
             caption=caption,

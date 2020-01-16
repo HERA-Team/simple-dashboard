@@ -59,6 +59,7 @@ def main():
     corr_map = redis_db.hgetall("corr:map")
 
     update_time = Time(float(corr_map[b"update_time"]), format="unix")
+    update_time.out_subfmt =  u"date_hm"
     all_tables = []
 
     # make a table of the antenna to snap mapping
@@ -154,12 +155,19 @@ def main():
 
     html_template = env.get_template("tables_with_footer.html")
 
+    if sys.version_info.minor >= 8 and sys.version_info.major > 2:
+        time_jd = update_time.to_value('jd', subfmt='float')
+        time_unix = update_time.to_value('unix')
+    else:
+        time_jd = update_time.jd
+        time_unix = update_time.unix
+
     rendered_html = html_template.render(
         tables=all_tables,
         data_type="Hookup information",
         data_date_iso=update_time.iso,
-        data_date_jd=update_time.jd,
-        data_date_unix_ms=update_time.unix * 1000,
+        data_date_jd="{:.3f}".format(time_jd),
+        data_date_unix_ms=time_unix * 1000,
         gen_date=Time.now().iso,
         gen_time_unix_ms=Time.now().unix * 1000,
         scriptname=os.path.basename(__file__),

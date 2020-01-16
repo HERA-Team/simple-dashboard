@@ -27,54 +27,45 @@
 {% block body %}
 {% block prebody %}{% endblock %}
 
-    <div class="container">
       {# Want to be able to support a list of names as input #}
       {# if not a list assume a single string as a name #}
 
       {% if plotname is iterable and plotname is not string %}
+      <div class="col-sm-12" style="{{ div_height or 'height: 84%;'}}">
       {% for namelist in plotname %}
 
-      <div class="row">
         {# if the first item is a list, make a grid of plots #}
         {# otherwise assume item is a string of a single plot #}
         {% if namelist is iterable and namelist is not string %}
         {% for name in namelist %}
 
-        <div id="{{ name }}" class="col-md-{{ colsize or 6 }}" style="{{ plotstyle or 'height: 85vh'}}; max-height: 950px"></div>
+        <div id="{{ name }}" class="col-sm-{{ colsize or 6 }}" style="{{ plotstyle or 'height: 85%'}}; max-height: 400em"></div>
         {% endfor %}
         {% else %}
-        <div id="{{ namelist }}" class="col-md-{{ colsize or 12 }}" style="{{ plotstyle or 'height: 85vh'}}; max-height: 950px"></div>
+        <div id="{{ namelist }}" class="col-sm-{{ colsize or 12 }}" style="{{ plotstyle or 'height: 85%'}}; max-height: 400em"></div>
         {% endif %}
 
-      </div>
       {% endfor %}
+    </div>
       {% else %}
 
-      <div class="row">
-        <div id="{{ plotname }}" class="col-md-{{ colsize or 12 }}" style="{{ plotstyle or 'height: 85vh'}}; max-height: 950px"></div>
+      <div class="col-sm-12" style="{{ div_height or 'height: 84%;'}}">
+        <div id="{{ plotname }}" class="col-sm-{{ colsize or 12 }}" style="{{ plotstyle or 'height: 100%'}}; max-height: 400em"></div>
       </div>
       {% endif %}
-
       {% block postbody %}{% endblock %}
 {% endblock %}
 
 {% block footer %}
-      {% if data_type is defined %}
-      <p class="text-muted text-center">
-        <b>{{ data_type }} observed <span id="data_age">???</span> ago ({{data_date_iso}} JD: {{ data_date_jd }})</b><br>
-        <small><small>Last updated: <span id="age">???</span> ago at {{ gen_date }}<br>
-        Script name: {{ scriptname }}
-        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
-        Executing host: {{ hostname }}
-      </small></small></p>
-      {% else %}
+
       <p class="text-muted text-center"><small><small>
-        Last updated: <span id="age">???</span> ago at {{ gen_date }}<br>
+        {% if data_type is not defined %}
+        Panel last update: <span id="age">???</span> ago at {{ gen_date }}<br>
+        {% endif %}
         Script name: {{ scriptname }}
         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
         Executing host: {{ hostname }}
       </small></small></p>
-      {% endif %}
     <script src="{{js_name}}.js"></script>
 {% endblock %}
 

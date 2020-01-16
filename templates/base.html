@@ -22,9 +22,15 @@
        .footer {
          margin-top: 20px;
        }
-
+       html {
+         height: 100%
+       }
+       body {
+         height: 100%;
+       }
        .wrapper {
          display: flex;
+         height: 100%;
          width: 100%;
          align-items: stretch;
          margin-right: auto; /* 1 */
@@ -32,13 +38,13 @@
        }
 
        #sidebar {
-         min-height: 100vh;
+         height: 100%;
+         min-height: 100%;
          max-width: 350px;
          width: 25%;
          position: fixed;
          top: 0;
          left: 0;
-         height: 100vh;
          z-index: 999;
          background: #cccccc;
          color: #000000;
@@ -51,10 +57,14 @@
        #content {
          position: flex;
          width: 100%;
+         height: 100%;
          float:none;
          text-align:center;
        }
-
+     plot-container plotly {
+       width: 100%;
+       height: 100%;
+     }
      </style>
     {% block head %}{% endblock %}
   </head>
@@ -64,18 +74,29 @@
         {% block caption %}{% endblock %}
     </nav>
     <div id='content' class="container-fluid d-flex">
-      <nav class="navbar navbar-expand-lg navbar-light bg-light">
-       <div class="custom-control">
-        {% if caption is defined %}
-        <button type="button" id="sidebarCollapse" class="btn btn-danger btn-lg">
-            <span>Toggle Help</span>
-        </button>
-        {% endif %}
-        {% block button %}{% endblock %}
-       </div>
+      <nav class="navbar navbar-expand-sm navbar-light bg-light" style="margin-bottom: 0;">
+         {% block button %}
+         <div class='col-sm-2 col-sm-offset-2'>
+         </div>
+         {% endblock %}
+         {% if caption is defined %}
+         <div class="custom-control">
+         <div class='col-sm-2' style="padding: 0; margin: 0;">
+           <button type="button" id="sidebarCollapse" class="btn btn-danger btn-lg">
+               <span>Toggle Help</span>
+           </button>
+         </div>
+         </div>
+         {% endif %}
+         {% if data_type is defined %}
+         <div class='col-sm-6' style="text-align: left; padding: 0; margin: 0;">
+           <b>{{ data_type }} from <span id="data_age">???</span>&nbspago ({{ data_date_iso }} JD: {{ data_date_jd }})</b><br>
+           <small><small>Panel last update:&nbsp<span id="age">???</span>&nbspago at {{ gen_date }}</small></small>
+         </div>
+         {% endif %}
       </nav>
       {% block body %}{% endblock %}
-      <footer class="footer navbar-default col-md-12">
+      <footer class="footer navbar-default col-sm-12">
         {% block footer %}{% endblock %}
         <p class="text-muted text-center"><small><small>
           (c) HERA Collaboration 2019

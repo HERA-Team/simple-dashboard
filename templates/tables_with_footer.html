@@ -4,7 +4,7 @@
 {% block prebody %}{% endblock %}
 
     {% for table in tables %}
-    <div class="table-responsive col-md-{{ colsize or 6 }}" {{ table.div_style or '' }}>
+    <div class="table-responsive col-sm-{{ colsize or 6 }}" {{ table.div_style or '' }}>
       <h2 style="position: -webkit-sticky; position: sticky; top: 0px;background-color: white;"> {{ table.title }} </h2>
     <table class="table table-striped" style="{{ table.style or '' }}">
       <thead>
@@ -44,15 +44,13 @@
 {% block footer %}
       {% if data_type is defined %}
       <p class="text-muted text-center">
-        <b>{{ data_type }} observed <span id="data_age">???</span> ago ({{data_date_iso}} JD: {{ data_date_jd }})</b><br>
-        <small><small>Last updated: <span id="age">???</span> ago at {{ gen_date }}<br>
-        Script name: {{ scriptname }}
+        <small><small>Script name: {{ scriptname }}
         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
         Executing host: {{ hostname }}
       </small></small></p>
       {% else %}
       <p class="text-muted text-center"><small><small>
-        Last updated: <span id="age">???</span> ago at {{ gen_date }}<br>
+        Panel last update: <span id="age">???</span> ago at {{ gen_date }}<br>
         Script name: {{ scriptname }}
         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
         Executing host: {{ hostname }}
