@@ -156,7 +156,7 @@ def main(pem_file, app_id_file, repo_owner, repo_name, time_window, all_issues=F
         request = requests.get(rfi_link.format(request_date))
         if request.status_code == 200:
             url = rfi_view.format(request_date)
-            rfi_notebook = '<a target="_blank" href={url}>View</a'.format(url=url)
+            rfi_notebook = '<a target="_blank" href={url}>View</a>'.format(url=url)
         else:
             rfi_notebook = "N/A"
 
