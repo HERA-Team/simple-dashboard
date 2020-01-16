@@ -135,11 +135,9 @@ def main():
             np.frombuffer(redis_db.get("auto:timestamp"), dtype=np.float64).item(),
             format="jd",
         )
-        latest.out_subfmt =  u"date_hm"
+        latest.out_subfmt = u"date_hm"
 
         now = Time.now()
-        autos = {}
-        autos_raw = {}
         amps = {}
         keys = [
             k.decode()
@@ -151,18 +149,36 @@ def main():
             match = re.search(r"auto:(?P<ant>\d+)(?P<pol>e|n)", key)
             if match is not None:
                 ant, pol = int(match.group("ant")), match.group("pol")
+                d = redis_db.get(key)
+                if d is not None:
+                    auto = np.frombuffer(d, dtype=np.float32)
 
-                autos_raw[(ant, pol)] = np.frombuffer(
-                    redis_db.get(key), dtype=np.float32
-                )
-                autos[(ant, pol)] = 10.0 * np.log10(autos_raw[(ant, pol)])
+                    eq_coeff = redis_db.hget(
+                        bytes("eq:ant:{ant}:{pol}".format(ant=ant, pol=pol).encode()),
+                        "values",
+                    )
+                    if eq_coeff is not None:
+                        eq_coeffs = np.fromstring(
+                            eq_coeff.decode("utf-8").strip("[]"), sep=","
+                        )
+                        if eq_coeffs.size == 0:
+                            eq_coeffs = np.ones_like(auto)
+                    else:
+                        eq_coeffs = np.ones_like(auto)
 
-                tmp_amp = np.median(autos_raw[(ant, pol)])
-                amps[(ant, pol)] = 10.0 * np.log10(tmp_amp)
+                    # divide out the equalization coefficients
+                    # eq_coeffs are stored as a length 1024 array but only a
+                    # single number is used. Taking the median to not deal with
+                    # a size mismatch
+                    eq_coeffs = np.median(eq_coeffs)
+                    auto /= eq_coeffs ** 2
+                    auto[auto < 10 ** -10.0] = 10 ** -10.0
+                    auto = np.median(auto)
+                    amps[(ant, pol)] = 10.0 * np.log10(auto)
 
         hsession = cm_sysutils.Handling(session)
-        ants = np.unique([ant for (ant, pol) in autos.keys()])
-        pols = np.unique([pol for (ant, pol) in autos.keys()])
+        ants = np.unique([ant for (ant, pol) in amps.keys()])
+        pols = np.unique([pol for (ant, pol) in amps.keys()])
 
         antpos = np.genfromtxt(
             os.path.join(mc.data_path, "HERA_350.txt"),
