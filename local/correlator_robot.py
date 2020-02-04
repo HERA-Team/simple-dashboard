@@ -11,7 +11,7 @@ with open("correlator.token", "r") as f:
 
 slack = slacker.Slacker(token)
 slack_chan = "#correlator_robot"
-username = "Correlator Log Bot"
+username = "CorrelatorRobot"
 
 parser = argparse.ArgumentParser(
     description="Subscribe to the redis-based log stream",
@@ -70,7 +70,11 @@ while True:
             print("Not ok")
         else:
             for m in s_mess.body["messages"]:
-                u = m.get("username", m.get("user"))
+                # try to get the bot profle, otherwise return the username
+                # if the username is not a field, returns the "user" field
+                u = m.get("bot_profile", m.get("username", m.get("user")))
+                if isinstance(u, dict):
+                    u = u.get("name")
                 if u != username:
                     command_id = m["ts"]
                     command_text = m["text"]
