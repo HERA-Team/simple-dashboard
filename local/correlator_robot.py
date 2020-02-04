@@ -5,7 +5,6 @@ import time
 import json
 import slacker
 import argparse
-import sys
 
 with open("correlator.token", "r") as f:
     token = f.read()
