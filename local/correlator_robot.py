@@ -41,7 +41,7 @@ try:
     if channel_id is not None:
         print(f"Channel ID: {channel_id}")
 except:
-   channel_id = None
+    channel_id = None
 
 last_command_id = None
 post_cnt = 0
