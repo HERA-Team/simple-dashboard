@@ -7,15 +7,17 @@ import slacker
 import argparse
 import sys
 
-with open("correlator.token", 'r') as f:
+with open("correlator.token", "r") as f:
     token = f.read()
 
 slack = slacker.Slacker(token)
-slack_chan = '#correlator_robot'
-username = 'Correlator Log Bot'
+slack_chan = "#correlator_robot"
+username = "Correlator Log Bot"
 
-parser = argparse.ArgumentParser(description="Subscribe to the redis-based log stream",
-                                 formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+parser = argparse.ArgumentParser(
+    description="Subscribe to the redis-based log stream",
+    formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+)
 parser.add_argument(
     "-r",
     dest="redishost",
@@ -45,7 +47,7 @@ except:
 
 last_command_id = None
 post_cnt = 0
-while(True):
+while True:
     try:
         # Try to get 50 messages at a time
         # this loop blocks for 1s if there are no messages.
@@ -77,21 +79,31 @@ while(True):
                         last_command_id = command_id
                         if command_text == "flush":
                             print("Flushing")
-                            slack.chat.post_message(slack_chan, username=username, text="Flushing")
+                            slack.chat.post_message(
+                                slack_chan, username=username, text="Flushing"
+                            )
                             ps.unsubscribe()
                             ps.subscribe("log-channel")
                         elif command_text == "stop":
                             print("Stopping")
-                            slack.chat.post_message(slack_chan, username=username, text="Stopping")
+                            slack.chat.post_message(
+                                slack_chan, username=username, text="Stopping"
+                            )
                             ps.unsubscribe()
                         elif command_text == "start":
                             print("Starting")
-                            slack.chat.post_message(slack_chan, username=username, text="Starting")
+                            slack.chat.post_message(
+                                slack_chan, username=username, text="Starting"
+                            )
                             ps.unsubscribe()
                             ps.subscribe("log-channel")
                         else:
                             print("Unknown command")
-                            slack.chat.post_message(slack_chan, username=username, text='Allowed commands: flush, stop, start')
+                            slack.chat.post_message(
+                                slack_chan,
+                                username=username,
+                                text="Allowed commands: flush, stop, start",
+                            )
                     break  # only process 1 user message
 
     except KeyboardInterrupt:
