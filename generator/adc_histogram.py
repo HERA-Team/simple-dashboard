@@ -332,7 +332,7 @@ def main():
             plotname=plotname,
             updatemenus=updatemenus
         )
-        with open("{}.json".format(basename), 'w') as json_file:
+        with open("{}.json".format(basename), "w") as json_file:
             json.dump(hists, json_file)
         with open("{}.html".format(basename), "w") as h_file:
             h_file.write(rendered_html)
