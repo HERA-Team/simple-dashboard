@@ -9,6 +9,7 @@ from __future__ import absolute_import, division, print_function
 
 import os
 import sys
+import json
 import numpy as np
 from astropy.time import Time, TimeDelta
 from hera_mc import mc
@@ -16,6 +17,18 @@ from hera_mc.qm import AntMetrics, ArrayMetrics
 import sqlalchemy
 from jinja2 import Environment, FileSystemLoader
 
+
+def is_list(value):
+    return isinstance(value, list)
+
+def listify(input):
+    if isinstance(input, (list, tuple, np.ndarray)):
+        return input
+    else:
+        return [input]
+
+def index_in(indexable, i):
+    return indexable[i]
 
 def do_ant_metric(
     session, metric, yexpression, ymode="lines", yname="NONAME", cutoff=None
@@ -94,6 +107,9 @@ def main():
     template_dir = os.path.join(split_dir[0], "templates")
 
     env = Environment(loader=FileSystemLoader(template_dir), trim_blocks=True)
+    env.filters["islist"] = is_list
+    env.filters["index"] = index_in
+    env.filters["listify"] = listify
     if sys.version_info[0] < 3:
         # py2
         computer_hostname = os.uname()[1]
@@ -151,7 +167,7 @@ def main():
          </div>
         """
     )
-
+    basename = "qm"
     html_template = env.get_template("plotly_base.html")
     rendered_html = html_template.render(
         plotname=plotnames,
@@ -159,7 +175,7 @@ def main():
         colsize=colsize,
         gen_date=now.iso,
         gen_time_unix_ms=now.unix * 1000,
-        js_name="qm",
+        js_name=basename,
         hostname=computer_hostname,
         scriptname=os.path.basename(__file__),
         caption=caption,
@@ -168,6 +184,10 @@ def main():
         h_file.write(rendered_html)
 
     js_template = env.get_template("plotly_base.js")
+
+    json_name_list = []
+    plotname_list = []
+    layout_list = []
 
     with db.sessionmaker() as session:
 
@@ -191,13 +211,18 @@ def main():
             yname="Data",
             cutoff=cutoff,
         )
+        _layout = layout.copy()
+        _layout["yaxis"]["title"] = "Count"
+        _layout["title"]["text"] = "Ant Metrics # of Xants"
+        layout_list.append(_layout)
 
-        layout["yaxis"]["title"] = "Count"
-        layout["title"]["text"] = "Ant Metrics # of Xants"
-        rendered_js = js_template.render(plotname="am-xants", data=data, layout=layout)
-        with open("qm.js", "w") as js_file:
-            js_file.write(rendered_js)
-            js_file.write("\n\n")
+        plotname_list.append("am-xants")
+        json_name = basename + "_am_xants"
+
+        with open(json_name, "w") as json_file:
+            json.dump(data, json_file)
+
+        json_name_list.append(json_name)
 
         # "Mean of the absolute value of all visibilities associated with an
         # antenna".
@@ -208,14 +233,18 @@ def main():
             yname="Data",
             cutoff=cutoff,
         )
-        layout["yaxis"]["title"] = "Average Amplitude"
-        layout["title"]["text"] = "Ant Metrics MeanVij"
-        rendered_js = js_template.render(
-            plotname="am-meanVij", data=data, layout=layout
-        )
-        with open("qm.js", "a") as js_file:
-            js_file.write(rendered_js)
-            js_file.write("\n\n")
+        _layout = layout.copy()
+        _layout["yaxis"]["title"] = "Average Amplitude"
+        _layout["title"]["text"] = "Ant Metrics MeanVij"
+        layout_list.append(_layout)
+
+        plotname_list.append("am-meanVij")
+        json_name = basename + "_am_meanVij"
+
+        with open(json_name, "w") as json_file:
+            json.dump(data, json_file)
+
+        json_name_list.append(json_name)
 
         # "Extent to which baselines involving an antenna do not correlate
         # with others they are nominmally redundant with".
@@ -226,14 +255,18 @@ def main():
             yname="Data",
             cutoff=cutoff,
         )
-        layout["yaxis"]["title"] = "Average Amplitude"
-        layout["title"]["text"] = "Ant Metrics redCorr"
-        rendered_js = js_template.render(
-            plotname="am-redCorr", data=data, layout=layout
-        )
-        with open("qm.js", "a") as js_file:
-            js_file.write(rendered_js)
-            js_file.write("\n\n")
+        _layout = layout.copy()
+        _layout["yaxis"]["title"] = "Average Amplitude"
+        _layout["title"]["text"] = "Ant Metrics redCorr"
+        layout_list.append(_layout)
+
+        plotname_list.append("am-redcorr")
+        json_name = basename + "_am_redcorr"
+
+        with open(json_name, "w") as json_file:
+            json.dump(data, json_file)
+
+        json_name_list.append(json_name)
 
         # "Ratio of mean cross-pol visibilities to mean same-pol visibilities:
         # (Vxy+Vyx)/(Vxx+Vyy)".
@@ -244,36 +277,49 @@ def main():
             yname="Data",
             cutoff=cutoff,
         )
-        layout["yaxis"]["title"] = "Average Amplitude"
-        layout["title"]["text"] = "Ant Metrics MeanVij CrossPol"
-        rendered_js = js_template.render(
-            plotname="am-meanVijXpol", data=data, layout=layout
-        )
-        with open("qm.js", "a") as js_file:
-            js_file.write(rendered_js)
-            js_file.write("\n\n")
+        _layout = layout.copy()
+
+        _layout["yaxis"]["title"] = "Average Amplitude"
+        _layout["title"]["text"] = "Ant Metrics MeanVij CrossPol"
+        layout_list.append(_layout)
+
+        plotname_list.append("am-meanVijXpol")
+        json_name = basename + "_am_meanVijXpol"
+
+        with open(json_name, "w") as json_file:
+            json.dump(data, json_file)
+
+        json_name_list.append(json_name)
 
         # "Aggregate standard deviation of delay solutions".
         data = do_xy_array_metric(session, "firstcal_metrics_agg_std", cutoff=cutoff)
-        layout["yaxis"]["title"] = "std"
-        layout["title"]["text"] = "FirstCal Metrics Agg Std"
-        rendered_js = js_template.render(
-            plotname="fc-agg_std", data=data, layout=layout
-        )
-        with open("qm.js", "a") as js_file:
-            js_file.write(rendered_js)
-            js_file.write("\n\n")
+        _layout = layout.copy()
+        _layout["yaxis"]["title"] = "std"
+        _layout["title"]["text"] = "FirstCal Metrics Agg Std"
+        layout_list.append(_layout)
+
+        plotname_list.append("fc-agg_std")
+        json_name = basename + "_fc_agg_std"
+
+        with open(json_name, "w") as json_file:
+            json.dump(data, json_file)
+
+        json_name_list.append(json_name)
 
         # "Maximum antenna standard deviation of delay solutions".
         data = do_xy_array_metric(session, "firstcal_metrics_max_std", cutoff=cutoff)
-        layout["yaxis"]["title"] = "FC max_std"
-        layout["title"]["text"] = "FirstCal Metrics Max Std"
-        rendered_js = js_template.render(
-            plotname="fc-max_std", data=data, layout=layout
-        )
-        with open("qm.js", "a") as js_file:
-            js_file.write(rendered_js)
-            js_file.write("\n\n")
+        _layout = layout.copy()
+        _layout["yaxis"]["title"] = "FC max_std"
+        _layout["title"]["text"] = "FirstCal Metrics Max Std"
+        layout_list.append(_layout)
+
+        plotname_list.append("fc-max_std")
+        json_name = basename + "_fc-max_std"
+
+        with open(json_name, "w") as json_file:
+            json.dump(data, json_file)
+
+        json_name_list.append(json_name)
 
         # Maximum of "gain phase standard deviation per-antenna across file".
         data = do_xy_array_metric(
@@ -282,27 +328,41 @@ def main():
             doubled_suffix=True,
             cutoff=cutoff,
         )
-        layout["yaxis"]["title"] = "OC ant_phs_std_max"
-        layout["title"]["text"] = "OmniCal Metrics Ant Phase Std max"
-        rendered_js = js_template.render(
-            plotname="oc-ant_phs_std_max", data=data, layout=layout
-        )
-        with open("qm.js", "a") as js_file:
-            js_file.write(rendered_js)
-            js_file.write("\n\n")
+        _layout = layout.copy()
+        _layout["yaxis"]["title"] = "OC ant_phs_std_max"
+        _layout["title"]["text"] = "OmniCal Metrics Ant Phase Std max"
+        layout_list.append(_layout)
+
+        plotname_list.append("oc-ant_phs_std_max")
+        json_name = basename + "_oc_ant_phs_std_max"
+
+        with open(json_name, "w") as json_file:
+            json.dump(data, json_file)
+
+        json_name_list.append(json_name)
 
         # "Median of chi-square across entire file".
         data = do_xy_array_metric(
             session, "omnical_metrics_chisq_tot_avg", doubled_suffix=True, cutoff=cutoff
         )
-        layout["yaxis"]["title"] = "OC chisq_tot_avg"
-        layout["title"]["text"] = "OmniCal Metrics Chi-square total avg"
+        _layout = layout.copy()
+        _layout["yaxis"]["title"] = "OC chisq_tot_avg"
+        _layout["title"]["text"] = "OmniCal Metrics Chi-square total avg"
+        layout_list.append(_layout)
+
+        plotname_list.append("oc-chisq_tot_avg")
+        json_name = basename + "_oc_chisq_tot_avg"
+
+        with open(json_name, "w") as json_file:
+            json.dump(data, json_file)
+
+        json_name_list.append(json_name)
+
         rendered_js = js_template.render(
-            plotname="oc-chisq_tot_avg", data=data, layout=layout
+            json_name=json_name_list, plotname=plotname_list, layout=layout_list
         )
         with open("qm.js", "a") as js_file:
             js_file.write(rendered_js)
-            js_file.write("\n\n")
 
 
 if __name__ == "__main__":

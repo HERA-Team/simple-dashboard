@@ -8,14 +8,27 @@
 from __future__ import absolute_import, division, print_function
 
 import os
-import sys
-import numpy as np
 import re
+import sys
+import json
 import redis
+import numpy as np
 from hera_mc import mc, cm_sysutils
 from astropy.time import Time
 from jinja2 import Environment, FileSystemLoader
 
+
+def is_list(value):
+    return isinstance(value, list)
+
+def listify(input):
+    if isinstance(input, (list, tuple, np.ndarray)):
+        return input
+    else:
+        return [input]
+
+def index_in(indexable, i):
+    return indexable[i]
 
 def write_csv(filename, antnames, ants, pols, stat_names, stats, built_but_not_on):
     """Write out antenna stats to csv file.
@@ -96,6 +109,9 @@ def main():
     template_dir = os.path.join(split_dir[0], "templates")
 
     env = Environment(loader=FileSystemLoader(template_dir), trim_blocks=True)
+    env.filters["islist"] = is_list
+    env.filters["index"] = index_in
+    env.filters["listify"] = listify
     if sys.version_info[0] < 3:
         # py2
         computer_hostname = os.uname()[1]
@@ -613,6 +629,7 @@ def main():
             time_jd = latest.jd
             time_unix = latest.unix
 
+        basename = "hex_amp"
         rendered_hex_html = html_template.render(
             plotname=plotname,
             data_type="Auto correlations",
@@ -621,7 +638,7 @@ def main():
             data_date_iso=latest.iso,
             data_date_jd="{:.3f}".format(time_jd),
             data_date_unix_ms=time_unix * 1000,
-            js_name="hex_amp",
+            js_name=basename,
             gen_time_unix_ms=now.unix * 1000,
             scriptname=os.path.basename(__file__),
             hostname=computer_hostname,
@@ -629,16 +646,19 @@ def main():
         )
 
         rendered_hex_js = js_template.render(
-            data=data_hex,
+            json_name=basename,
             layout=layout_hex,
             updatemenus=updatemenus_hex,
             plotname=plotname,
         )
 
-        with open("hex_amp.html", "w") as h_file:
+        with open("{}.json".format(basename), "w") as json_file:
+            json.dump(data_hex, json_file)
+
+        with open("{}.html".format(basename), "w") as h_file:
             h_file.write(rendered_hex_html)
 
-        with open("hex_amp.js", "w") as js_file:
+        with open("{}.js".format(basename), "w") as js_file:
             js_file.write(rendered_hex_js)
 
         # now prepare the data to be plotted vs node number
@@ -823,6 +843,7 @@ def main():
             time_jd = latest.jd
             time_unix = latest.unix
 
+        basename = "node_amp"
         rendered_node_html = html_template.render(
             plotname=plotname,
             data_type="Auto correlations",
@@ -832,23 +853,26 @@ def main():
             data_date_iso=latest.iso,
             data_date_jd="{:.3f}".format(time_jd),
             data_date_unix_ms=time_unix * 1000,
-            js_name="node_amp",
+            js_name=basename,
             scriptname=os.path.basename(__file__),
             hostname=computer_hostname,
             caption=caption_node,
         )
 
         rendered_node_js = js_template.render(
-            data=data_node,
+            json_name=basename,
             layout=layout_node,
             updatemenus=updatemenus_node,
             plotname=plotname,
         )
 
-        with open("node_amp.html", "w") as h_file:
+        with open("{}.json".format(basename), "w") as json_file:
+            json.dump(data_node, json_file)
+
+        with open("{}.html".format(basename), "w") as h_file:
             h_file.write(rendered_node_html)
 
-        with open("node_amp.js", "w") as js_file:
+        with open("{}.js".format(basename), "w") as js_file:
             js_file.write(rendered_node_js)
 
 

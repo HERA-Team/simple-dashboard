@@ -25,6 +25,14 @@ from jinja2 import Environment, FileSystemLoader
 def is_list(value):
     return isinstance(value, list)
 
+def listify(input):
+    if isinstance(input, (list, tuple, np.ndarray)):
+        return input
+    else:
+        return [input]
+
+def index_in(indexable, i):
+    return indexable[i]
 
 # Two redis instances run on this server.
 # port 6379 is the hera-digi mirror
@@ -39,6 +47,8 @@ def main():
 
     env = Environment(loader=FileSystemLoader(template_dir), trim_blocks=True)
     env.filters["islist"] = is_list
+    env.filters["index"] = index_in
+    env.filters["listify"] = listify
 
     if sys.version_info[0] < 3:
         # py2
@@ -292,6 +302,7 @@ def main():
         time_jd = t_plot.jd
         time_unix = t_plot.unix
 
+    basename = "spectra"
     rendered_html = html_template.render(
         plotname=plotname,
         data_type="Auto correlations",
@@ -301,7 +312,7 @@ def main():
         data_date_iso=t_plot.iso,
         data_date_jd="{:.3f}".format(time_jd),
         data_date_unix_ms=time_unix * 1000,
-        js_name="spectra",
+        js_name=basename,
         gen_time_unix_ms=Time.now().unix * 1000,
         scriptname=os.path.basename(__file__),
         hostname=computer_hostname,
@@ -310,13 +321,20 @@ def main():
     )
 
     rendered_js = js_template.render(
-        data=autospectra, layout=layout, updatemenus=updatemenus, plotname=plotname
+        json_name=basename,
+        layout=layout,
+        updatemenus=updatemenus,
+        plotname=plotname
     )
 
     print("Got {n_sig:d} signals".format(n_sig=n_signals))
-    with open("spectra.html", "w") as h_file:
+    with open("{}.json".format(basename), "w") as json_file:
+        json.dump(autospectra, json_file)
+
+    with open("{}.html".format(basename), "w") as h_file:
         h_file.write(rendered_html)
-    with open("spectra.js", "w") as js_file:
+
+    with open("{}.js".format(basename), "w") as js_file:
         js_file.write(rendered_js)
 
 

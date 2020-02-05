@@ -8,10 +8,11 @@
 from __future__ import absolute_import, division, print_function
 
 import os
-import sys
 import re
-import numpy as np
+import sys
+import json
 import redis
+import numpy as np
 from hera_mc import mc, cm_sysutils
 from astropy.time import Time
 import hera_corr_cm
@@ -21,6 +22,14 @@ from jinja2 import Environment, FileSystemLoader
 def is_list(value):
     return isinstance(value, list)
 
+def listify(input):
+    if isinstance(input, (list, tuple, np.ndarray)):
+        return input
+    else:
+        return [input]
+
+def index_in(indexable, i):
+    return indexable[i]
 
 def main():
     # templates are stored relative to the script dir
@@ -33,7 +42,9 @@ def main():
     env = Environment(loader=FileSystemLoader(template_dir),
                       trim_blocks=True)
     # this filter is used to see if there is more than one table
-    env.filters['islist'] = is_list
+    env.filters["islist"] = is_list
+    env.filters["index"] = index_in
+    env.filters["listify"] = listify
 
     if sys.version_info[0] < 3:
         # py2
@@ -377,21 +388,25 @@ def main():
         plotname = "plotly-snap"
         html_template = env.get_template("refresh_with_table.html")
         js_template = env.get_template("plotly_base.js")
-
+        basename = "snapspectra"
         rendered_html = html_template.render(plotname=plotname,
                                              plotstyle="height: 100%",
                                              gen_date=Time.now().iso,
-                                             js_name='snapspectra',
+                                             js_name=basename,
                                              gen_time_unix_ms=Time.now().unix * 1000,
                                              scriptname=os.path.basename(__file__),
                                              hostname=computer_hostname,
                                              table=[table_snap, table_ants],
                                              caption=caption
                                              )
-        rendered_js = js_template.render(data=data,
+
+        rendered_js = js_template.render(json_name=basename,
                                          layout=layout,
                                          updatemenus=updatemenus,
                                          plotname=plotname)
+
+        with open("{}.json".format(basename), "w") as json_file:
+            json.dump(data, json_file)
 
         with open('snapspectra.html', 'w') as h_file:
             h_file.write(rendered_html)

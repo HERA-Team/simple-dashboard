@@ -8,8 +8,9 @@
 from __future__ import absolute_import, division, print_function
 
 import os
-import sys
 import re
+import sys
+import json
 import numpy as np
 from astropy.time import Time, TimeDelta
 from html import escape
@@ -20,7 +21,6 @@ from hera_mc.librarian import (
     LibRemoteStatus,
     LibServerStatus,
     LibStatus,
-    LibFiles,
 )
 from jinja2 import Environment, FileSystemLoader
 
@@ -72,6 +72,19 @@ UI_HOSTNAMES = {
 }
 
 REMOTES = ["aoc-uploads", "shredder"]
+
+
+def is_list(value):
+    return isinstance(value, list)
+
+def listify(input):
+    if isinstance(input, (list, tuple, np.ndarray)):
+        return input
+    else:
+        return [input]
+
+def index_in(indexable, i):
+    return indexable[i]
 
 
 def do_server_loads(session, cutoff):
@@ -407,6 +420,9 @@ def main():
     template_dir = os.path.join(split_dir[0], "templates")
 
     env = Environment(loader=FileSystemLoader(template_dir), trim_blocks=True)
+    env.filters["islist"] = is_list
+    env.filters["index"] = index_in
+    env.filters["listify"] = listify
     if sys.version_info[0] < 3:
         # py2
         computer_hostname = os.uname()[1]
@@ -447,89 +463,126 @@ def main():
     html_template = env.get_template("librarian_table.html")
     js_template = env.get_template("plotly_base.js")
 
+    json_name_list = []
+    layout_list = []
+    plotname_list = []
+
+    basename = "librarian"
     with db.sessionmaker() as session:
 
         data = do_server_loads(session, cutoff)
-        layout["title"]["text"] = "CPU Loads"
-        rendered_js = js_template.render(
-            plotname="server-loads", data=data, layout=layout
-        )
-        with open("librarian.js", "w") as js_file:
-            js_file.write(rendered_js)
-            js_file.write("\n\n")
+        _layout = layout.copy()
+        _layout["title"]["text"] = "CPU Loads"
+
+        layout_list.append(_layout)
+        plotname_list.append("server-loads")
+        json_name = basename + "_server_loads"
+
+        with open(json_name, "w") as json_file:
+            json.dump(data, json_file)
+
+        json_name_list.append(json_name)
 
         data = do_upload_ages(session, cutoff)
-        layout["yaxis"]["title"] = "Minutes"
-        layout["yaxis"]["zeroline"] = False
-        layout["title"]["text"] = "Time Since last upload"
-        rendered_js = js_template.render(
-            plotname="upload-ages", data=data, layout=layout
-        )
-        with open("librarian.js", "a") as js_file:
-            js_file.write(rendered_js)
-            js_file.write("\n\n")
+
+        _layout = layout.copy()
+        _layout["yaxis"]["title"] = "Minutes"
+        _layout["yaxis"]["zeroline"] = False
+        _layout["title"]["text"] = "Time Since last upload"
+        layout_list.append(_layout)
+
+        plotname_list.append("upload-ages")
+        json_name = basename + "_upload_ages"
+
+        with open(json_name, "w") as json_file:
+            json.dump(data, json_file)
+
+        json_name_list.append(json_name)
 
         data = do_disk_space(session, cutoff)
-        layout["yaxis"]["title"] = "Data Volume [GiB]"
-        layout["yaxis"]["zeroline"] = True
-        layout["yaxis2"] = {
+
+        _layout = layout.copy()
+
+        _layout["yaxis"]["title"] = "Data Volume [GiB]"
+        _layout["yaxis"]["zeroline"] = True
+        _layout["yaxis2"] = {
             "title": "Free Space [GiB]",
             "overlaying": "y",
             "side": "right",
         }
-        layout["title"]["text"] = "Disk Usage"
+        _layout["title"]["text"] = "Disk Usage"
+        layout_list.append(_layout)
 
-        rendered_js = js_template.render(
-            plotname="disk-space", data=data, layout=layout
-        )
-        with open("librarian.js", "a") as js_file:
-            js_file.write(rendered_js)
-            js_file.write("\n\n")
+        plotname_list.append("disk-space")
+        json_name = basename + "_disk_space"
 
-        layout.pop("yaxis2", None)
+        with open(json_name, "w") as json_file:
+            json.dump(data, json_file)
+
+        json_name_list.append(json_name)
+
         data = do_bandwidths(session, cutoff)
-        layout["yaxis"]["title"] = "MB/s"
-        layout["title"]["text"] = "Librarian Transfer Rates"
-        rendered_js = js_template.render(
-            plotname="bandwidths", data=data, layout=layout
-        )
-        with open("librarian.js", "a") as js_file:
-            js_file.write(rendered_js)
-            js_file.write("\n\n")
+        _layout = layout.copy()
+        _layout.pop("yaxis2", None)
+        _layout["yaxis"]["title"] = "MB/s"
+        _layout["title"]["text"] = "Librarian Transfer Rates"
+        layout_list.append(_layout)
+
+        plotname_list.append("bandwidths")
+        json_name = basename + "_bandwidths"
+
+        with open(json_name, "w") as json_file:
+            json.dump(data, json_file)
+
+        json_name_list.append(json_name)
 
         data = do_num_files(session, cutoff)
-        layout["yaxis"]["title"] = "Number"
-        layout["yaxis"]["zeroline"] = False
-        layout["title"]["text"] = "Total Number of Files in Librarian"
-        rendered_js = js_template.render(plotname="num-files", data=data, layout=layout)
-        with open("librarian.js", "a") as js_file:
-            js_file.write(rendered_js)
-            js_file.write("\n\n")
+        _layout = layout.copy()
+        _layout["yaxis"]["title"] = "Number"
+        _layout["yaxis"]["zeroline"] = False
+        _layout["title"]["text"] = "Total Number of Files in Librarian"
+        layout_list.append(_layout)
+
+        plotname_list.append("num-files")
+        json_name = basename + "_num_files"
+
+        with open(json_name, "w") as json_file:
+            json.dump(data, json_file)
+
+        json_name_list.append(json_name)
 
         data = do_ping_times(session, cutoff)
-        layout["yaxis"]["title"] = "ms"
-        layout["yaxis"]["rangemode"] = "tozero"
-        layout["yaxis"]["zeroline"] = True
-        layout["title"]["text"] = "Server Ping Times"
-        rendered_js = js_template.render(
-            plotname="ping-times", data=data, layout=layout
-        )
-        with open("librarian.js", "a") as js_file:
-            js_file.write(rendered_js)
-            js_file.write("\n\n")
+        _layout = layout.copy()
+        _layout["yaxis"]["title"] = "ms"
+        _layout["yaxis"]["rangemode"] = "tozero"
+        _layout["yaxis"]["zeroline"] = True
+        _layout["title"]["text"] = "Server Ping Times"
+        layout_list.append(_layout)
+
+        plotname_list.append("ping-times")
+        json_name = basename + "_ping_times"
+
+        with open(json_name, "w") as json_file:
+            json.dump(data, json_file)
+
+        json_name_list.append(json_name)
 
         data = do_compare_file_types(TIME_WINDOW)
         if data is not None:
-            layout["yaxis"]["title"] = "Files in <br><b>temporary staging</b>"
-            layout["yaxis"]["zeroline"] = True
-            layout["margin"]["l"] = 60
-            layout["title"]["text"] = "Files in <b>Temporary Staging</b>"
-            rendered_js = js_template.render(
-                plotname="file-compare", data=data, layout=layout
-            )
-            with open("librarian.js", "a") as js_file:
-                js_file.write(rendered_js)
-                js_file.write("\n\n")
+            _layout = layout.copy()
+            _layout["yaxis"]["title"] = "Files in <br><b>temporary staging</b>"
+            _layout["yaxis"]["zeroline"] = True
+            _layout["margin"]["l"] = 60
+            _layout["title"]["text"] = "Files in <b>Temporary Staging</b>"
+            layout_list.append(_layout)
+
+            plotname_list.append("file-compare")
+            json_name = basename + "_file_compare"
+
+            with open(json_name, "w") as json_file:
+                json.dump(data, json_file)
+
+            json_name_list.append(json_name)
 
         tables = []
         tables.append(do_raid_errors(session, cutoff))
@@ -577,14 +630,21 @@ def main():
             colsize=colsize,
             gen_date=now.iso,
             gen_time_unix_ms=now.unix * 1000,
-            js_name="librarian",
+            js_name=basename,
             hostname=computer_hostname,
             scriptname=os.path.basename(__file__),
             tables=tables,
             caption=caption,
         )
 
-        with open("librarian.html", "w") as h_file:
+        rendered_js = js_template.render(
+            json_name=json_name_list, plotname=plotname_list, layout=layout_list
+        )
+
+        with open("{}.js".format(basename), "w") as js_file:
+            js_file.write(rendered_js)
+
+        with open("{}.html".format(basename), "w") as h_file:
             h_file.write(rendered_html)
 
 
