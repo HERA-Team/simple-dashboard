@@ -59,7 +59,7 @@ def main():
     corr_map = redis_db.hgetall("corr:map")
 
     update_time = Time(float(corr_map[b"update_time"]), format="unix")
-    update_time.out_subfmt =  u"date_hm"
+    update_time.out_subfmt = u"date_hm"
     all_tables = []
 
     # make a table of the antenna to snap mapping
@@ -86,6 +86,7 @@ def main():
             rows_a.append(row)
     table_a_to_s["rows"] = rows_a
     table_a_to_s["div_style"] = 'style="max-height: 2500px;"'
+    table_a_to_s["colsize"] = 6
     all_tables.append(table_a_to_s)
 
     # make a table of the snap to antenna mapping
@@ -110,6 +111,7 @@ def main():
         rows_s.append(row)
 
     table_s_to_a["rows"] = rows_s
+    table_s_to_a["colsize"] = 6
     all_tables.append(table_s_to_a)
 
     # Make a table of the snap to antenna indices mapping
@@ -130,6 +132,7 @@ def main():
 
     table_ant_ind["rows"] = rows_ant_ind
     table_ant_ind["style"] = "float: right"
+    table_ant_ind["colsize"] = 6
     all_tables.append(table_ant_ind)
 
     # Make a table of the XENG channel indices
@@ -150,6 +153,7 @@ def main():
         rows_xeng.append(row)
     table_xeng["rows"] = rows_xeng
     table_xeng["style"] = "float: right"
+    table_xeng["colsize"] = 6
 
     all_tables.append(table_xeng)
 
@@ -172,7 +176,6 @@ def main():
         gen_time_unix_ms=Time.now().unix * 1000,
         scriptname=os.path.basename(__file__),
         hostname=computer_hostname,
-        colsize=6,
     )
 
     with open("snaphookup.html", "w") as h_file:
