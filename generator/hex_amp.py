@@ -22,7 +22,7 @@ from jinja2 import Environment, FileSystemLoader
 def runInParallel(*fns):
     proc = []
     for fn in fns:
-        p = Process(target=fn)
+        p = Process(target=fn[0], args=fn[1])
         p.start()
         proc.append(p)
     for p in proc:
@@ -925,44 +925,52 @@ def main():
                 _text[pol_cnt, ant_cnt] = _text[pol_cnt, ant_cnt].replace(" ", "\t")
 
     runInParallel(
-        make_hex(
-            powers,
-            xs_offline,
-            ys_offline,
-            name_offline,
-            built_but_not_on,
-            xs,
-            ys,
-            _text,
-            env,
-            latest,
-            pols,
-            computer_hostname,
-            names
-        ),
-        make_node(
-            powers,
-            _text,
-            names,
-            hostname,
-            nodes,
-            node_ind,
-            pols,
-            env,
-            latest,
-            computer_hostname,
-        ),
-        write_csv(
-            "ant_stats.csv",
-            antnames,
-            ants,
-            pols,
-            names,
-            powers,
-            built_but_not_on
-        )
-
-   )
+        [
+            make_hex,
+            [
+                powers,
+                xs_offline,
+                ys_offline,
+                name_offline,
+                built_but_not_on,
+                xs,
+                ys,
+                _text,
+                env,
+                latest,
+                pols,
+                computer_hostname,
+                names
+            ]
+        ],
+        [
+            make_node,
+            [
+                powers,
+                _text,
+                names,
+                hostname,
+                nodes,
+                node_ind,
+                pols,
+                env,
+                latest,
+                computer_hostname,
+            ]
+        ],
+        [
+            write_csv,
+            [
+                "ant_stats.csv",
+                antnames,
+                ants,
+                pols,
+                names,
+                powers,
+                built_but_not_on
+            ],
+        ],
+    )
 
 
 
