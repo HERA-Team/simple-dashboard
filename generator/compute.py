@@ -265,7 +265,7 @@ def main():
             json_name=json_name_list, plotname=name_list, layout=layout_list
         )
 
-        with open("{}.js".basename(basename), "w") as js_file:
+        with open("{}.js".format(basename), "w") as js_file:
             js_file.write(rendered_js)
 
 
