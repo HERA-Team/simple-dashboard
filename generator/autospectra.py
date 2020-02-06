@@ -46,7 +46,6 @@ def grab_spectra(
     frange_mhz
 ):
     r_pool = redis.ConnectionPool(host=redishost, port=port)
-    r = redis.Redis(connection_pool=r_pool)
     autospectra = []
     nodes = []
     bad_ants = []
@@ -54,78 +53,79 @@ def grab_spectra(
     n_signals = 0
     if not isinstance(ants, list):
         ants = [ants]
-    for i in ants:
-        for pol in ["e", "n"]:
-            # get the timestamp from redis for the first ant-pol
-            if not got_time:
-                t_plot_jd = float(
-                    r.hget(
-                        "visdata://{i:d}/{j:d}/{i_pol:s}{j_pol:s}".format(
-                            i=i, j=i, i_pol=pol, j_pol=pol
-                        ),
-                        "time",
+    with redis.Redis(connection_pool=r_pool) as r:
+        for i in ants:
+            for pol in ["e", "n"]:
+                # get the timestamp from redis for the first ant-pol
+                if not got_time:
+                    t_plot_jd = float(
+                        r.hget(
+                            "visdata://{i:d}/{j:d}/{i_pol:s}{j_pol:s}".format(
+                                i=i, j=i, i_pol=pol, j_pol=pol
+                            ),
+                            "time",
+                        )
                     )
-                )
-                if t_plot_jd is not None:
-                    got_time = True
-            linename = "ant{ant:d}{pol:s}".format(ant=i, pol=pol)
+                    if t_plot_jd is not None:
+                        got_time = True
+                linename = "ant{ant:d}{pol:s}".format(ant=i, pol=pol)
 
-            try:
-                hostname = ant_to_snap[str(i)][pol]["host"]
-                match = re.search(r"heraNode(?P<node>\d+)Snap", hostname)
-                if match is not None:
-                    _node = int(match.group("node"))
-                    nodes.append(_node)
-                    node_map[linename] = _node
-                else:
+                try:
+                    hostname = ant_to_snap[str(i)][pol]["host"]
+                    match = re.search(r"heraNode(?P<node>\d+)Snap", hostname)
+                    if match is not None:
+                        _node = int(match.group("node"))
+                        nodes.append(_node)
+                        node_map[linename] = _node
+                    else:
+                        print("No Node mapping for antennna: " + linename)
+                        bad_ants.append(linename)
+                        node_map[linename] = -1
+                        nodes.append(-1)
+                except (KeyError):
                     print("No Node mapping for antennna: " + linename)
                     bad_ants.append(linename)
                     node_map[linename] = -1
                     nodes.append(-1)
-            except (KeyError):
-                print("No Node mapping for antennna: " + linename)
-                bad_ants.append(linename)
-                node_map[linename] = -1
-                nodes.append(-1)
 
-            d = r.get("auto:{ant:d}{pol:s}".format(ant=i, pol=pol))
-            if d is not None:
+                d = r.get("auto:{ant:d}{pol:s}".format(ant=i, pol=pol))
+                if d is not None:
 
-                n_signals += 1
-                auto = np.frombuffer(d, dtype=np.float32)[0:NCHANS].copy()
+                    n_signals += 1
+                    auto = np.frombuffer(d, dtype=np.float32)[0:NCHANS].copy()
 
-                eq_coeffs = r.hget(
-                    bytes("eq:ant:{ant}:{pol}".format(ant=i, pol=pol).encode()),
-                    "values",
-                )
-                if eq_coeffs is not None:
-                    eq_coeffs = np.fromstring(
-                        eq_coeffs.decode("utf-8").strip("[]"), sep=","
+                    eq_coeffs = r.hget(
+                        bytes("eq:ant:{ant}:{pol}".format(ant=i, pol=pol).encode()),
+                        "values",
                     )
-                    if eq_coeffs.size == 0:
+                    if eq_coeffs is not None:
+                        eq_coeffs = np.fromstring(
+                            eq_coeffs.decode("utf-8").strip("[]"), sep=","
+                        )
+                        if eq_coeffs.size == 0:
+                            eq_coeffs = np.ones_like(auto)
+                    else:
                         eq_coeffs = np.ones_like(auto)
-                else:
-                    eq_coeffs = np.ones_like(auto)
 
-                # divide out the equalization coefficients
-                # eq_coeffs are stored as a length 1024 array but only a
-                # single number is used. Taking the median to not deal with
-                # a size mismatch
-                eq_coeffs = np.median(eq_coeffs)
-                auto /= eq_coeffs ** 2
+                    # divide out the equalization coefficients
+                    # eq_coeffs are stored as a length 1024 array but only a
+                    # single number is used. Taking the median to not deal with
+                    # a size mismatch
+                    eq_coeffs = np.median(eq_coeffs)
+                    auto /= eq_coeffs ** 2
 
-                auto[auto < 10 ** -10.0] = 10 ** -10.0
-                auto = 10 * np.log10(auto)
-                _auto = {
-                    "x": frange_mhz.tolist(),
-                    "y": auto.tolist(),
-                    "name": linename,
-                    "node": node_map[linename],
-                    "type": "scatter",
-                    "hovertemplate": "%{x:.1f}\tMHz<br>%{y:.3f}\t[dB]",
-                }
-                autospectra.append(_auto)
-    r.close()
+                    auto[auto < 10 ** -10.0] = 10 ** -10.0
+                    auto = 10 * np.log10(auto)
+                    _auto = {
+                        "x": frange_mhz.tolist(),
+                        "y": auto.tolist(),
+                        "name": linename,
+                        "node": node_map[linename],
+                        "type": "scatter",
+                        "hovertemplate": "%{x:.1f}\tMHz<br>%{y:.3f}\t[dB]",
+                    }
+                    autospectra.append(_auto)
+        r.close()
     return autospectra, n_signals, bad_ants, nodes, node_map
 
 # Two redis instances run on this server.
@@ -173,33 +173,32 @@ def main():
     )
     args = parser.parse_args()
     r_pool = redis.ConnectionPool(host=args.redishost, port=args.port)
-    r = redis.Redis(connection_pool=r_pool)
+    with redis.Redis(connection_pool=r_pool) as r:
+        keys = [
+            k.decode()
+            for k in r.keys()
+            if k.startswith(b"auto") and not k.endswith(b"timestamp")
+        ]
 
-    keys = [
-        k.decode()
-        for k in r.keys()
-        if k.startswith(b"auto") and not k.endswith(b"timestamp")
-    ]
+        ants = []
+        for key in keys:
+            match = re.search(r"auto:(?P<ant>\d+)(?P<pol>e|n)", key)
+            if match is not None:
+                ant, pol = int(match.group("ant")), match.group("pol")
+                ants.append(ant)
 
-    ants = []
-    for key in keys:
-        match = re.search(r"auto:(?P<ant>\d+)(?P<pol>e|n)", key)
-        if match is not None:
-            ant, pol = int(match.group("ant")), match.group("pol")
-            ants.append(ant)
-
-    ants = np.unique(ants)
-    corr_map = r.hgetall(b"corr:map")
-    ant_to_snap = json.loads(corr_map[b"ant_to_snap"])
-    node_map = {}
-    # want to be smart against the length of the autos, they sometimes change
-    # depending on the mode of the array
-    for i in ants:
-        for pol in ["e", "n"]:
-            d = r.get("auto:{ant:d}{pol:s}".format(ant=i, pol=pol))
-            if d is not None:
-                auto = np.frombuffer(d, dtype=np.float32).copy()
-                break
+        corr_map = r.hgetall(b"corr:map")
+        ants = np.unique(ants)
+        ant_to_snap = json.loads(corr_map[b"ant_to_snap"])
+        node_map = {}
+        # want to be smart against the length of the autos, they sometimes change
+        # depending on the mode of the array
+        for i in ants:
+            for pol in ["e", "n"]:
+                d = r.get("auto:{ant:d}{pol:s}".format(ant=i, pol=pol))
+                if d is not None:
+                    auto = np.frombuffer(d, dtype=np.float32).copy()
+                    break
     auto_size = auto.size
     # Generate frequency axis
     # Some times we have 6144 length inputs, others 1536, this should
