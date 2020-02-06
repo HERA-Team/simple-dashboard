@@ -11,7 +11,6 @@ import os
 import sys
 import re
 import json
-import redis
 import numpy as np
 from hera_mc import mc, cm_sysutils
 from astropy.time import Time
@@ -72,12 +71,6 @@ def main():
     except RuntimeError as e:
         raise SystemExit(str(e))
 
-    try:
-        redis_db = redis.Redis(args.redishost, port=args.port)
-        redis_db.keys()
-    except Exception as err:
-        raise SystemExit(str(err))
-
     with db.sessionmaker() as session:
         now = Time.now()
 
@@ -109,7 +102,7 @@ def main():
         hists = []
         bad_ants = []
         bad_node = []
-        for ant_cnt, ant in enumerate(ants):
+        for ant in ants:
             ant_status = session.get_antenna_status(
                 most_recent=True, antenna_number=int(ant)
             )
