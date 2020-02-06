@@ -361,7 +361,7 @@ def main():
         rendered_js = js_template.render(
             json_name=json_name_list, plotname=plotname_list, layout=layout_list
         )
-        with open("qm.js", "a") as js_file:
+        with open("qm.js", "w") as js_file:
             js_file.write(rendered_js)
 
 
