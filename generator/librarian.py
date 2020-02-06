@@ -11,6 +11,7 @@ import os
 import re
 import sys
 import json
+import copy
 import numpy as np
 from astropy.time import Time, TimeDelta
 from html import escape
@@ -471,7 +472,7 @@ def main():
     with db.sessionmaker() as session:
 
         data = do_server_loads(session, cutoff)
-        _layout = layout.copy()
+        _layout = copy.deepcopy(layout)
         _layout["title"]["text"] = "CPU Loads"
 
         layout_list.append(_layout)
@@ -485,7 +486,7 @@ def main():
 
         data = do_upload_ages(session, cutoff)
 
-        _layout = layout.copy()
+        _layout = copy.deepcopy(layout)
         _layout["yaxis"]["title"] = "Minutes"
         _layout["yaxis"]["zeroline"] = False
         _layout["title"]["text"] = "Time Since last upload"
@@ -501,7 +502,7 @@ def main():
 
         data = do_disk_space(session, cutoff)
 
-        _layout = layout.copy()
+        _layout = copy.deepcopy(layout)
 
         _layout["yaxis"]["title"] = "Data Volume [GiB]"
         _layout["yaxis"]["zeroline"] = True
@@ -522,7 +523,7 @@ def main():
         json_name_list.append(json_name)
 
         data = do_bandwidths(session, cutoff)
-        _layout = layout.copy()
+        _layout = copy.deepcopy(layout)
         _layout.pop("yaxis2", None)
         _layout["yaxis"]["title"] = "MB/s"
         _layout["title"]["text"] = "Librarian Transfer Rates"
@@ -537,7 +538,7 @@ def main():
         json_name_list.append(json_name)
 
         data = do_num_files(session, cutoff)
-        _layout = layout.copy()
+        _layout = copy.deepcopy(layout)
         _layout["yaxis"]["title"] = "Number"
         _layout["yaxis"]["zeroline"] = False
         _layout["title"]["text"] = "Total Number of Files in Librarian"
@@ -552,7 +553,7 @@ def main():
         json_name_list.append(json_name)
 
         data = do_ping_times(session, cutoff)
-        _layout = layout.copy()
+        _layout = copy.deepcopy(layout)
         _layout["yaxis"]["title"] = "ms"
         _layout["yaxis"]["rangemode"] = "tozero"
         _layout["yaxis"]["zeroline"] = True
@@ -569,7 +570,7 @@ def main():
 
         data = do_compare_file_types(TIME_WINDOW)
         if data is not None:
-            _layout = layout.copy()
+            _layout = copy.deepcopy(layout)
             _layout["yaxis"]["title"] = "Files in <br><b>temporary staging</b>"
             _layout["yaxis"]["zeroline"] = True
             _layout["margin"]["l"] = 60

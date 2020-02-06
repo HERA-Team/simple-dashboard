@@ -10,6 +10,7 @@ from __future__ import absolute_import, division, print_function
 import os
 import sys
 import json
+import copy
 import numpy as np
 from astropy.time import Time, TimeDelta
 from hera_mc import mc
@@ -211,7 +212,7 @@ def main():
             yname="Data",
             cutoff=cutoff,
         )
-        _layout = layout.copy()
+        _layout = copy.deepcopy(layout)
         _layout["yaxis"]["title"] = "Count"
         _layout["title"]["text"] = "Ant Metrics # of Xants"
         layout_list.append(_layout)
@@ -233,7 +234,7 @@ def main():
             yname="Data",
             cutoff=cutoff,
         )
-        _layout = layout.copy()
+        _layout = copy.deepcopy(layout)
         _layout["yaxis"]["title"] = "Average Amplitude"
         _layout["title"]["text"] = "Ant Metrics MeanVij"
         layout_list.append(_layout)
@@ -255,7 +256,7 @@ def main():
             yname="Data",
             cutoff=cutoff,
         )
-        _layout = layout.copy()
+        _layout = copy.deepcopy(layout)
         _layout["yaxis"]["title"] = "Average Amplitude"
         _layout["title"]["text"] = "Ant Metrics redCorr"
         layout_list.append(_layout)
@@ -277,7 +278,7 @@ def main():
             yname="Data",
             cutoff=cutoff,
         )
-        _layout = layout.copy()
+        _layout = copy.deepcopy(layout)
 
         _layout["yaxis"]["title"] = "Average Amplitude"
         _layout["title"]["text"] = "Ant Metrics MeanVij CrossPol"
@@ -293,7 +294,7 @@ def main():
 
         # "Aggregate standard deviation of delay solutions".
         data = do_xy_array_metric(session, "firstcal_metrics_agg_std", cutoff=cutoff)
-        _layout = layout.copy()
+        _layout = copy.deepcopy(layout)
         _layout["yaxis"]["title"] = "std"
         _layout["title"]["text"] = "FirstCal Metrics Agg Std"
         layout_list.append(_layout)
@@ -308,7 +309,7 @@ def main():
 
         # "Maximum antenna standard deviation of delay solutions".
         data = do_xy_array_metric(session, "firstcal_metrics_max_std", cutoff=cutoff)
-        _layout = layout.copy()
+        _layout = copy.deepcopy(layout)
         _layout["yaxis"]["title"] = "FC max_std"
         _layout["title"]["text"] = "FirstCal Metrics Max Std"
         layout_list.append(_layout)
@@ -328,7 +329,7 @@ def main():
             doubled_suffix=True,
             cutoff=cutoff,
         )
-        _layout = layout.copy()
+        _layout = copy.deepcopy(layout)
         _layout["yaxis"]["title"] = "OC ant_phs_std_max"
         _layout["title"]["text"] = "OmniCal Metrics Ant Phase Std max"
         layout_list.append(_layout)
@@ -345,7 +346,7 @@ def main():
         data = do_xy_array_metric(
             session, "omnical_metrics_chisq_tot_avg", doubled_suffix=True, cutoff=cutoff
         )
-        _layout = layout.copy()
+        _layout = copy.deepcopy(layout)
         _layout["yaxis"]["title"] = "OC chisq_tot_avg"
         _layout["title"]["text"] = "OmniCal Metrics Chi-square total avg"
         layout_list.append(_layout)

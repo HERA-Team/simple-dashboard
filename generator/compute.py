@@ -10,6 +10,7 @@ from __future__ import absolute_import, division, print_function
 import os
 import sys
 import json
+import copy
 import numpy as np
 from astropy.time import Time, TimeDelta
 from hera_mc import mc
@@ -250,7 +251,7 @@ def main():
         for server_type, data_dict in zip(["lib", "rtp"], [lib_data, rtp_data]):
 
             for pname in ["load", "disk", "mem", "bandwidth", "timediff"]:
-                _layout = layout.copy()
+                _layout = copy.deepcopy(layout)
                 _layout["yaxis"]["title"] = yaxis_titles[pname]
                 _layout["title"]["text"] = server_type + " " + titles[pname]
                 layout_list.append(_layout)
