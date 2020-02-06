@@ -1,5 +1,5 @@
-{% for name in json_name|listify %}
-{% set layout, plotname, updatemenus = layout|listify, plotname|listify, updatemenus|listify %}
+{% set json_name, layout, plotname, updatemenus = json_name|listify, layout|listify, plotname|listify, [updatemenus] %}
+{% for name in json_name %}
 $.getJSON("./{{ name }}.json", function(data){
 
 var layout = {{ layout[loop.index0]|tojson }};
