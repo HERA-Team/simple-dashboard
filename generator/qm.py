@@ -260,7 +260,7 @@ def main():
         _layout["title"]["text"] = "Ant Metrics redCorr"
         layout_list.append(_layout)
 
-        plotname_list.append("am-redcorr")
+        plotname_list.append("am-redCorr")
         json_name = basename + "_am_redcorr"
 
         with open("{}.json".format(json_name), "w") as json_file:
