@@ -478,7 +478,7 @@ def main():
         plotname_list.append("server-loads")
         json_name = basename + "_server_loads"
 
-        with open(json_name, "w") as json_file:
+        with open("{}.json".format(json_name), "w") as json_file:
             json.dump(data, json_file)
 
         json_name_list.append(json_name)
@@ -494,7 +494,7 @@ def main():
         plotname_list.append("upload-ages")
         json_name = basename + "_upload_ages"
 
-        with open(json_name, "w") as json_file:
+        with open("{}.json".format(json_name), "w") as json_file:
             json.dump(data, json_file)
 
         json_name_list.append(json_name)
@@ -516,7 +516,7 @@ def main():
         plotname_list.append("disk-space")
         json_name = basename + "_disk_space"
 
-        with open(json_name, "w") as json_file:
+        with open("{}.json".format(json_name), "w") as json_file:
             json.dump(data, json_file)
 
         json_name_list.append(json_name)
@@ -531,7 +531,7 @@ def main():
         plotname_list.append("bandwidths")
         json_name = basename + "_bandwidths"
 
-        with open(json_name, "w") as json_file:
+        with open("{}.json".format(json_name), "w") as json_file:
             json.dump(data, json_file)
 
         json_name_list.append(json_name)
@@ -546,7 +546,7 @@ def main():
         plotname_list.append("num-files")
         json_name = basename + "_num_files"
 
-        with open(json_name, "w") as json_file:
+        with open("{}.json".format(json_name), "w") as json_file:
             json.dump(data, json_file)
 
         json_name_list.append(json_name)
@@ -562,7 +562,7 @@ def main():
         plotname_list.append("ping-times")
         json_name = basename + "_ping_times"
 
-        with open(json_name, "w") as json_file:
+        with open("{}.json".format(json_name), "w") as json_file:
             json.dump(data, json_file)
 
         json_name_list.append(json_name)
@@ -579,7 +579,7 @@ def main():
             plotname_list.append("file-compare")
             json_name = basename + "_file_compare"
 
-            with open(json_name, "w") as json_file:
+            with open("{}.json".format(json_name), "w") as json_file:
                 json.dump(data, json_file)
 
             json_name_list.append(json_name)

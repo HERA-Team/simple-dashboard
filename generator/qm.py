@@ -219,7 +219,7 @@ def main():
         plotname_list.append("am-xants")
         json_name = basename + "_am_xants"
 
-        with open(json_name, "w") as json_file:
+        with open("{}.json".format(json_name), "w") as json_file:
             json.dump(data, json_file)
 
         json_name_list.append(json_name)
@@ -241,7 +241,7 @@ def main():
         plotname_list.append("am-meanVij")
         json_name = basename + "_am_meanVij"
 
-        with open(json_name, "w") as json_file:
+        with open("{}.json".format(json_name), "w") as json_file:
             json.dump(data, json_file)
 
         json_name_list.append(json_name)
@@ -263,7 +263,7 @@ def main():
         plotname_list.append("am-redcorr")
         json_name = basename + "_am_redcorr"
 
-        with open(json_name, "w") as json_file:
+        with open("{}.json".format(json_name), "w") as json_file:
             json.dump(data, json_file)
 
         json_name_list.append(json_name)
@@ -286,7 +286,7 @@ def main():
         plotname_list.append("am-meanVijXpol")
         json_name = basename + "_am_meanVijXpol"
 
-        with open(json_name, "w") as json_file:
+        with open("{}.json".format(json_name), "w") as json_file:
             json.dump(data, json_file)
 
         json_name_list.append(json_name)
@@ -301,7 +301,7 @@ def main():
         plotname_list.append("fc-agg_std")
         json_name = basename + "_fc_agg_std"
 
-        with open(json_name, "w") as json_file:
+        with open("{}.json".format(json_name), "w") as json_file:
             json.dump(data, json_file)
 
         json_name_list.append(json_name)
@@ -316,7 +316,7 @@ def main():
         plotname_list.append("fc-max_std")
         json_name = basename + "_fc-max_std"
 
-        with open(json_name, "w") as json_file:
+        with open("{}.json".format(json_name), "w") as json_file:
             json.dump(data, json_file)
 
         json_name_list.append(json_name)
@@ -336,7 +336,7 @@ def main():
         plotname_list.append("oc-ant_phs_std_max")
         json_name = basename + "_oc_ant_phs_std_max"
 
-        with open(json_name, "w") as json_file:
+        with open("{}.json".format(json_name), "w") as json_file:
             json.dump(data, json_file)
 
         json_name_list.append(json_name)
@@ -353,7 +353,7 @@ def main():
         plotname_list.append("oc-chisq_tot_avg")
         json_name = basename + "_oc_chisq_tot_avg"
 
-        with open(json_name, "w") as json_file:
+        with open("{}.json".format(json_name), "w") as json_file:
             json.dump(data, json_file)
 
         json_name_list.append(json_name)
