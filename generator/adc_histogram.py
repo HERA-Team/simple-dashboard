@@ -154,11 +154,6 @@ def main():
                         stat.histogram_bin_centers.strip("[]"), sep=","
                     )
                     hist = np.fromstring(stat.histogram.strip("[]"), sep=",")
-                    if stat.eq_coeffs is not None:
-                        eq_coeffs = np.fromstring(stat.eq_coeffs.strip("[]"), sep=",")
-                    else:
-                        eq_coeffs = np.ones_like(hist)
-                    hist /= np.median(eq_coeffs) ** 2
 
                     text = "observed at {iso}<br>(JD {jd})".format(
                         iso=timestamp.iso, jd=timestamp.jd
@@ -285,8 +280,7 @@ def main():
         caption = {}
 
         caption["text"] = (
-            "The ADC Histograms with equalization coefficients "
-            "divided out."
+            "The ADC Histograms"
             "<br><br>Some antennas known to M&C may not have a histogram "
             " and are listed below the image."
             "<br><br>Some antennas may not have "
