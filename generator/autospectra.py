@@ -19,6 +19,8 @@ import json
 import numpy as np
 import argparse
 from astropy.time import Time
+from multiprocessing import Pool
+from itertools import repeat
 from jinja2 import Environment, FileSystemLoader
 
 
@@ -34,101 +36,24 @@ def listify(input):
 def index_in(indexable, i):
     return indexable[i]
 
-# Two redis instances run on this server.
-# port 6379 is the hera-digi mirror
-# port 6380 is the paper1 mirror
-def main():
-    # templates are stored relative to the script dir
-    # stored one level up, find the parent directory
-    # and split the parent directory away
-    script_dir = os.path.dirname(os.path.realpath(__file__))
-    split_dir = os.path.split(script_dir)
-    template_dir = os.path.join(split_dir[0], "templates")
-
-    env = Environment(loader=FileSystemLoader(template_dir), trim_blocks=True)
-    env.filters["islist"] = is_list
-    env.filters["index"] = index_in
-    env.filters["listify"] = listify
-
-    if sys.version_info[0] < 3:
-        # py2
-        computer_hostname = os.uname()[1]
-    else:
-        # py3
-        computer_hostname = os.uname().nodename
-
-    parser = argparse.ArgumentParser(
-        description=("Create auto-correlation spectra plot for heranow dashboard")
-    )
-    parser.add_argument(
-        "--redishost",
-        dest="redishost",
-        type=str,
-        default="redishost",
-        help=('The host name for redis to connect to, defaults to "redishost"'),
-    )
-    parser.add_argument(
-        "--port", dest="port", type=int, default=6379, help="Redis port to connect."
-    )
-    args = parser.parse_args()
-    r = redis.Redis(args.redishost, port=args.port)
-
-    keys = [
-        k.decode()
-        for k in r.keys()
-        if k.startswith(b"auto") and not k.endswith(b"timestamp")
-    ]
-
-    ants = []
-    for key in keys:
-        match = re.search(r"auto:(?P<ant>\d+)(?P<pol>e|n)", key)
-        if match is not None:
-            ant, pol = int(match.group("ant")), match.group("pol")
-            ants.append(ant)
-
-    ants = np.unique(ants)
-    corr_map = r.hgetall(b"corr:map")
-    ant_to_snap = json.loads(corr_map[b"ant_to_snap"])
-    node_map = {}
-    nodes = []
-    # want to be smart against the length of the autos, they sometimes change
-    # depending on the mode of the array
-    for i in ants:
-        for pol in ["e", "n"]:
-            d = r.get("auto:{ant:d}{pol:s}".format(ant=i, pol=pol))
-            if d is not None:
-                auto = np.frombuffer(d, dtype=np.float32).copy()
-                break
-    auto_size = auto.size
-    # Generate frequency axis
-    # Some times we have 6144 length inputs, others 1536, this should
-    # set the length to match whatever the auto we got was
-    NCHANS = int(8192 // 4 * 3)
-    NCHANS_F = 8192
-    NCHAN_SUM = NCHANS // auto_size
-    NCHANS = auto_size
-    frange = np.linspace(0, 250e6, NCHANS_F + 1)[1536 : 1536 + (8192 // 4 * 3)]
-    # average over channels
-    frange = frange.reshape(NCHANS, NCHAN_SUM).sum(axis=1) / NCHAN_SUM
-    frange_mhz = frange / 1e6
-
-    got_time = False
-    n_signals = 0
-
-    try:
-        t_plot_jd = np.frombuffer(r["auto:timestamp"], dtype=np.float64)[0]
-        t_plot = Time(t_plot_jd, format="jd")
-        t_plot.out_subfmt = u"date_hm"
-        got_time = True
-    except:
-        pass
-    # grab data from redis and format it according to plotly's javascript api
+def grab_spectra(
+    ants,
+    redishost,
+    port,
+    got_time,
+    ant_to_snap,
+    NCHANS,
+    frange_mhz
+):
+    r_pool = redis.ConnectionPool(host=redishost, port=port)
+    r = redis.Redis(connection_pool=r_pool)
     autospectra = []
-
-    table_ants = {}
-    table_ants["title"] = "Antennas with no Node mapping"
-    rows = []
+    nodes = []
     bad_ants = []
+    node_map = {}
+    n_signals = 0
+    if not isinstance(ants, list):
+        ants = [ants]
     for i in ants:
         for pol in ["e", "n"]:
             # get the timestamp from redis for the first ant-pol
@@ -200,6 +125,133 @@ def main():
                     "hovertemplate": "%{x:.1f}\tMHz<br>%{y:.3f}\t[dB]",
                 }
                 autospectra.append(_auto)
+    r.close()
+    return autospectra, n_signals, bad_ants, nodes, node_map
+
+# Two redis instances run on this server.
+# port 6379 is the hera-digi mirror
+# port 6380 is the paper1 mirror
+def main():
+    # templates are stored relative to the script dir
+    # stored one level up, find the parent directory
+    # and split the parent directory away
+    script_dir = os.path.dirname(os.path.realpath(__file__))
+    split_dir = os.path.split(script_dir)
+    template_dir = os.path.join(split_dir[0], "templates")
+
+    env = Environment(loader=FileSystemLoader(template_dir), trim_blocks=True)
+    env.filters["islist"] = is_list
+    env.filters["index"] = index_in
+    env.filters["listify"] = listify
+
+    if sys.version_info[0] < 3:
+        # py2
+        computer_hostname = os.uname()[1]
+    else:
+        # py3
+        computer_hostname = os.uname().nodename
+
+    parser = argparse.ArgumentParser(
+        description=("Create auto-correlation spectra plot for heranow dashboard")
+    )
+    parser.add_argument(
+        "--redishost",
+        dest="redishost",
+        type=str,
+        default="redishost",
+        help=('The host name for redis to connect to, defaults to "redishost"'),
+    )
+    parser.add_argument(
+        "--port", dest="port", type=int, default=6379, help="Redis port to connect."
+    )
+    parser.add_argument(
+        "--nproc",
+        "-n",
+        dest="nproc",
+        default=4,
+        help="Number of processes to use in Mulitprocessing Pool."
+    )
+    args = parser.parse_args()
+    r_pool = redis.ConnectionPool(host=args.redishost, port=args.port)
+    r = redis.Redis(connection_pool=r_pool)
+
+    keys = [
+        k.decode()
+        for k in r.keys()
+        if k.startswith(b"auto") and not k.endswith(b"timestamp")
+    ]
+
+    ants = []
+    for key in keys:
+        match = re.search(r"auto:(?P<ant>\d+)(?P<pol>e|n)", key)
+        if match is not None:
+            ant, pol = int(match.group("ant")), match.group("pol")
+            ants.append(ant)
+
+    ants = np.unique(ants)
+    corr_map = r.hgetall(b"corr:map")
+    ant_to_snap = json.loads(corr_map[b"ant_to_snap"])
+    node_map = {}
+    # want to be smart against the length of the autos, they sometimes change
+    # depending on the mode of the array
+    for i in ants:
+        for pol in ["e", "n"]:
+            d = r.get("auto:{ant:d}{pol:s}".format(ant=i, pol=pol))
+            if d is not None:
+                auto = np.frombuffer(d, dtype=np.float32).copy()
+                break
+    auto_size = auto.size
+    # Generate frequency axis
+    # Some times we have 6144 length inputs, others 1536, this should
+    # set the length to match whatever the auto we got was
+    NCHANS = int(8192 // 4 * 3)
+    NCHANS_F = 8192
+    NCHAN_SUM = NCHANS // auto_size
+    NCHANS = auto_size
+    frange = np.linspace(0, 250e6, NCHANS_F + 1)[1536 : 1536 + (8192 // 4 * 3)]
+    # average over channels
+    frange = frange.reshape(NCHANS, NCHAN_SUM).sum(axis=1) / NCHAN_SUM
+    frange_mhz = frange / 1e6
+
+    got_time = False
+    n_signals = 0
+
+    try:
+        t_plot_jd = np.frombuffer(r["auto:timestamp"], dtype=np.float64)[0]
+        t_plot = Time(t_plot_jd, format="jd")
+        t_plot.out_subfmt = u"date_hm"
+        got_time = True
+    except:
+        pass
+    # grab data from redis and format it according to plotly's javascript api
+
+    table_ants = {}
+    table_ants["title"] = "Antennas with no Node mapping"
+    rows = []
+    bad_ants = []
+    with Pool(processes=args.nproc) as pool:
+        result_obj = pool.starmap_async(
+            grab_spectra,
+            zip(
+                ants,
+                repeat(args.redishost),
+                repeat(args.port),
+                repeat(got_time),
+                repeat(ant_to_snap),
+                repeat(NCHANS),
+                repeat(frange_mhz)
+            ),
+        )
+        result_obj.wait()
+        result = result_obj.get()
+
+    autospectra = sum([r[0] for r in result], [])
+    n_signals = sum([r[1] for r in result])
+    bad_ants = sum([r[2] for r in result], [])
+    nodes = sum([r[3] for r in result], [])
+    node_map = {}
+    for r in result:
+        node_map.update(r[-1])
 
     row = {}
     row["text"] = "\t".join(bad_ants)
