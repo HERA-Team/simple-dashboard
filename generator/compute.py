@@ -10,6 +10,7 @@ from __future__ import absolute_import, division, print_function
 import os
 import sys
 import json
+import numpy as np
 from astropy.time import Time, TimeDelta
 from hera_mc import mc
 from hera_mc.librarian import LibServerStatus
