@@ -255,7 +255,7 @@ def main():
                 _layout["title"]["text"] = server_type + " " + titles[pname]
                 layout_list.append(_layout)
                 name_list.append(server_type + "-" + pname)
-                json_name = ".".join([basename, server_type, pname])
+                json_name = "_".join([basename, server_type, pname])
                 json_name_list.append(json_name)
                 with open("{}.json".format(json_name), "w") as json_file:
                     json.dump(data_dict, json_file)
