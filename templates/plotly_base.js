@@ -1,4 +1,7 @@
-{% set json_name, layout, plotname, updatemenus = json_name|listify, layout|listify, plotname|listify, [updatemenus] %}
+{% set json_name, layout, plotname = json_name|listify, layout|listify, plotname|listify %}
+{% if updatemenus is defined %}
+{% set updatemenus = [updatemenus]%}
+{% endif %}
 {% for name in json_name %}
 $.getJSON("./{{ name }}.json", function(data){
 
