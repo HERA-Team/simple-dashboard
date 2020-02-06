@@ -259,7 +259,7 @@ def main():
                 json_name = "_".join([basename, server_type, pname])
                 json_name_list.append(json_name)
                 with open("{}.json".format(json_name), "w") as json_file:
-                    json.dump(data_dict, json_file)
+                    json.dump(data_dict[pname], json_file)
 
         js_template = env.get_template("plotly_base.js")
         rendered_js = js_template.render(
