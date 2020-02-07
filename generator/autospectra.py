@@ -176,7 +176,7 @@ def main():
         "-c",
         dest="chunksize",
         type=int,
-        defualt=12,
+        default=12,
         help=(
             "Size of chunks to process per task. "
             "Defaults to maximum number of antennas on a node."
