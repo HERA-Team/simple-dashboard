@@ -171,6 +171,17 @@ def main():
         default=4,
         help="Number of processes to use in Mulitprocessing Pool."
     )
+    parser.add_argument(
+        "--chunksize",
+        "-c",
+        dest="chunksize",
+        type=int,
+        defualt=12,
+        help=(
+            "Size of chunks to process per task. "
+            "Defaults to maximum number of antennas on a node."
+        )
+    )
     args = parser.parse_args()
     r_pool = redis.ConnectionPool(host=args.redishost, port=args.port)
     with redis.Redis(connection_pool=r_pool) as r:
@@ -229,7 +240,7 @@ def main():
     rows = []
     bad_ants = []
     with Pool(processes=args.nproc) as pool:
-        result_obj = pool.starmap_async(
+        result = pool.starmap(
             grab_spectra,
             zip(
                 ants,
@@ -240,9 +251,8 @@ def main():
                 repeat(NCHANS),
                 repeat(frange_mhz)
             ),
+            chunksize=args.chunksize
         )
-        result_obj.wait()
-        result = result_obj.get()
 
     autospectra = sum([r[0] for r in result], [])
     n_signals = sum([r[1] for r in result])
