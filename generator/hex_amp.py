@@ -20,7 +20,7 @@ from jinja2 import Environment, FileSystemLoader
 
 node_path = {
     0: "M -80,-125, L -100,-90 L -60,-90 L -60,-78 L -50,-78, L -35,-105 L -45,-125 Z",
-    3: "M -100,-90 L -120,-50, L -65,-50 L -50,-78"
+    3: "M -100,-90 L {},-50, L -65,-50 L -50,-78".format(-100 - 160. / 7)
 }
 
 def runInParallel(*fns):
