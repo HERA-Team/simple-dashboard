@@ -284,22 +284,23 @@ def make_hex(
         if node == -1:
             continue
         node_index = np.where(node_ind == node)[0]
-        shape = {
-            "type": "circle",
-            "xref": "x",
-            "yref": "y",
-            "x0": np.min(xs[node_index]),
-            "y0": np.min(ys[:, node_index]),
-            "x1": np.max(xs[node_index]),
-            "y1": np.max(ys[:, node_index]),
-            "opacity": 0.2,
-            "layer": "below",
-            # "fillcolor": 'blue',
-            # "line": {
-            # "color": 'blue'
-            # }
-        }
-        layout_hex["shapes"].append(shape)
+        if not np.logial_or(xs[node_index].mask.all(), ys[:, node_index].mask.all()):
+            shape = {
+                "type": "circle",
+                "xref": "x",
+                "yref": "y",
+                "x0": np.min(xs[node_index]),
+                "y0": np.min(ys[:, node_index]),
+                "x1": np.max(xs[node_index]),
+                "y1": np.max(ys[:, node_index]),
+                "opacity": 0.2,
+                "layer": "below",
+                # "fillcolor": 'blue',
+                # "line": {
+                # "color": 'blue'
+                # }
+            }
+            layout_hex["shapes"].append(shape)
 
     caption = {}
     caption["title"] = "Stats vs Hex pos Help"
