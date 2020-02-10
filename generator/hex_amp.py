@@ -18,6 +18,9 @@ from hera_mc import mc, cm_sysutils
 from astropy.time import Time
 from jinja2 import Environment, FileSystemLoader
 
+node_path = {
+    0: "M -80,-125, L -100,-90 L -60,-90 L -60,-78 L -50,-78, L -35,-105 L -45,-125 Z"
+}
 
 def runInParallel(*fns):
     proc = []
@@ -280,27 +283,19 @@ def make_hex(
     }
     layout_hex["shapes"] = []
 
-    # for node in nodes:
-    #     if node == -1:
-    #         continue
-    #     node_index = np.where(node_ind == node)[0]
-    #     if not np.logical_or(xs[node_index].mask.all(), ys[:, node_index].mask.all()):
-    #         shape = {
-    #             "type": "circle",
-    #             "xref": "x",
-    #             "yref": "y",
-    #             "x0": np.min(xs.data[node_index]),
-    #             "y0": np.min(ys.data[:, node_index]),
-    #             "x1": np.max(xs.data[node_index]),
-    #             "y1": np.max(ys.data[:, node_index]),
-    #             "opacity": 0.2,
-    #             "layer": "below",
-    #             # "fillcolor": 'blue',
-    #             # "line": {
-    #             # "color": 'blue'
-    #             # }
-    #         }
-    #         layout_hex["shapes"].append(shape)
+    for node in nodes:
+        if node in node_path:
+            shape = {
+                "type": "path",
+                "path": node_path[node],
+                "opacity": 0.2,
+                "layer": "below",
+                # "fillcolor": 'blue',
+                # "line": {
+                # "color": 'blue'
+                # }
+            }
+            layout_hex["shapes"].append(shape)
 
     caption = {}
     caption["title"] = "Stats vs Hex pos Help"
