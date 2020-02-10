@@ -283,15 +283,15 @@ def make_hex(
     for node in nodes:
         if node == -1:
             continue
-        node_ind = np.where(node_ind == node)[0]
+        node_index = np.where(node_ind == node)[0]
         shape = {
-            "type": 'circle',
-            "xref": 'x',
-            "yref": 'y',
-            "x0": np.min(xs[node_ind]),
-            "y0": np.min(ys[:, node_ind]),
-            "x1": np.max(xs[node_ind]),
-            "y1": np.max(ys[:, node_ind]),
+            "type": "circle",
+            "xref": "x",
+            "yref": "y",
+            "x0": np.min(xs[node_index]),
+            "y0": np.min(ys[:, node_index]),
+            "x1": np.max(xs[node_index]),
+            "y1": np.max(ys[:, node_index]),
             "opacity": 0.2,
             "layer": "below",
             # "fillcolor": 'blue',
