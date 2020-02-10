@@ -118,6 +118,8 @@ def make_hex(
     built_but_not_on,
     xs,
     ys,
+    nodes,
+    node_ind,
     _text,
     env,
     latest,
@@ -276,6 +278,29 @@ def make_hex(
         "showlegend": False,
         "hovermode": "closest",
     }
+    layout_hex["shapes"] = []
+
+    for node in nodes:
+        if node == -1:
+            continue
+        node_ind = np.where(node_ind == node)[0]
+        shape = {
+            "type": 'circle',
+            "xref": 'x',
+            "yref": 'y',
+            "x0": np.min(xs[:, node_ind]),
+            "y0": np.min(ys[:, node_ind]),
+            "x1": np.max(xs[:, node_ind]),
+            "y1": np.max(ys[:, node_ind]),
+            "opacity": 0.2,
+            "layer": "below",
+            # "fillcolor": 'blue',
+            # "line": {
+            # "color": 'blue'
+            # }
+        }
+        layout_hex["shapes"].append(shape)
+
     caption = {}
     caption["title"] = "Stats vs Hex pos Help"
     caption["text"] = (
@@ -935,6 +960,8 @@ def main():
                 built_but_not_on,
                 xs,
                 ys,
+                nodes,
+                node_ind,
                 _text,
                 env,
                 latest,
