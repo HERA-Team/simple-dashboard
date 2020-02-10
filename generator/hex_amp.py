@@ -284,7 +284,7 @@ def make_hex(
         if node == -1:
             continue
         node_index = np.where(node_ind == node)[0]
-        if not np.logial_or(xs[node_index].mask.all(), ys[:, node_index].mask.all()):
+        if not np.logical_or(xs[node_index].mask.all(), ys[:, node_index].mask.all()):
             shape = {
                 "type": "circle",
                 "xref": "x",
