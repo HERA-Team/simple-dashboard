@@ -280,27 +280,27 @@ def make_hex(
     }
     layout_hex["shapes"] = []
 
-    for node in nodes:
-        if node == -1:
-            continue
-        node_index = np.where(node_ind == node)[0]
-        if not np.logical_or(xs[node_index].mask.all(), ys[:, node_index].mask.all()):
-            shape = {
-                "type": "circle",
-                "xref": "x",
-                "yref": "y",
-                "x0": np.min(xs[node_index]),
-                "y0": np.min(ys[:, node_index]),
-                "x1": np.max(xs[node_index]),
-                "y1": np.max(ys[:, node_index]),
-                "opacity": 0.2,
-                "layer": "below",
-                # "fillcolor": 'blue',
-                # "line": {
-                # "color": 'blue'
-                # }
-            }
-            layout_hex["shapes"].append(shape)
+    # for node in nodes:
+    #     if node == -1:
+    #         continue
+    #     node_index = np.where(node_ind == node)[0]
+    #     if not np.logical_or(xs[node_index].mask.all(), ys[:, node_index].mask.all()):
+    #         shape = {
+    #             "type": "circle",
+    #             "xref": "x",
+    #             "yref": "y",
+    #             "x0": np.min(xs.data[node_index]),
+    #             "y0": np.min(ys.data[:, node_index]),
+    #             "x1": np.max(xs.data[node_index]),
+    #             "y1": np.max(ys.data[:, node_index]),
+    #             "opacity": 0.2,
+    #             "layer": "below",
+    #             # "fillcolor": 'blue',
+    #             # "line": {
+    #             # "color": 'blue'
+    #             # }
+    #         }
+    #         layout_hex["shapes"].append(shape)
 
     caption = {}
     caption["title"] = "Stats vs Hex pos Help"
