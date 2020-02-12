@@ -317,7 +317,7 @@ def do_compare_file_types(TIME_WINDOW):
         )
         return
 
-    sum_jd = Time([float(re.findall(sum_regex, f)[0]) for f in raw_names], format="jd")
+    sum_jd = Time([float(re.findall(sum_regex, f)[0]) for f in sum_names], format="jd")
     diff_jd = Time(
         [float(re.findall(diff_regex, f)[0]) for f in diff_names], format="jd"
     )
