@@ -296,11 +296,11 @@ def do_compare_file_types(TIME_WINDOW):
     timesteps = np.linspace(-1 * TIME_WINDOW, 0, 24 * 14 * 6, endpoint=True)
     time_array = Time.now() + TimeDelta(timesteps, format="jd")
     _data = []
-    raw_regex = r"zen.(\d+.\d+).uvh5"
-    processed_regex = r"zen.(\d+.\d+).HH.uvh5"
+    sum_regex = r"zen.(\d+.\d+).sum.uvh5"
+    diff_regex = r"zen.(\d+.\d+).diff.uvh5"
     data_dir = "/mnt/sn1/"
     try:
-        raw_names = [f for f in os.listdir(data_dir) if re.search(raw_regex, f)]
+        sum_names = [f for f in os.listdir(data_dir) if re.search(sum_regex, f)]
     except OSError as err:
         print(
             "Experienced OSError while " "attempting to find files: {err}".format(err)
@@ -308,8 +308,8 @@ def do_compare_file_types(TIME_WINDOW):
         return
 
     try:
-        processed_names = [
-            f for f in os.listdir(data_dir) if re.search(processed_regex, f)
+        diff_names = [
+            f for f in os.listdir(data_dir) if re.search(diff_regex, f)
         ]
     except OSError as err:
         print(
@@ -317,34 +317,34 @@ def do_compare_file_types(TIME_WINDOW):
         )
         return
 
-    raw_jd = Time([float(re.findall(raw_regex, f)[0]) for f in raw_names], format="jd")
-    proc_jd = Time(
-        [float(re.findall(processed_regex, f)[0]) for f in processed_names], format="jd"
+    sum_jd = Time([float(re.findall(sum_regex, f)[0]) for f in raw_names], format="jd")
+    diff_jd = Time(
+        [float(re.findall(diff_regex, f)[0]) for f in diff_names], format="jd"
     )
 
     # try to find the times they were created
-    raw_times = Time(
-        [creation_date(os.path.join(data_dir, n)) for n in raw_names], format="unix"
+    sum_times = Time(
+        [creation_date(os.path.join(data_dir, n)) for n in sum_names], format="unix"
     )
 
-    hh_times = Time(
-        [creation_date(os.path.join(data_dir, n)) for n in processed_names],
+    diff_times = Time(
+        [creation_date(os.path.join(data_dir, n)) for n in diff_names],
         format="unix",
     )
     # Only consider processed files if their JD is equal to or newer than
     # the oldest raw file
-    hh_times = hh_times[proc_jd >= raw_jd.min()]
+    hh_times = diff_times[diff_jd >= sum_jd.min()]
 
     n_files_raw = []
     n_files_processed = []
     for _t in time_array:
-        n_files_raw.append(int(sum(list(_t >= raw_times))))
+        n_files_raw.append(int(sum(list(_t >= sum_times))))
         n_files_processed.append(int(sum(list(_t >= hh_times))))
 
     __data = {
         "x": time_array.isot.tolist(),
         "y": n_files_raw,
-        "name": "Raw files".replace(" ", "\t"),
+        "name": "Sum files".replace(" ", "\t"),
         "type": "scatter",
     }
 
@@ -353,7 +353,7 @@ def do_compare_file_types(TIME_WINDOW):
     __data = {
         "x": time_array.isot.tolist(),
         "y": n_files_processed,
-        "name": "Processed files".replace(" ", "\t"),
+        "name": "Diff files".replace(" ", "\t"),
         "type": "scatter",
     }
 
