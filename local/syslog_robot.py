@@ -50,10 +50,16 @@ while True:
         # Try to get 50 messages at a time
         # this loop blocks for 1s if there are no messages.
         for mess in ps.listen():
-            message = json.loads(mess["data"])["formatted"]
-            if not any(h in message for h in ["hera_corr_f", "hera_snap_redis_monitor"]):
-                input = message.split(":")[0]
-                syslog.syslog(priority_dict[severity_dict[input]], message)
+            if (
+                mess["type"] != "subscribe"
+                and mess["channel"] == args.channel
+                # messages come as byte strings, make sure an error didn't occur
+                and mess["data"].decode() != "UnicodeDecodeError on emit!"
+            ):
+                message = json.loads(mess["data"])["formatted"]
+                if not any(h in message for h in ["hera_corr_f", "hera_snap_redis_monitor"]):
+                    input = message.split(":")[0]
+                    syslog.syslog(priority_dict[severity_dict[input]], message)
 
     except KeyboardInterrupt:
         ps.close()
