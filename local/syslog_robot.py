@@ -47,8 +47,6 @@ severity_dict = {
 last_command_id = None
 while True:
     try:
-        # Try to get 50 messages at a time
-        # this loop blocks for 1s if there are no messages.
         for mess in ps.listen():
             if (
                 mess["type"] != "subscribe"
@@ -66,6 +64,6 @@ while True:
         exit()
     except Exception as e:
         print("An unexpected error occured!")
-        raise e
+        syslog.syslog(priority_dict["LOG_ERROR", e)
         time.sleep(1)
         continue
