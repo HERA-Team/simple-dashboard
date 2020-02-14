@@ -27,7 +27,7 @@ ps = r.pubsub()
 
 ps.subscribe("log-channel")
 
-priority_dict ={
+priority_dict = {
     "LOG_EMERG": 0,
     "LOG_ALERT": 1,
     "LOG_CRIT": 2,
@@ -52,11 +52,14 @@ while True:
         for mess in ps.listen():
             message = json.loads(mess["data"])["formatted"]
             if not any(h in message for h in ["hera_corr_f", "hera_snap_redis_monitor"]):
+                input = message.split(":")[0]
                 syslog.syslog(priority_dict[severity_dict[input]], message)
 
     except KeyboardInterrupt:
         ps.close()
         exit()
-    except:
+    except Exception as e:
         print("An unexpected error occured!")
+        raise e
         time.sleep(1)
+        continue
