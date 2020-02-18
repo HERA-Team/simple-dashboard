@@ -64,6 +64,6 @@ while True:
         exit()
     except Exception as e:
         print("An unexpected error occured!")
-        syslog.syslog(priority_dict["LOG_ERR"], e)
+        syslog.syslog(priority_dict["LOG_ERR"], str(e))
         time.sleep(1)
         continue
