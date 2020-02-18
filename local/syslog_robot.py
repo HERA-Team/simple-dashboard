@@ -49,8 +49,8 @@ while True:
     try:
         for mess in ps.listen():
             if (
-                mess["type"] != "subscribe"
-                and mess["channel"] == args.channel
+                mess is not None
+                and mess["type"] != "subscribe"
                 # messages come as byte strings, make sure an error didn't occur
                 and mess["data"].decode() != "UnicodeDecodeError on emit!"
             ):
@@ -63,7 +63,8 @@ while True:
         ps.close()
         exit()
     except Exception as e:
-        print("An unexpected error occured!")
-        syslog.syslog(priority_dict["LOG_ERR"], str(e))
+        if not str(e).startswith("'NoneType' object has no attribute 'readline'"):
+            syslog.syslog(priority_dict["LOG_ERR"], str(e))
+            print("An unexpected error occured!")
         time.sleep(1)
         continue
