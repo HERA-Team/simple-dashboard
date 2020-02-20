@@ -57,7 +57,10 @@ while True:
                 message = json.loads(mess["data"])["formatted"]
                 if not any(h in message for h in ["hera_corr_f", "hera_snap_redis_monitor"]):
                     input = message.split(":")[0]
-                    syslog.syslog(priority_dict[severity_dict[input]], message)
+                    try:
+                        syslog.syslog(priority_dict[severity_dict[input]], message)
+                    except KeyError:
+                        syslog.syslog(priority_dict["LOG_INFO"], message)
 
     except KeyboardInterrupt:
         ps.close()
