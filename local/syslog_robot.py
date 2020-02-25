@@ -19,13 +19,8 @@ parser.add_argument(
 )
 
 args = parser.parse_args()
+pool = redis.ConnectionPool(host=args.redishost)
 
-print(f"Connecting to redis server {args.redishost}")
-r = redis.Redis(args.redishost)
-
-ps = r.pubsub()
-
-ps.subscribe("log-channel")
 
 priority_dict = {
     "LOG_EMERG": 0,
@@ -47,6 +42,10 @@ severity_dict = {
 last_command_id = None
 while True:
     try:
+        print(f"Connecting to redis server {args.redishost}")
+        r = redis.Redis(connection_pool=pool)
+        ps = r.pubsub()
+        ps.subscribe("log-channel")
         for mess in ps.listen():
             if (
                 mess is not None
@@ -70,4 +69,5 @@ while True:
             syslog.syslog(priority_dict["LOG_ERR"], str(e))
             print("An unexpected error occured!")
         time.sleep(1)
+        ps.close()
         continue
