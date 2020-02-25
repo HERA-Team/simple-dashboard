@@ -70,4 +70,5 @@ while True:
             print("An unexpected error occured!")
         time.sleep(1)
         ps.close()
+        del r
         continue
