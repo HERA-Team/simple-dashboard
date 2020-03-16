@@ -128,10 +128,14 @@ setInterval(reloadradiosky, 30000);
               <li><a href="http://heranow.reionization.org/snapspectra.html">SNAP Spectra</a></li>
   	    </ul>
       </li>
-
-       <li>
-         <a  class="btn btn-secondary" href=https://enterprise.sese.asu.edu:8484/d/f3tDVE7Zk/dashboards>Grafana Dashboards</a>
-       </li>
+      <li class="dropdown">
+        <a href="#" class="btn btn-secondary dropdown-toggle" data-toggle="dropdown">Time Domain Data
+           <b class="caret"></b></a>
+       <ul class="dropdown-menu">
+         <li><a target="_blank" class="btn btn-secondary" href=https://enterprise.sese.asu.edu:8484/d/f3tDVE7Zk/dashboards>Grafana Dashboards</a></li>
+         <li><a target="_blank" class="btn btn-secondary" href=https://galileo.sese.asu.edu:8888>Chronograf Dashboards</a></li>
+       </ul>
+     </li>
        <li>
          <a  class="btn btn-secondary" href=https://github.com/HERA-Team/H3C_plots>Daily Notebooks</a>
        </li>
