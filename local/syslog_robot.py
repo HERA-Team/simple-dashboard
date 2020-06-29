@@ -65,7 +65,13 @@ while True:
         ps.close()
         exit()
     except Exception as e:
-        if not str(e).startswith("'NoneType' object has no attribute 'readline'"):
+        if not any(
+            str(e).startswith(err)
+            for err in [
+                "'NoneType' object has no attribute 'readline'",
+                "Connection closed by server."
+            ]
+        ):
             syslog.syslog(priority_dict["LOG_ERR"], str(e))
             print("An unexpected error occured!")
         time.sleep(1)
