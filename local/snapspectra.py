@@ -118,17 +118,18 @@ def main():
             auto_group = snapautos.setdefault(host, {})
 
             try:
-                tmp_auto = np.array(all_snaprf_stats[snap_chan]["autocorrelation"])
+                tmp_auto = all_snaprf_stats[snap_chan]["autocorrelation"]
                 if np.all(tmp_auto == "None") or tmp_auto is None:
                     print("No Data for {} port {}".format(host, loc_num))
                     bad_snaps.append(snap_chan)
                     tmp_auto = np.full(1024, np.nan)
 
-                eq_coeffs = np.array(all_snaprf_stats[snap_chan]["eq_coeffs"])
+                eq_coeffs = all_snaprf_stats[snap_chan]["eq_coeffs"]
                 if np.all(eq_coeffs == "None") or eq_coeffs is None:
                     eq_coeffs = np.full_like(tmp_auto, 1.0)
 
-                tmp_auto /= eq_coeffs**2
+                tmp_auto = np.asarray(tmp_auto)
+                tmp_auto /= np.asarray(eq_coeffs)**2
                 tmp_auto = np.ma.masked_invalid(10 * np.log10(np.real(tmp_auto)))
                 auto_group[loc_num] = tmp_auto.filled(-50)
 
