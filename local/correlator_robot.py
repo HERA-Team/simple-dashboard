@@ -32,7 +32,6 @@ r = redis.Redis(args.redishost)
 
 ps = r.pubsub()
 
-ps.subscribe("log-channel")
 
 try:
     channel_id = None
@@ -48,6 +47,7 @@ last_command_id = None
 post_cnt = 0
 while True:
     try:
+        ps.subscribe("log-channel")
         # Try to get 50 messages at a time
         # this loop blocks for 1s if there are no messages.
         message = ""
