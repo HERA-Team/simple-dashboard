@@ -119,13 +119,13 @@ def main():
 
             try:
                 tmp_auto = np.array(all_snaprf_stats[snap_chan]["autocorrelation"])
-                if np.all(tmp_auto == "None"):
+                if np.all(tmp_auto == "None") and tmp_auto is not None:
                     print("No Data for {} port {}".format(host, loc_num))
                     bad_snaps.append(snap_chan)
                     tmp_auto = np.full(1024, np.nan)
 
                 eq_coeffs = np.array(all_snaprf_stats[snap_chan]["eq_coeffs"])
-                if np.all(eq_coeffs == "None"):
+                if np.all(eq_coeffs == "None") and eq_coeffs is not None:
                     eq_coeffs = np.full_like(tmp_auto, 1.0)
 
                 tmp_auto /= eq_coeffs**2
