@@ -107,7 +107,7 @@ def do_server_loads(session, cutoff):
             "x": time_array,
             "y": [t[1] for t in data],
             "name": UI_HOSTNAMES.get(host, host),
-            "type": "scatter",
+            "type": "scattergl",
         }
 
         _data.append(__data)
@@ -133,7 +133,7 @@ def do_disk_space(session, cutoff):
         "x": time_array,
         "y": [t[1] for t in data],
         "name": "Data Volume".replace(" ", "\t"),
-        "type": "scatter",
+        "type": "scattergl",
     }
     _data.append(__data)
 
@@ -153,7 +153,7 @@ def do_disk_space(session, cutoff):
         "x": time_array,
         "y": [t[1] for t in data],
         "name": "Free space".replace(" ", "\t"),
-        "type": "scatter",
+        "type": "scattergl",
         "yaxis": "y2",
     }
     _data.append(__data)
@@ -180,7 +180,7 @@ def do_upload_ages(session, cutoff):
         "x": time_array,
         "y": [t[1] for t in data],
         "name": "Time since last upload".replace(" ", "\t"),
-        "type": "scatter",
+        "type": "scattergl",
     }
     _data.append(__data)
 
@@ -208,7 +208,7 @@ def do_bandwidths(session, cutoff):
             "x": time_array,
             "y": [t[1] for t in data],
             "name": ("{name} transfer rate".format(name=remote).replace(" ", "\t")),
-            "type": "scatter",
+            "type": "scattergl",
         }
         _data.append(__data)
 
@@ -235,7 +235,7 @@ def do_ping_times(session, cutoff):
             "x": time_array,
             "y": [1000 * t[1] for t in data],
             "name": "{name} ping time".format(name=remote).replace(" ", "\t"),
-            "type": "scatter",
+            "type": "scattergl",
         }
         _data.append(__data)
 
@@ -272,7 +272,7 @@ def do_num_files(session, cutoff):
         "x": time_array,
         "y": [t[1] for t in data],
         "name": "Total Number of files".replace(" ", "\t"),
-        "type": "scatter",
+        "type": "scattergl",
     }
 
     _data.append(__data)
@@ -345,7 +345,7 @@ def do_compare_file_types(TIME_WINDOW):
         "x": time_array.isot.tolist(),
         "y": n_files_raw,
         "name": "Sum files".replace(" ", "\t"),
-        "type": "scatter",
+        "type": "scattergl",
     }
 
     _data.append(__data)
@@ -354,7 +354,7 @@ def do_compare_file_types(TIME_WINDOW):
         "x": time_array.isot.tolist(),
         "y": n_files_processed,
         "name": "Diff files".replace(" ", "\t"),
-        "type": "scatter",
+        "type": "scattergl",
     }
 
     _data.append(__data)

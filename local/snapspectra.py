@@ -274,7 +274,8 @@ def main():
                              "y": snapautos[host][loc_num].tolist(),
                              "name": name,
                              "visible": visible,
-                             "hovertemplate": "%{x:.1f}\tMHz<br>%{y:.3f}\t[dB]"
+                             "hovertemplate": "%{x:.1f}\tMHz<br>%{y:.3f}\t[dB]",
+                             "type": "scattergl",
                              }
                 except KeyError:
                     print("Given host, location pair: ({0}, {1})".format(host, loc_num))
