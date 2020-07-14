@@ -179,7 +179,10 @@ def main():
                         and stat['host_ant_id'] != "None"):
                     hostname = stat['f_host']
                     loc_num = stat['host_ant_id']
-                    hostname_lookup[hostname][loc_num]['MC'] = name
+                    try:
+                        hostname_lookup[hostname][loc_num]['MC'] = name
+                    except KeyError:
+                        print(f"Unknown hostname {hostname} or loc_num {loc_num}")
                 else:
                     # Try to get the snap info from M&C. Output is a dictionary with 'e' and 'n' keys
                     # connect to M&C to find all the hooked up Snap hostnames and corresponding ant-pols
