@@ -118,7 +118,7 @@ def get_status(session, tablecls, hostnames, cutoff):
         net_array = [rec.network_bandwidth_mbs for rec in data]
         data_arrays = [load_array, tdiff_array, mem_array, disk_array, net_array]
         for pname, array in zip(data_dict.keys(), data_arrays):
-            _data = {"x": time_array, "y": array, "name": _name}
+            _data = {"x": time_array, "y": array, "name": _name, "type": "scattergl"}
             data_dict[pname].append(_data)
     return data_dict
 

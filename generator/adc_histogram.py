@@ -167,6 +167,7 @@ def main():
                         "node": _node_num,
                         "text": [text] * bins.size,
                         "hovertemplate": "(%{x:.1},\t%{y})<br>%{text}",
+                        "type": "scattergl",
                     }
                     hists.append(_data)
                 else:

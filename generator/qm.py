@@ -55,6 +55,7 @@ def do_ant_metric(
             "y": (np.ma.masked_invalid([t[1] for t in data]).filled(None).tolist()),
             "name": yname,
             "mode": ymode,
+            "type": "scattergl",
         }
     ]
     return _data
@@ -93,6 +94,7 @@ def do_xy_array_metric(
             "y": (np.ma.masked_invalid([t[1] for t in data]).filled(None).tolist()),
             "name": desc,
             "mode": ymode,
+            "type": "scattergl",
         }
         _data.append(__data)
 
