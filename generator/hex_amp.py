@@ -18,6 +18,7 @@ from hera_mc import mc, cm_sysutils
 from astropy.time import Time
 from jinja2 import Environment, FileSystemLoader
 
+# derivatives on the diagonals should be 35 / 20. 160/7 is scaled 40/x to 35/20
 node_path = {
     0: "M -80,-125, L -100,-90 L -60,-90 L -60,-78 L -50,-78, L -35,-105 L -45,-125 Z",
     3: "M -100,-90 L {},-50, L -65,-50 L -50,-78".format(-100 - 160. / 7)
@@ -225,6 +226,7 @@ def make_hex(
                 "text": _text[pol_ind][~power[pol_ind].mask].tolist(),
                 "mode": "markers",
                 "visible": visible,
+                "type": "scattergl",
                 "marker": {
                     "color": power[pol_ind].data[~power[pol_ind].mask].tolist(),
                     "size": 14,
@@ -243,6 +245,7 @@ def make_hex(
                 "text": _text[pol_ind][power[pol_ind].mask].tolist(),
                 "mode": "markers",
                 "visible": visible,
+                "type": "scattergl",
                 "marker": {
                     "color": "orange",
                     "size": 14,
@@ -485,6 +488,7 @@ def make_node(
                     "text": ___text[~__power.mask].tolist(),
                     "mode": "markers",
                     "visible": visible,
+                    "type": "scattergl",
                     "marker": {
                         "color": __power.data[~__power.mask].tolist(),
                         "size": 14,
@@ -504,6 +508,7 @@ def make_node(
                     "text": ___text[__power.mask].tolist(),
                     "mode": "markers",
                     "visible": visible,
+                    "type": "scattergl",
                     "marker": {
                         "color": "orange",
                         "size": 14,
