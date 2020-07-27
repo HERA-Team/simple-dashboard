@@ -121,8 +121,9 @@ def grab_spectra(
                         "y": auto.tolist(),
                         "name": linename,
                         "node": node_map[linename],
-                        "type": "scattergl",
+                        "type": "scatter",
                         "hovertemplate": "%{x:.1f}\tMHz<br>%{y:.3f}\t[dB]",
+                        "mode": "lines",
                     }
                     autospectra.append(_auto)
         r.close()
