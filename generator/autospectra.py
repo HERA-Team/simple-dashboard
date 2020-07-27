@@ -305,7 +305,7 @@ def main():
                 },
             ],
             "label": label,
-            "method": "update",
+            "method": "restyle",
         }
         buttons.append(_button)
 
