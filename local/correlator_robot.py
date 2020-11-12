@@ -112,6 +112,15 @@ while True:
     except KeyboardInterrupt:
         ps.close()
         exit()
-    except:
-        print("An unexpected error occured!")
+    except Exception as e:
+        if not any(
+            str(e).startswith(err)
+            for err in [
+                "'NoneType' object has no attribute 'readline'",
+                "Connection closed by server."
+            ]
+        ):
+            print("An unexpected error occured!", str(e))
+        ps.close()
         time.sleep(1)
+        continue
