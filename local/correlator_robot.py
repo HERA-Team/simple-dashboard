@@ -35,7 +35,7 @@ ps = r.pubsub()
 
 try:
     channel_id = None
-    for channel in json.loads(slack.channels.list().raw)["channels"]:
+    for channel in json.loads(slack.conversations.list().raw)["channels"]:
         if channel["name_normalized"] == slack_chan.lstrip("#"):
             channel_id = channel["id"]
     if channel_id is not None:
@@ -65,7 +65,7 @@ while True:
             time.sleep(1)
         post_cnt += 1
 
-        s_mess = slack.channels.history(channel_id, count=2)
+        s_mess = slack.conversations.history(channel_id, limit=2)
         if not s_mess.successful:
             print("Not ok")
         else:
