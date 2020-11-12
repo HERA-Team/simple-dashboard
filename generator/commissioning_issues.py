@@ -300,13 +300,30 @@ if __name__ == "__main__":
         action="store_true",
         help=("Print all Daily issues even if outside of " "the input time window."),
     )
+    parser.add_argument(
+        "--ntries",
+        "-n",
+        dest="n_tries",
+        default=5,
+        help="The number of attempts to scrape issue log before raising error."
+
+    )
     args = parser.parse_args()
 
-    main(
-        pem_file=args.pem_file[0],
-        app_id_file=args.app_id_file[0],
-        repo_owner=args.repo_owner,
-        repo_name=args.repo_name,
-        time_window=args.time_window,
-        all_issues=args.all_issues,
-    )
+    for i in range(args.n_tries):
+        try:
+            main(
+                pem_file=args.pem_file[0],
+                app_id_file=args.app_id_file[0],
+                repo_owner=args.repo_owner,
+                repo_name=args.repo_name,
+                time_window=args.time_window,
+                all_issues=args.all_issues,
+            )
+            break
+        except Exception as e:
+            print(f"Attempt {i + 1:d} received error {e}.")
+            if i < args.n_tries - 1:
+                continue
+            else:
+                raise e

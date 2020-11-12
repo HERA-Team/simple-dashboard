@@ -9,6 +9,9 @@ from __future__ import absolute_import, division, print_function
 
 import os
 import sys
+import json
+import copy
+import numpy as np
 from astropy.time import Time, TimeDelta
 from hera_mc import mc
 from hera_mc.librarian import LibServerStatus
@@ -78,6 +81,17 @@ UI_HOSTNAMES = {
     "bigmem2.rtp.pvt": "bigmem2",
 }
 
+def is_list(value):
+    return isinstance(value, list)
+
+def listify(input):
+    if isinstance(input, (list, tuple, np.ndarray)):
+        return input
+    else:
+        return [input]
+
+def index_in(indexable, i):
+    return indexable[i]
 
 def get_status(session, tablecls, hostnames, cutoff):
     data_dict = {
@@ -104,7 +118,7 @@ def get_status(session, tablecls, hostnames, cutoff):
         net_array = [rec.network_bandwidth_mbs for rec in data]
         data_arrays = [load_array, tdiff_array, mem_array, disk_array, net_array]
         for pname, array in zip(data_dict.keys(), data_arrays):
-            _data = {"x": time_array, "y": array, "name": _name}
+            _data = {"x": time_array, "y": array, "name": _name, "type": "scattergl"}
             data_dict[pname].append(_data)
     return data_dict
 
@@ -118,6 +132,9 @@ def main():
     template_dir = os.path.join(split_dir[0], "templates")
 
     env = Environment(loader=FileSystemLoader(template_dir), trim_blocks=True)
+    env.filters["islist"] = is_list
+    env.filters["index"] = index_in
+    env.filters["listify"] = listify
     if sys.version_info[0] < 3:
         # py2
         computer_hostname = os.uname()[1]
@@ -184,13 +201,14 @@ def main():
     caption["title"] = "Compute Help"
 
     html_template = env.get_template("plotly_base.html")
+    basename="compute"
     rendered_html = html_template.render(
         plotname=plotnames,
         plotstyle="height: 19.5%",
         colsize=colsize,
         gen_date=now.iso,
         gen_time_unix_ms=now.unix * 1000,
-        js_name="compute",
+        js_name=basename,
         hostname=computer_hostname,
         scriptname=os.path.basename(__file__),
         caption=caption,
@@ -227,24 +245,29 @@ def main():
             "bandwidth": "Network I/O",
             "timediff": "M&C time diff. ",
         }
+        name_list = []
+        layout_list = []
+        json_name_list = []
         for server_type, data_dict in zip(["lib", "rtp"], [lib_data, rtp_data]):
-            js_template = env.get_template("plotly_base.js")
 
             for pname in ["load", "disk", "mem", "bandwidth", "timediff"]:
-                layout["yaxis"]["title"] = yaxis_titles[pname]
-                layout["title"]["text"] = server_type + " " + titles[pname]
-                _name = server_type + "-" + pname
-                rendered_js = js_template.render(
-                    plotname=_name, data=data_dict[pname], layout=layout
-                )
-                if _name == "lib-load":
-                    open_type = "w"
-                else:
-                    open_type = "a"
+                _layout = copy.deepcopy(layout)
+                _layout["yaxis"]["title"] = yaxis_titles[pname]
+                _layout["title"]["text"] = server_type + " " + titles[pname]
+                layout_list.append(_layout)
+                name_list.append(server_type + "-" + pname)
+                json_name = "_".join([basename, server_type, pname])
+                json_name_list.append(json_name)
+                with open("{}.json".format(json_name), "w") as json_file:
+                    json.dump(data_dict[pname], json_file)
 
-                with open("compute.js", open_type) as js_file:
-                    js_file.write(rendered_js)
-                    js_file.write("\n\n")
+        js_template = env.get_template("plotly_base.js")
+        rendered_js = js_template.render(
+            json_name=json_name_list, plotname=name_list, layout=layout_list
+        )
+
+        with open("{}.js".format(basename), "w") as js_file:
+            js_file.write(rendered_js)
 
 
 if __name__ == "__main__":

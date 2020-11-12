@@ -8,14 +8,43 @@
 from __future__ import absolute_import, division, print_function
 
 import os
-import sys
-import numpy as np
 import re
+import sys
+import json
 import redis
+import numpy as np
+from multiprocessing import Process
 from hera_mc import mc, cm_sysutils
 from astropy.time import Time
 from jinja2 import Environment, FileSystemLoader
 
+# derivatives on the diagonals should be 35 / 20. 160/7 is scaled 40/x to 35/20
+node_path = {
+    0: "M -80,-125, L -100,-90 L -60,-90 L -60,-78 L -50,-78, L -35,-105 L -45,-125 Z",
+    3: "M -100,-90 L {},-50, L -65,-50 L -50,-78".format(-100 - 160. / 7)
+}
+
+def runInParallel(*fns):
+    proc = []
+    for fn in fns:
+        p = Process(target=fn[0], args=fn[1])
+        p.start()
+        proc.append(p)
+    for p in proc:
+        p.join()
+
+
+def is_list(value):
+    return isinstance(value, list)
+
+def listify(input):
+    if isinstance(input, (list, tuple, np.ndarray)):
+        return input
+    else:
+        return [input]
+
+def index_in(indexable, i):
+    return indexable[i]
 
 def write_csv(filename, antnames, ants, pols, stat_names, stats, built_but_not_on):
     """Write out antenna stats to csv file.
@@ -86,6 +115,519 @@ def write_csv(filename, antnames, ants, pols, stat_names, stats, built_but_not_o
                 csv_file.write("\n")
     return
 
+def make_hex(
+    powers,
+    xs_offline,
+    ys_offline,
+    name_offline,
+    built_but_not_on,
+    xs,
+    ys,
+    nodes,
+    node_ind,
+    _text,
+    env,
+    latest,
+    pols,
+    computer_hostname,
+    names
+):
+    masks = [[True] for p in powers]
+
+    # Offline antennas
+    data_hex = []
+    offline_ants = {
+        "x": xs_offline.compressed().tolist(),
+        "y": ys_offline.compressed().tolist(),
+        "text": name_offline,
+        "mode": "markers",
+        "visible": True,
+        "marker": {
+            "color": np.ma.masked_array(
+                ["black"] * len(name_offline), mask=xs_offline.mask
+            ),
+            "size": 14,
+            "opacity": 0.5,
+            "symbol": "hexagon",
+        },
+        "hovertemplate": "%{text}<extra></extra>",
+    }
+    # now we want to Fill in the conneted ones
+    offline_ants["marker"]["color"][built_but_not_on] = "red"
+    offline_ants["text"].data[built_but_not_on] = [
+        offline_ants["text"].data[ant].split("<br>")[0]
+        + "<br>Constructed<br>Not\tOnline"
+        for ant in built_but_not_on
+    ]
+
+    offline_ants["marker"]["color"] = (
+        offline_ants["marker"]["color"].compressed().tolist()
+    )
+    offline_ants["text"] = offline_ants["text"].compressed().tolist()
+    data_hex.append(offline_ants)
+
+    #  for each type of power, loop over pols and print out the data
+    #  save up a mask array used for the buttons later
+    #  also plot the bad ones!3
+    colorscale = "Viridis"
+
+    # define some custom scale values for the ADC RMS page
+    rms_scale_vals = [2, 20]
+    relavitve_values = [0.4, 0.7]
+    rms_color_scale = [
+        ["0.0", "rgb(68,1,84)"],
+        ["0.2", "rgb(62,74,137)"],
+        ["0.3", "rgb(38,130,142)"],
+        ["0.4", "rgb(53,183,121)"],
+        ["0.5", "rgb(53,183,121)"],
+        ["0.6", "rgb(53,183,121)"],
+        ["0.7", "rgb(109,205,89)"],
+        ["0.8", "rgb(180,222,44)"],
+        ["1.0", "rgb(253,231,37)"],
+    ]
+
+    for pow_ind, power in enumerate(powers):
+        if power.compressed().size > 0:
+            vmax = np.max(power.compressed())
+            vmin = np.min(power.compressed())
+        else:
+            vmax = 1
+            vmin = 0
+
+        colorscale = "Viridis"
+
+        if pow_ind == 3:
+            cbar_title = "RMS\tlinear"
+            vmin = rms_scale_vals[0] * relavitve_values[0]
+            vmax = rms_scale_vals[1] / relavitve_values[1]
+            colorscale = rms_color_scale
+        elif pow_ind == 4 or pow_ind == 5:
+            cbar_title = "Degrees"
+        elif pow_ind == len(powers) - 1:
+            cbar_title = "Median\tCoeff"
+        else:
+            cbar_title = "dB"
+
+        if pow_ind == 0:
+            visible = True
+        else:
+            visible = False
+
+        for pol_ind, pol in enumerate(pols):
+            for mask_cnt, mask in enumerate(masks):
+                if mask_cnt == pow_ind:
+                    mask.extend([True] * 2)
+                else:
+                    mask.extend([False] * 2)
+
+            _power = {
+                "x": xs.data[~power[pol_ind].mask].tolist(),
+                "y": ys[pol_ind].data[~power[pol_ind].mask].tolist(),
+                "text": _text[pol_ind][~power[pol_ind].mask].tolist(),
+                "mode": "markers",
+                "visible": visible,
+                "type": "scattergl",
+                "marker": {
+                    "color": power[pol_ind].data[~power[pol_ind].mask].tolist(),
+                    "size": 14,
+                    "cmin": vmin,
+                    "cmax": vmax,
+                    "colorscale": colorscale,
+                    "colorbar": {"thickness": 20, "title": cbar_title},
+                },
+                "hovertemplate": "%{text}<extra></extra>",
+            }
+            data_hex.append(_power)
+
+            _power_offline = {
+                "x": xs.data[power[pol_ind].mask].tolist(),
+                "y": ys[pol_ind].data[power[pol_ind].mask].tolist(),
+                "text": _text[pol_ind][power[pol_ind].mask].tolist(),
+                "mode": "markers",
+                "visible": visible,
+                "type": "scattergl",
+                "marker": {
+                    "color": "orange",
+                    "size": 14,
+                    "cmin": vmin,
+                    "cmax": vmax,
+                    "colorscale": colorscale,
+                    "colorbar": {"thickness": 20, "title": cbar_title},
+                },
+                "hovertemplate": "%{text}<extra></extra>",
+            }
+            data_hex.append(_power_offline)
+
+    buttons = []
+    for _name, mask in zip(names, masks):
+        _button = {
+            "args": [{"visible": mask}, {"title": "", "annotations": {}}],
+            "label": _name,
+            "method": "restyle",
+        }
+        buttons.append(_button)
+
+    updatemenus_hex = [{"buttons": buttons, "showactive": True, "type": "buttons"}]
+
+    layout_hex = {
+        "xaxis": {"title": "East-West Position [m]"},
+        "yaxis": {
+            "title": "North-South Position [m]",
+            "scaleanchor": "x"
+        },
+        "title": {
+            "text": "Per Antpol Stats vs Hex position",
+            "font": {"size": 24},
+        },
+        "hoverlabel": {"align": "left"},
+        "margin": {"t": 40},
+        "autosize": True,
+        "showlegend": False,
+        "hovermode": "closest",
+    }
+    layout_hex["shapes"] = []
+
+    for node in node_path:
+        shape = {
+            "type": "path",
+            "path": node_path[node],
+            "opacity": 0.2,
+            "layer": "below",
+            # "fillcolor": 'blue',
+            # "line": {
+            # "color": 'blue'
+            # }
+        }
+        layout_hex["shapes"].append(shape)
+
+    caption = {}
+    caption["title"] = "Stats vs Hex pos Help"
+    caption["text"] = (
+        "This plot shows various statistics and measurements "
+        "per ant-pol versus its position in the array."
+        "<br>Antennas which are build but not fully hooked up "
+        "are shown in light red."
+        "<br>Grey antennas are not yet constructed."
+        "<br><br><h4>Available plotting options</h4>"
+        "<ul>"
+        "<li>Auto Corr - Median Auto Correlation (in db) "
+        "from the correlator with equalization coefficients "
+        "divided out</li>"
+        "<li>Pam Power - Latest Pam Power (in db) recorded in M&C</li>"
+        "<li>ADC Power - Latest ADC Power (in db) recorded in M&C</li>"
+        "<li>ADC RMS - Latest linear ADC RMS recorded in M&C</li>"
+        "<li>FEM IMU THETA - IMU-reported theta, in degrees</li>"
+        "<li>FEM IMU PHI - IMU-reported phi, in degrees</li>"
+        "<li>EQ Coeffs - Latest Median Equalization Coefficient recorded in M&C</li>"
+        "</ul>"
+        "Any antpol showing with an orange color means "
+        "no data is avaible for the currenty plot selection."
+        "<h4>Hover label Formatting</h4>"
+        "<ul>"
+        "<li>Antenna Name from M&C<br>(e.g. HH0n = Hera Hex Antenna 0 Polarization N)</li>"
+        "<li>Snap hostname from M&C<br>(e.g. heraNode0Snap0)</li>"
+        "<li>PAM Number</li>"
+        "<li>Median Auto Correlation power in dB</li>"
+        "<li>PAM power in dB</li>"
+        "<li>ADC power in dB</li>"
+        "<li>Linear ADC RMS</li>"
+        "<li>FEM IMU reported theta in degrees</li>"
+        "<li>FEM IMU reported phi in degrees</li>"
+        "<li>Median Equalization Coefficient</li>"
+        "<li>Time ago in hours the M&C Antenna Status was updated. "
+        "This time stamp applies to all data for this antenna "
+        "except the Auto Correlation.</li>"
+        "</ul>"
+        "In any hover label entry 'No Data' means "
+        "information not currrently available in M&C."
+    )
+
+    # Render all the power vs position files
+    plotname = "plotly-hex"
+    html_template = env.get_template("plotly_base.html")
+    js_template = env.get_template("plotly_base.js")
+
+    if sys.version_info.minor >= 8 and sys.version_info.major > 2:
+        time_jd = latest.to_value('jd', subfmt='float')
+        time_unix = latest.to_value('unix')
+    else:
+        time_jd = latest.jd
+        time_unix = latest.unix
+
+    basename = "hex_amp"
+    rendered_hex_html = html_template.render(
+        plotname=plotname,
+        data_type="Auto correlations",
+        plotstyle="height: 100%",
+        gen_date=Time.now().iso,
+        data_date_iso=latest.iso,
+        data_date_jd="{:.3f}".format(time_jd),
+        data_date_unix_ms=time_unix * 1000,
+        js_name=basename,
+        gen_time_unix_ms=Time.now().unix * 1000,
+        scriptname=os.path.basename(__file__),
+        hostname=computer_hostname,
+        caption=caption,
+    )
+
+    rendered_hex_js = js_template.render(
+        json_name=basename,
+        layout=layout_hex,
+        updatemenus=updatemenus_hex,
+        plotname=plotname,
+    )
+
+    with open("{}.json".format(basename), "w") as json_file:
+        json.dump(data_hex, json_file)
+
+    with open("{}.html".format(basename), "w") as h_file:
+        h_file.write(rendered_hex_html)
+
+    with open("{}.js".format(basename), "w") as js_file:
+        js_file.write(rendered_hex_js)
+
+
+def make_node(
+    powers,
+    _text,
+    names,
+    hostname,
+    nodes,
+    node_ind,
+    pols,
+    env,
+    latest,
+    computer_hostname,
+):
+    rms_scale_vals = [2, 20]
+    relavitve_values = [0.4, 0.7]
+    rms_color_scale = [
+        ["0.0", "rgb(68,1,84)"],
+        ["0.2", "rgb(62,74,137)"],
+        ["0.3", "rgb(38,130,142)"],
+        ["0.4", "rgb(53,183,121)"],
+        ["0.5", "rgb(53,183,121)"],
+        ["0.6", "rgb(53,183,121)"],
+        ["0.7", "rgb(109,205,89)"],
+        ["0.8", "rgb(180,222,44)"],
+        ["1.0", "rgb(253,231,37)"],
+    ]
+    # now prepare the data to be plotted vs node number
+    data_node = []
+
+    masks = [[] for p in powers]
+
+    vmax = [
+        np.max(power.compressed()) if power.compressed().size > 1 else 1
+        for power in powers
+    ]
+    vmin = [
+        np.min(power.compressed()) if power.compressed().size > 1 else 0
+        for power in powers
+    ]
+    vmin[3] = rms_scale_vals[0] * relavitve_values[0]
+    vmax[3] = rms_scale_vals[1] / relavitve_values[1]
+
+    for node in nodes:
+        node_index = np.where(node_ind == node)[0]
+        hosts = hostname[node_index]
+
+        host_index = np.argsort(hosts)
+
+        ys = np.ma.masked_array(
+            [
+                np.arange(node_index.size) + 0.3 * pol_cnt
+                for pol_cnt, pol in enumerate(pols)
+            ],
+            mask=powers[0][:, node_index].mask,
+        )
+        xs = np.zeros_like(ys)
+        xs[:] = node
+        powers_node = [pow[:, node_index] for pow in powers]
+        __text = _text[:, node_index]
+
+        for pow_ind, power in enumerate(powers_node):
+            cbar_title = "dB"
+            if pow_ind == 4 or pow_ind == 5:
+                cbar_title = "Degrees"
+
+            if pow_ind == 3:
+                colorscale = rms_color_scale
+            else:
+                colorscale = "Viridis"
+            colorscale = "Viridis"
+
+            if pow_ind == 3:
+                cbar_title = "RMS\tlinear"
+                colorscale = rms_color_scale
+            elif pow_ind == 4 or pow_ind == 5:
+                cbar_title = "Degrees"
+            elif pow_ind == len(powers) - 1:
+                cbar_title = "Median\tCoeff"
+            else:
+                cbar_title = "dB"
+
+            if pow_ind == 0:
+                visible = True
+            else:
+                visible = False
+
+            for pol_ind, pol in enumerate(pols):
+                for mask_cnt, mask in enumerate(masks):
+                    if mask_cnt == pow_ind:
+                        mask.extend([True] * 2)
+                    else:
+                        mask.extend([False] * 2)
+
+                __power = power[pol_ind][host_index]
+                ___text = __text[pol_ind][host_index]
+
+                _power = {
+                    "x": xs[pol_ind].data[~__power.mask].tolist(),
+                    "y": ys[pol_ind].data[~__power.mask].tolist(),
+                    "text": ___text[~__power.mask].tolist(),
+                    "mode": "markers",
+                    "visible": visible,
+                    "type": "scattergl",
+                    "marker": {
+                        "color": __power.data[~__power.mask].tolist(),
+                        "size": 14,
+                        "cmin": vmin[pow_ind],
+                        "cmax": vmax[pow_ind],
+                        "colorscale": colorscale,
+                        "colorbar": {"thickness": 20, "title": cbar_title},
+                    },
+                    "hovertemplate": "%{text}<extra></extra>",
+                }
+
+                data_node.append(_power)
+
+                _power_offline = {
+                    "x": xs[pol_ind].data[__power.mask].tolist(),
+                    "y": ys[pol_ind].data[__power.mask].tolist(),
+                    "text": ___text[__power.mask].tolist(),
+                    "mode": "markers",
+                    "visible": visible,
+                    "type": "scattergl",
+                    "marker": {
+                        "color": "orange",
+                        "size": 14,
+                        "cmin": vmin[pow_ind],
+                        "cmax": vmax[pow_ind],
+                        "colorscale": colorscale,
+                        "colorbar": {"thickness": 20, "title": cbar_title},
+                    },
+                    "hovertemplate": "%{text}<extra></extra>",
+                }
+
+                data_node.append(_power_offline)
+    buttons = []
+    for _name, mask in zip(names, masks):
+        _button = {
+            "args": [{"visible": mask}, {"title": "", "annotations": {}}],
+            "label": _name,
+            "method": "restyle",
+        }
+        buttons.append(_button)
+
+    updatemenus_node = [{"buttons": buttons, "showactive": True, "type": "buttons"}]
+
+    layout_node = {
+        "xaxis": {
+            "title": "Node Number",
+            "dtick": 1,
+            "tick0": 0,
+            "showgrid": False,
+            "zeroline": False,
+        },
+        "yaxis": {"showticklabels": False, "showgrid": False, "zeroline": False},
+        "title": {"text": "Per Antpol Stats vs Node #", "font": {"size": 24}},
+        "hoverlabel": {"align": "left"},
+        "margin": {"t": 40},
+        "autosize": True,
+        "showlegend": False,
+        "hovermode": "closest",
+    }
+
+    caption_node = {}
+    caption_node["title"] = "Stats vs Node Help"
+    caption_node["text"] = (
+        "This plot shows various statistics and measurements "
+        "per ant-pol versus the node number to which it is connected."
+        "<br><br><h4>Available plotting options</h4>"
+        "<ul>"
+        "<li>Auto Corr - Median Auto Correlation (in db) "
+        "from the correlator with equalization coefficients "
+        "divided out</li>"
+        "<li>Pam Power - Latest Pam Power (in db) recorded in M&C</li>"
+        "<li>ADC Power - Latest ADC Power (in db) recorded in M&C</li>"
+        "<li>ADC RMS - Latest linear ADC RMS recorded in M&C</li>"
+        "<li>EQ Coeffs - Latest Median Equalization Coefficient recorded in M&C</li>"
+        "</ul>"
+        "Any antpol showing with an orange color means "
+        "no data is avaible for the currenty plot selection."
+        "<h4>Hover label Formatting</h4>"
+        "<ul>"
+        "<li>Antenna Name from M&C<br>(e.g. HH0n = Hera Hex Antenna 0 Polarization N)</li>"
+        "<li>Snap hostname from M&C<br>(e.g. heraNode0Snap0)</li>"
+        "<li>PAM Number</li>"
+        "<li>Median Auto Correlation power in dB</li>"
+        "<li>PAM power in dB</li>"
+        "<li>ADC power in dB</li>"
+        "<li>Linear ADC RMS</li>"
+        "<li>Median Equalization Coefficient</li>"
+        "<li>Time ago in hours the M&C Antenna Status was updated. "
+        "This time stamp applies to all data for this antenna "
+        "except the Auto Correlation.</li>"
+        "</ul>"
+        "In any hover label entry 'No Data' means "
+        "information not currrently available in M&C."
+    )
+
+    # Render all the power vs ndde files
+    plotname = "plotly-node"
+    html_template = env.get_template("plotly_base.html")
+    js_template = env.get_template("plotly_base.js")
+
+    if sys.version_info.minor >= 8 and sys.version_info.major > 2:
+        time_jd = latest.to_value('jd', subfmt='float')
+        time_unix = latest.to_value('unix')
+    else:
+        time_jd = latest.jd
+        time_unix = latest.unix
+
+    basename = "node_amp"
+    rendered_node_html = html_template.render(
+        plotname=plotname,
+        data_type="Auto correlations",
+        plotstyle="height: 100%",
+        gen_date=Time.now().iso,
+        gen_time_unix_ms=Time.now().unix * 1000,
+        data_date_iso=latest.iso,
+        data_date_jd="{:.3f}".format(time_jd),
+        data_date_unix_ms=time_unix * 1000,
+        js_name=basename,
+        scriptname=os.path.basename(__file__),
+        hostname=computer_hostname,
+        caption=caption_node,
+    )
+
+    rendered_node_js = js_template.render(
+        json_name=basename,
+        layout=layout_node,
+        updatemenus=updatemenus_node,
+        plotname=plotname,
+    )
+
+    with open("{}.json".format(basename), "w") as json_file:
+        json.dump(data_node, json_file)
+
+    with open("{}.html".format(basename), "w") as h_file:
+        h_file.write(rendered_node_html)
+
+    with open("{}.js".format(basename), "w") as js_file:
+        js_file.write(rendered_node_js)
+
 
 def main():
     # templates are stored relative to the script dir
@@ -96,6 +638,9 @@ def main():
     template_dir = os.path.join(split_dir[0], "templates")
 
     env = Environment(loader=FileSystemLoader(template_dir), trim_blocks=True)
+    env.filters["islist"] = is_list
+    env.filters["index"] = index_in
+    env.filters["listify"] = listify
     if sys.version_info[0] < 3:
         # py2
         computer_hostname = os.uname()[1]
@@ -137,7 +682,6 @@ def main():
         )
         latest.out_subfmt = u"date_hm"
 
-        now = Time.now()
         amps = {}
         keys = [
             k.decode()
@@ -239,7 +783,7 @@ def main():
                 eq_coeffs.setdefault((ant, pol), np.Inf)
                 fem_imu_theta.setdefault((ant, pol), np.Inf)
                 fem_imu_phi.setdefault((ant, pol), np.Inf)
-                time_array.setdefault((ant, pol), now - Time(0, format="gps"))
+                time_array.setdefault((ant, pol), Time.now() - Time(0, format="gps"))
 
         for ant_cnt, ant in enumerate(ants):
             station_status = session.get_antenna_status(
@@ -255,7 +799,7 @@ def main():
                 if status.adc_rms is not None:
                     adc_rms[antpol] = status.adc_rms
                 if status.time is not None:
-                    time_array[antpol] = now - Time(status.time, format="gps")
+                    time_array[antpol] = Time.now() - Time(status.time, format="gps")
                 if status.fem_imu_phi is not None:
                     fem_imu_phi[antpol] = status.fem_imu_phi
                 if status.fem_imu_theta is not None:
@@ -351,9 +895,6 @@ def main():
             np.ma.masked_invalid([[p[ant, pol] for ant in ants] for pol in pols])
             for p in powers
         ]
-        write_csv(
-            "ant_stats.csv", antnames, ants, pols, names, powers, built_but_not_on
-        )
 
         time_array = np.array(
             [[time_array[ant, pol].to("hour").value for ant in ants] for pol in pols]
@@ -363,6 +904,7 @@ def main():
             [antpos[1, ants] + 3 * (pol_cnt - 0.5) for pol_cnt, pol in enumerate(pols)],
             mask=powers[0].mask,
         )
+
         _text = np.array(
             [
                 [
@@ -408,448 +950,57 @@ def main():
                 # spaces by \t
                 _text[pol_cnt, ant_cnt] = _text[pol_cnt, ant_cnt].replace(" ", "\t")
 
-        masks = [[True] for p in powers]
+    runInParallel(
+        [
+            make_hex,
+            [
+                powers,
+                xs_offline,
+                ys_offline,
+                name_offline,
+                built_but_not_on,
+                xs,
+                ys,
+                nodes,
+                node_ind,
+                _text,
+                env,
+                latest,
+                pols,
+                computer_hostname,
+                names
+            ]
+        ],
+        [
+            make_node,
+            [
+                powers,
+                _text,
+                names,
+                hostname,
+                nodes,
+                node_ind,
+                pols,
+                env,
+                latest,
+                computer_hostname,
+            ]
+        ],
+        [
+            write_csv,
+            [
+                "ant_stats.csv",
+                antnames,
+                ants,
+                pols,
+                names,
+                powers,
+                built_but_not_on
+            ],
+        ],
+    )
 
-        # Offline antennas
-        data_hex = []
-        offline_ants = {
-            "x": xs_offline.compressed().tolist(),
-            "y": ys_offline.compressed().tolist(),
-            "text": name_offline,
-            "mode": "markers",
-            "visible": True,
-            "marker": {
-                "color": np.ma.masked_array(
-                    ["black"] * len(name_offline), mask=xs_offline.mask
-                ),
-                "size": 14,
-                "opacity": 0.5,
-                "symbol": "hexagon",
-            },
-            "hovertemplate": "%{text}<extra></extra>",
-        }
-        # now we want to Fill in the conneted ones
-        offline_ants["marker"]["color"][built_but_not_on] = "red"
-        offline_ants["text"].data[built_but_not_on] = [
-            offline_ants["text"].data[ant].split("<br>")[0]
-            + "<br>Constructed<br>Not\tOnline"
-            for ant in built_but_not_on
-        ]
 
-        offline_ants["marker"]["color"] = (
-            offline_ants["marker"]["color"].compressed().tolist()
-        )
-        offline_ants["text"] = offline_ants["text"].compressed().tolist()
-        data_hex.append(offline_ants)
-
-        #  for each type of power, loop over pols and print out the data
-        #  save up a mask array used for the buttons later
-        #  also plot the bad ones!3
-        colorscale = "Viridis"
-
-        # define some custom scale values for the ADC RMS page
-        rms_scale_vals = [2, 20]
-        relavitve_values = [0.4, 0.7]
-        rms_color_scale = [
-            ["0.0", "rgb(68,1,84)"],
-            ["0.2", "rgb(62,74,137)"],
-            ["0.3", "rgb(38,130,142)"],
-            ["0.4", "rgb(53,183,121)"],
-            ["0.5", "rgb(53,183,121)"],
-            ["0.6", "rgb(53,183,121)"],
-            ["0.7", "rgb(109,205,89)"],
-            ["0.8", "rgb(180,222,44)"],
-            ["1.0", "rgb(253,231,37)"],
-        ]
-
-        for pow_ind, power in enumerate(powers):
-            if power.compressed().size > 0:
-                vmax = np.max(power.compressed())
-                vmin = np.min(power.compressed())
-            else:
-                vmax = 1
-                vmin = 0
-
-            colorscale = "Viridis"
-
-            if pow_ind == 3:
-                cbar_title = "RMS\tlinear"
-                vmin = rms_scale_vals[0] * relavitve_values[0]
-                vmax = rms_scale_vals[1] / relavitve_values[1]
-                colorscale = rms_color_scale
-            elif pow_ind == 4 or pow_ind == 5:
-                cbar_title = "Degrees"
-            elif pow_ind == len(powers) - 1:
-                cbar_title = "Median\tCoeff"
-            else:
-                cbar_title = "dB"
-
-            if pow_ind == 0:
-                visible = True
-            else:
-                visible = False
-
-            for pol_ind, pol in enumerate(pols):
-                for mask_cnt, mask in enumerate(masks):
-                    if mask_cnt == pow_ind:
-                        mask.extend([True] * 2)
-                    else:
-                        mask.extend([False] * 2)
-
-                _power = {
-                    "x": xs.data[~power[pol_ind].mask].tolist(),
-                    "y": ys[pol_ind].data[~power[pol_ind].mask].tolist(),
-                    "text": _text[pol_ind][~power[pol_ind].mask].tolist(),
-                    "mode": "markers",
-                    "visible": visible,
-                    "marker": {
-                        "color": power[pol_ind].data[~power[pol_ind].mask].tolist(),
-                        "size": 14,
-                        "cmin": vmin,
-                        "cmax": vmax,
-                        "colorscale": colorscale,
-                        "colorbar": {"thickness": 20, "title": cbar_title},
-                    },
-                    "hovertemplate": "%{text}<extra></extra>",
-                }
-                data_hex.append(_power)
-
-                _power_offline = {
-                    "x": xs.data[power[pol_ind].mask].tolist(),
-                    "y": ys[pol_ind].data[power[pol_ind].mask].tolist(),
-                    "text": _text[pol_ind][power[pol_ind].mask].tolist(),
-                    "mode": "markers",
-                    "visible": visible,
-                    "marker": {
-                        "color": "orange",
-                        "size": 14,
-                        "cmin": vmin,
-                        "cmax": vmax,
-                        "colorscale": colorscale,
-                        "colorbar": {"thickness": 20, "title": cbar_title},
-                    },
-                    "hovertemplate": "%{text}<extra></extra>",
-                }
-                data_hex.append(_power_offline)
-
-        buttons = []
-        for _name, mask in zip(names, masks):
-            _button = {
-                "args": [{"visible": mask}, {"title": "", "annotations": {}}],
-                "label": _name,
-                "method": "restyle",
-            }
-            buttons.append(_button)
-
-        updatemenus_hex = [{"buttons": buttons, "showactive": True, "type": "buttons"}]
-
-        layout_hex = {
-            "xaxis": {"title": "East-West Position [m]"},
-            "yaxis": {
-                "title": "North-South Position [m]",
-                "scaleanchor": "x"
-            },
-            "title": {
-                "text": "Per Antpol Stats vs Hex position",
-                "font": {"size": 24},
-            },
-            "hoverlabel": {"align": "left"},
-            "margin": {"t": 40},
-            "autosize": True,
-            "showlegend": False,
-            "hovermode": "closest",
-        }
-        caption = {}
-        caption["title"] = "Stats vs Hex pos Help"
-        caption["text"] = (
-            "This plot shows various statistics and measurements "
-            "per ant-pol versus its position in the array."
-            "<br>Antennas which are build but not fully hooked up "
-            "are shown in light red."
-            "<br>Grey antennas are not yet constructed."
-            "<br><br><h4>Available plotting options</h4>"
-            "<ul>"
-            "<li>Auto Corr - Median Auto Correlation (in db) "
-            "from the correlator with equalization coefficients "
-            "divided out</li>"
-            "<li>Pam Power - Latest Pam Power (in db) recorded in M&C</li>"
-            "<li>ADC Power - Latest ADC Power (in db) recorded in M&C</li>"
-            "<li>ADC RMS - Latest linear ADC RMS recorded in M&C</li>"
-            "<li>FEM IMU THETA - IMU-reported theta, in degrees</li>"
-            "<li>FEM IMU PHI - IMU-reported phi, in degrees</li>"
-            "<li>EQ Coeffs - Latest Median Equalization Coefficient recorded in M&C</li>"
-            "</ul>"
-            "Any antpol showing with an orange color means "
-            "no data is avaible for the currenty plot selection."
-            "<h4>Hover label Formatting</h4>"
-            "<ul>"
-            "<li>Antenna Name from M&C<br>(e.g. HH0n = Hera Hex Antenna 0 Polarization N)</li>"
-            "<li>Snap hostname from M&C<br>(e.g. heraNode0Snap0)</li>"
-            "<li>PAM Number</li>"
-            "<li>Median Auto Correlation power in dB</li>"
-            "<li>PAM power in dB</li>"
-            "<li>ADC power in dB</li>"
-            "<li>Linear ADC RMS</li>"
-            "<li>FEM IMU reported theta in degrees</li>"
-            "<li>FEM IMU reported phi in degrees</li>"
-            "<li>Median Equalization Coefficient</li>"
-            "<li>Time ago in hours the M&C Antenna Status was updated. "
-            "This time stamp applies to all data for this antenna "
-            "except the Auto Correlation.</li>"
-            "</ul>"
-            "In any hover label entry 'No Data' means "
-            "information not currrently available in M&C."
-        )
-
-        # Render all the power vs position files
-        plotname = "plotly-hex"
-        html_template = env.get_template("plotly_base.html")
-        js_template = env.get_template("plotly_base.js")
-
-        if sys.version_info.minor >= 8 and sys.version_info.major > 2:
-            time_jd = latest.to_value('jd', subfmt='float')
-            time_unix = latest.to_value('unix')
-        else:
-            time_jd = latest.jd
-            time_unix = latest.unix
-
-        rendered_hex_html = html_template.render(
-            plotname=plotname,
-            data_type="Auto correlations",
-            plotstyle="height: 100%",
-            gen_date=now.iso,
-            data_date_iso=latest.iso,
-            data_date_jd="{:.3f}".format(time_jd),
-            data_date_unix_ms=time_unix * 1000,
-            js_name="hex_amp",
-            gen_time_unix_ms=now.unix * 1000,
-            scriptname=os.path.basename(__file__),
-            hostname=computer_hostname,
-            caption=caption,
-        )
-
-        rendered_hex_js = js_template.render(
-            data=data_hex,
-            layout=layout_hex,
-            updatemenus=updatemenus_hex,
-            plotname=plotname,
-        )
-
-        with open("hex_amp.html", "w") as h_file:
-            h_file.write(rendered_hex_html)
-
-        with open("hex_amp.js", "w") as js_file:
-            js_file.write(rendered_hex_js)
-
-        # now prepare the data to be plotted vs node number
-        data_node = []
-
-        masks = [[] for p in powers]
-
-        vmax = [
-            np.max(power.compressed()) if power.compressed().size > 1 else 1
-            for power in powers
-        ]
-        vmin = [
-            np.min(power.compressed()) if power.compressed().size > 1 else 0
-            for power in powers
-        ]
-        vmin[3] = rms_scale_vals[0] * relavitve_values[0]
-        vmax[3] = rms_scale_vals[1] / relavitve_values[1]
-
-        for node in nodes:
-            node_index = np.where(node_ind == node)[0]
-            hosts = hostname[node_index]
-
-            host_index = np.argsort(hosts)
-
-            ys = np.ma.masked_array(
-                [
-                    np.arange(node_index.size) + 0.3 * pol_cnt
-                    for pol_cnt, pol in enumerate(pols)
-                ],
-                mask=powers[0][:, node_index].mask,
-            )
-            xs = np.zeros_like(ys)
-            xs[:] = node
-            powers_node = [pow[:, node_index] for pow in powers]
-            __text = _text[:, node_index]
-
-            for pow_ind, power in enumerate(powers_node):
-                cbar_title = "dB"
-                if pow_ind == 4 or pow_ind == 5:
-                    cbar_title = "Degrees"
-
-                if pow_ind == 3:
-                    colorscale = rms_color_scale
-                else:
-                    colorscale = "Viridis"
-                colorscale = "Viridis"
-
-                if pow_ind == 3:
-                    cbar_title = "RMS\tlinear"
-                    colorscale = rms_color_scale
-                elif pow_ind == 4 or pow_ind == 5:
-                    cbar_title = "Degrees"
-                elif pow_ind == len(powers) - 1:
-                    cbar_title = "Median\tCoeff"
-                else:
-                    cbar_title = "dB"
-
-                if pow_ind == 0:
-                    visible = True
-                else:
-                    visible = False
-
-                for pol_ind, pol in enumerate(pols):
-                    for mask_cnt, mask in enumerate(masks):
-                        if mask_cnt == pow_ind:
-                            mask.extend([True] * 2)
-                        else:
-                            mask.extend([False] * 2)
-
-                    __power = power[pol_ind][host_index]
-                    ___text = __text[pol_ind][host_index]
-
-                    _power = {
-                        "x": xs[pol_ind].data[~__power.mask].tolist(),
-                        "y": ys[pol_ind].data[~__power.mask].tolist(),
-                        "text": ___text[~__power.mask].tolist(),
-                        "mode": "markers",
-                        "visible": visible,
-                        "marker": {
-                            "color": __power.data[~__power.mask].tolist(),
-                            "size": 14,
-                            "cmin": vmin[pow_ind],
-                            "cmax": vmax[pow_ind],
-                            "colorscale": colorscale,
-                            "colorbar": {"thickness": 20, "title": cbar_title},
-                        },
-                        "hovertemplate": "%{text}<extra></extra>",
-                    }
-
-                    data_node.append(_power)
-
-                    _power_offline = {
-                        "x": xs[pol_ind].data[__power.mask].tolist(),
-                        "y": ys[pol_ind].data[__power.mask].tolist(),
-                        "text": ___text[__power.mask].tolist(),
-                        "mode": "markers",
-                        "visible": visible,
-                        "marker": {
-                            "color": "orange",
-                            "size": 14,
-                            "cmin": vmin[pow_ind],
-                            "cmax": vmax[pow_ind],
-                            "colorscale": colorscale,
-                            "colorbar": {"thickness": 20, "title": cbar_title},
-                        },
-                        "hovertemplate": "%{text}<extra></extra>",
-                    }
-
-                    data_node.append(_power_offline)
-        buttons = []
-        for _name, mask in zip(names, masks):
-            _button = {
-                "args": [{"visible": mask}, {"title": "", "annotations": {}}],
-                "label": _name,
-                "method": "restyle",
-            }
-            buttons.append(_button)
-
-        updatemenus_node = [{"buttons": buttons, "showactive": True, "type": "buttons"}]
-
-        layout_node = {
-            "xaxis": {
-                "title": "Node Number",
-                "dtick": 1,
-                "tick0": 0,
-                "showgrid": False,
-                "zeroline": False,
-            },
-            "yaxis": {"showticklabels": False, "showgrid": False, "zeroline": False},
-            "title": {"text": "Per Antpol Stats vs Node #", "font": {"size": 24}},
-            "hoverlabel": {"align": "left"},
-            "margin": {"t": 40},
-            "autosize": True,
-            "showlegend": False,
-            "hovermode": "closest",
-        }
-
-        caption_node = {}
-        caption_node["title"] = "Stats vs Node Help"
-        caption_node["text"] = (
-            "This plot shows various statistics and measurements "
-            "per ant-pol versus the node number to which it is connected."
-            "<br><br><h4>Available plotting options</h4>"
-            "<ul>"
-            "<li>Auto Corr - Median Auto Correlation (in db) "
-            "from the correlator with equalization coefficients "
-            "divided out</li>"
-            "<li>Pam Power - Latest Pam Power (in db) recorded in M&C</li>"
-            "<li>ADC Power - Latest ADC Power (in db) recorded in M&C</li>"
-            "<li>ADC RMS - Latest linear ADC RMS recorded in M&C</li>"
-            "<li>EQ Coeffs - Latest Median Equalization Coefficient recorded in M&C</li>"
-            "</ul>"
-            "Any antpol showing with an orange color means "
-            "no data is avaible for the currenty plot selection."
-            "<h4>Hover label Formatting</h4>"
-            "<ul>"
-            "<li>Antenna Name from M&C<br>(e.g. HH0n = Hera Hex Antenna 0 Polarization N)</li>"
-            "<li>Snap hostname from M&C<br>(e.g. heraNode0Snap0)</li>"
-            "<li>PAM Number</li>"
-            "<li>Median Auto Correlation power in dB</li>"
-            "<li>PAM power in dB</li>"
-            "<li>ADC power in dB</li>"
-            "<li>Linear ADC RMS</li>"
-            "<li>Median Equalization Coefficient</li>"
-            "<li>Time ago in hours the M&C Antenna Status was updated. "
-            "This time stamp applies to all data for this antenna "
-            "except the Auto Correlation.</li>"
-            "</ul>"
-            "In any hover label entry 'No Data' means "
-            "information not currrently available in M&C."
-        )
-
-        # Render all the power vs ndde files
-        plotname = "plotly-node"
-        html_template = env.get_template("plotly_base.html")
-        js_template = env.get_template("plotly_base.js")
-
-        if sys.version_info.minor >= 8 and sys.version_info.major > 2:
-            time_jd = latest.to_value('jd', subfmt='float')
-            time_unix = latest.to_value('unix')
-        else:
-            time_jd = latest.jd
-            time_unix = latest.unix
-
-        rendered_node_html = html_template.render(
-            plotname=plotname,
-            data_type="Auto correlations",
-            plotstyle="height: 100%",
-            gen_date=now.iso,
-            gen_time_unix_ms=now.unix * 1000,
-            data_date_iso=latest.iso,
-            data_date_jd="{:.3f}".format(time_jd),
-            data_date_unix_ms=time_unix * 1000,
-            js_name="node_amp",
-            scriptname=os.path.basename(__file__),
-            hostname=computer_hostname,
-            caption=caption_node,
-        )
-
-        rendered_node_js = js_template.render(
-            data=data_node,
-            layout=layout_node,
-            updatemenus=updatemenus_node,
-            plotname=plotname,
-        )
-
-        with open("node_amp.html", "w") as h_file:
-            h_file.write(rendered_node_html)
-
-        with open("node_amp.js", "w") as js_file:
-            js_file.write(rendered_node_js)
 
 
 if __name__ == "__main__":

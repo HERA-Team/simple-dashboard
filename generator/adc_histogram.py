@@ -10,7 +10,7 @@ from __future__ import absolute_import, division, print_function
 import os
 import sys
 import re
-import redis
+import json
 import numpy as np
 from hera_mc import mc, cm_sysutils
 from astropy.time import Time
@@ -20,6 +20,14 @@ from jinja2 import Environment, FileSystemLoader
 def is_list(value):
     return isinstance(value, list)
 
+def listify(input):
+    if isinstance(input, (list, tuple, np.ndarray)):
+        return input
+    else:
+        return [input]
+
+def index_in(indexable, i):
+    return indexable[i]
 
 # Two redis instances run on this server.
 # port 6379 is the hera-digi mirror
@@ -35,6 +43,8 @@ def main():
     env = Environment(loader=FileSystemLoader(template_dir), trim_blocks=True)
     # this filter is used to see if there is more than one table
     env.filters["islist"] = is_list
+    env.filters["index"] = index_in
+    env.filters["listify"] = listify
 
     if sys.version_info[0] < 3:
         # py2
@@ -60,12 +70,6 @@ def main():
         db = mc.connect_to_mc_db(args)
     except RuntimeError as e:
         raise SystemExit(str(e))
-
-    try:
-        redis_db = redis.Redis(args.redishost, port=args.port)
-        redis_db.keys()
-    except Exception as err:
-        raise SystemExit(str(err))
 
     with db.sessionmaker() as session:
         now = Time.now()
@@ -98,7 +102,7 @@ def main():
         hists = []
         bad_ants = []
         bad_node = []
-        for ant_cnt, ant in enumerate(ants):
+        for ant in ants:
             ant_status = session.get_antenna_status(
                 most_recent=True, antenna_number=int(ant)
             )
@@ -150,11 +154,6 @@ def main():
                         stat.histogram_bin_centers.strip("[]"), sep=","
                     )
                     hist = np.fromstring(stat.histogram.strip("[]"), sep=",")
-                    if stat.eq_coeffs is not None:
-                        eq_coeffs = np.fromstring(stat.eq_coeffs.strip("[]"), sep=",")
-                    else:
-                        eq_coeffs = np.ones_like(hist)
-                    hist /= np.median(eq_coeffs) ** 2
 
                     text = "observed at {iso}<br>(JD {jd})".format(
                         iso=timestamp.iso, jd=timestamp.jd
@@ -168,6 +167,7 @@ def main():
                         "node": _node_num,
                         "text": [text] * bins.size,
                         "hovertemplate": "(%{x:.1},\t%{y})<br>%{text}",
+                        "type": "scattergl",
                     }
                     hists.append(_data)
                 else:
@@ -281,8 +281,7 @@ def main():
         caption = {}
 
         caption["text"] = (
-            "The ADC Histograms with equalization coefficients "
-            "divided out."
+            "The ADC Histograms"
             "<br><br>Some antennas known to M&C may not have a histogram "
             " and are listed below the image."
             "<br><br>Some antennas may not have "
@@ -302,12 +301,12 @@ def main():
         )
 
         caption["title"] = "Histogram Help"
-
+        basename = "adchist"
         rendered_html = html_template.render(
             plotname=plotname,
             plotstyle="height: 100%",
             gen_date=now.iso,
-            js_name="adchist",
+            js_name=basename,
             caption=caption,
             gen_time_unix_ms=now.unix * 1000,
             scriptname=os.path.basename(__file__),
@@ -316,11 +315,16 @@ def main():
         )
 
         rendered_js = js_template.render(
-            data=hists, layout=layout, plotname=plotname, updatemenus=updatemenus
+            json_name=basename,
+            layout=layout,
+            plotname=plotname,
+            updatemenus=updatemenus
         )
-        with open("adchist.html", "w") as h_file:
+        with open("{}.json".format(basename), "w") as json_file:
+            json.dump(hists, json_file)
+        with open("{}.html".format(basename), "w") as h_file:
             h_file.write(rendered_html)
-        with open("adchist.js", "w") as js_file:
+        with open("{}.js".format(basename), "w") as js_file:
             js_file.write(rendered_js)
 
 

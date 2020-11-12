@@ -19,12 +19,115 @@ import json
 import numpy as np
 import argparse
 from astropy.time import Time
+from multiprocessing import Pool
+from itertools import repeat
 from jinja2 import Environment, FileSystemLoader
 
 
 def is_list(value):
     return isinstance(value, list)
 
+def listify(input):
+    if isinstance(input, (list, tuple, np.ndarray)):
+        return input
+    else:
+        return [input]
+
+def index_in(indexable, i):
+    return indexable[i]
+
+def grab_spectra(
+    ants,
+    redishost,
+    port,
+    got_time,
+    ant_to_snap,
+    NCHANS,
+    frange_mhz
+):
+    r_pool = redis.ConnectionPool(host=redishost, port=port)
+    autospectra = []
+    nodes = []
+    bad_ants = []
+    node_map = {}
+    n_signals = 0
+    if not isinstance(ants, list):
+        ants = [ants]
+    with redis.Redis(connection_pool=r_pool) as r:
+        for i in ants:
+            for pol in ["e", "n"]:
+                # get the timestamp from redis for the first ant-pol
+                if not got_time:
+                    t_plot_jd = float(
+                        r.hget(
+                            "visdata://{i:d}/{j:d}/{i_pol:s}{j_pol:s}".format(
+                                i=i, j=i, i_pol=pol, j_pol=pol
+                            ),
+                            "time",
+                        )
+                    )
+                    if t_plot_jd is not None:
+                        got_time = True
+                linename = "ant{ant:d}{pol:s}".format(ant=i, pol=pol)
+
+                try:
+                    hostname = ant_to_snap[str(i)][pol]["host"]
+                    match = re.search(r"heraNode(?P<node>\d+)Snap", hostname)
+                    if match is not None:
+                        _node = int(match.group("node"))
+                        nodes.append(_node)
+                        node_map[linename] = _node
+                    else:
+                        print("No Node mapping for antennna: " + linename)
+                        bad_ants.append(linename)
+                        node_map[linename] = -1
+                        nodes.append(-1)
+                except (KeyError):
+                    print("No Node mapping for antennna: " + linename)
+                    bad_ants.append(linename)
+                    node_map[linename] = -1
+                    nodes.append(-1)
+
+                d = r.get("auto:{ant:d}{pol:s}".format(ant=i, pol=pol))
+                if d is not None:
+
+                    n_signals += 1
+                    auto = np.frombuffer(d, dtype=np.float32)[0:NCHANS].copy()
+
+                    eq_coeffs = r.hget(
+                        bytes("eq:ant:{ant}:{pol}".format(ant=i, pol=pol).encode()),
+                        "values",
+                    )
+                    if eq_coeffs is not None:
+                        eq_coeffs = np.fromstring(
+                            eq_coeffs.decode("utf-8").strip("[]"), sep=","
+                        )
+                        if eq_coeffs.size == 0:
+                            eq_coeffs = np.ones_like(auto)
+                    else:
+                        eq_coeffs = np.ones_like(auto)
+
+                    # divide out the equalization coefficients
+                    # eq_coeffs are stored as a length 1024 array but only a
+                    # single number is used. Taking the median to not deal with
+                    # a size mismatch
+                    eq_coeffs = np.median(eq_coeffs)
+                    auto /= eq_coeffs ** 2
+
+                    auto[auto < 10 ** -10.0] = 10 ** -10.0
+                    auto = 10 * np.log10(auto)
+                    _auto = {
+                        "x": frange_mhz.tolist(),
+                        "y": auto.tolist(),
+                        "name": linename,
+                        "node": node_map[linename],
+                        "type": "scatter",
+                        "hovertemplate": "%{x:.1f}\tMHz<br>%{y:.3f}\t[dB]",
+                        "mode": "lines",
+                    }
+                    autospectra.append(_auto)
+        r.close()
+    return autospectra, n_signals, bad_ants, nodes, node_map
 
 # Two redis instances run on this server.
 # port 6379 is the hera-digi mirror
@@ -39,6 +142,8 @@ def main():
 
     env = Environment(loader=FileSystemLoader(template_dir), trim_blocks=True)
     env.filters["islist"] = is_list
+    env.filters["index"] = index_in
+    env.filters["listify"] = listify
 
     if sys.version_info[0] < 3:
         # py2
@@ -60,35 +165,52 @@ def main():
     parser.add_argument(
         "--port", dest="port", type=int, default=6379, help="Redis port to connect."
     )
+    parser.add_argument(
+        "--nproc",
+        "-n",
+        dest="nproc",
+        default=4,
+        help="Number of processes to use in Mulitprocessing Pool."
+    )
+    parser.add_argument(
+        "--chunksize",
+        "-c",
+        dest="chunksize",
+        type=int,
+        default=12,
+        help=(
+            "Size of chunks to process per task. "
+            "Defaults to maximum number of antennas on a node."
+        )
+    )
     args = parser.parse_args()
-    r = redis.Redis(args.redishost, port=args.port)
+    r_pool = redis.ConnectionPool(host=args.redishost, port=args.port)
+    with redis.Redis(connection_pool=r_pool) as r:
+        keys = [
+            k.decode()
+            for k in r.keys()
+            if k.startswith(b"auto") and not k.endswith(b"timestamp")
+        ]
 
-    keys = [
-        k.decode()
-        for k in r.keys()
-        if k.startswith(b"auto") and not k.endswith(b"timestamp")
-    ]
+        ants = []
+        for key in keys:
+            match = re.search(r"auto:(?P<ant>\d+)(?P<pol>e|n)", key)
+            if match is not None:
+                ant, pol = int(match.group("ant")), match.group("pol")
+                ants.append(ant)
 
-    ants = []
-    for key in keys:
-        match = re.search(r"auto:(?P<ant>\d+)(?P<pol>e|n)", key)
-        if match is not None:
-            ant, pol = int(match.group("ant")), match.group("pol")
-            ants.append(ant)
-
-    ants = np.unique(ants)
-    corr_map = r.hgetall(b"corr:map")
-    ant_to_snap = json.loads(corr_map[b"ant_to_snap"])
-    node_map = {}
-    nodes = []
-    # want to be smart against the length of the autos, they sometimes change
-    # depending on the mode of the array
-    for i in ants:
-        for pol in ["e", "n"]:
-            d = r.get("auto:{ant:d}{pol:s}".format(ant=i, pol=pol))
-            if d is not None:
-                auto = np.frombuffer(d, dtype=np.float32).copy()
-                break
+        corr_map = r.hgetall(b"corr:map")
+        ants = np.unique(ants)
+        ant_to_snap = json.loads(corr_map[b"ant_to_snap"])
+        node_map = {}
+        # want to be smart against the length of the autos, they sometimes change
+        # depending on the mode of the array
+        for i in ants:
+            for pol in ["e", "n"]:
+                d = r.get("auto:{ant:d}{pol:s}".format(ant=i, pol=pol))
+                if d is not None:
+                    auto = np.frombuffer(d, dtype=np.float32).copy()
+                    break
     auto_size = auto.size
     # Generate frequency axis
     # Some times we have 6144 length inputs, others 1536, this should
@@ -113,83 +235,33 @@ def main():
     except:
         pass
     # grab data from redis and format it according to plotly's javascript api
-    autospectra = []
 
     table_ants = {}
     table_ants["title"] = "Antennas with no Node mapping"
     rows = []
     bad_ants = []
-    for i in ants:
-        for pol in ["e", "n"]:
-            # get the timestamp from redis for the first ant-pol
-            if not got_time:
-                t_plot_jd = float(
-                    r.hget(
-                        "visdata://{i:d}/{j:d}/{i_pol:s}{j_pol:s}".format(
-                            i=i, j=i, i_pol=pol, j_pol=pol
-                        ),
-                        "time",
-                    )
-                )
-                if t_plot_jd is not None:
-                    got_time = True
-            linename = "ant{ant:d}{pol:s}".format(ant=i, pol=pol)
+    with Pool(processes=args.nproc) as pool:
+        result = pool.starmap(
+            grab_spectra,
+            zip(
+                ants,
+                repeat(args.redishost),
+                repeat(args.port),
+                repeat(got_time),
+                repeat(ant_to_snap),
+                repeat(NCHANS),
+                repeat(frange_mhz)
+            ),
+            chunksize=args.chunksize
+        )
 
-            try:
-                hostname = ant_to_snap[str(i)][pol]["host"]
-                match = re.search(r"heraNode(?P<node>\d+)Snap", hostname)
-                if match is not None:
-                    _node = int(match.group("node"))
-                    nodes.append(_node)
-                    node_map[linename] = _node
-                else:
-                    print("No Node mapping for antennna: " + linename)
-                    bad_ants.append(linename)
-                    node_map[linename] = -1
-                    nodes.append(-1)
-            except (KeyError):
-                print("No Node mapping for antennna: " + linename)
-                bad_ants.append(linename)
-                node_map[linename] = -1
-                nodes.append(-1)
-
-            d = r.get("auto:{ant:d}{pol:s}".format(ant=i, pol=pol))
-            if d is not None:
-
-                n_signals += 1
-                auto = np.frombuffer(d, dtype=np.float32)[0:NCHANS].copy()
-
-                eq_coeffs = r.hget(
-                    bytes("eq:ant:{ant}:{pol}".format(ant=i, pol=pol).encode()),
-                    "values",
-                )
-                if eq_coeffs is not None:
-                    eq_coeffs = np.fromstring(
-                        eq_coeffs.decode("utf-8").strip("[]"), sep=","
-                    )
-                    if eq_coeffs.size == 0:
-                        eq_coeffs = np.ones_like(auto)
-                else:
-                    eq_coeffs = np.ones_like(auto)
-
-                # divide out the equalization coefficients
-                # eq_coeffs are stored as a length 1024 array but only a
-                # single number is used. Taking the median to not deal with
-                # a size mismatch
-                eq_coeffs = np.median(eq_coeffs)
-                auto /= eq_coeffs ** 2
-
-                auto[auto < 10 ** -10.0] = 10 ** -10.0
-                auto = 10 * np.log10(auto)
-                _auto = {
-                    "x": frange_mhz.tolist(),
-                    "y": auto.tolist(),
-                    "name": linename,
-                    "node": node_map[linename],
-                    "type": "scatter",
-                    "hovertemplate": "%{x:.1f}\tMHz<br>%{y:.3f}\t[dB]",
-                }
-                autospectra.append(_auto)
+    autospectra = sum([r[0] for r in result], [])
+    n_signals = sum([r[1] for r in result])
+    bad_ants = sum([r[2] for r in result], [])
+    nodes = sum([r[3] for r in result], [])
+    node_map = {}
+    for r in result:
+        node_map.update(r[-1])
 
     row = {}
     row["text"] = "\t".join(bad_ants)
@@ -233,7 +305,7 @@ def main():
                 },
             ],
             "label": label,
-            "method": "update",
+            "method": "restyle",
         }
         buttons.append(_button)
 
@@ -292,6 +364,7 @@ def main():
         time_jd = t_plot.jd
         time_unix = t_plot.unix
 
+    basename = "spectra"
     rendered_html = html_template.render(
         plotname=plotname,
         data_type="Auto correlations",
@@ -301,7 +374,7 @@ def main():
         data_date_iso=t_plot.iso,
         data_date_jd="{:.3f}".format(time_jd),
         data_date_unix_ms=time_unix * 1000,
-        js_name="spectra",
+        js_name=basename,
         gen_time_unix_ms=Time.now().unix * 1000,
         scriptname=os.path.basename(__file__),
         hostname=computer_hostname,
@@ -310,13 +383,20 @@ def main():
     )
 
     rendered_js = js_template.render(
-        data=autospectra, layout=layout, updatemenus=updatemenus, plotname=plotname
+        json_name=basename,
+        layout=layout,
+        updatemenus=updatemenus,
+        plotname=plotname
     )
 
     print("Got {n_sig:d} signals".format(n_sig=n_signals))
-    with open("spectra.html", "w") as h_file:
+    with open("{}.json".format(basename), "w") as json_file:
+        json.dump(autospectra, json_file)
+
+    with open("{}.html".format(basename), "w") as h_file:
         h_file.write(rendered_html)
-    with open("spectra.js", "w") as js_file:
+
+    with open("{}.js".format(basename), "w") as js_file:
         js_file.write(rendered_js)
 
 

@@ -8,8 +8,10 @@
 from __future__ import absolute_import, division, print_function
 
 import os
-import sys
 import re
+import sys
+import json
+import copy
 import numpy as np
 from astropy.time import Time, TimeDelta
 from html import escape
@@ -20,7 +22,6 @@ from hera_mc.librarian import (
     LibRemoteStatus,
     LibServerStatus,
     LibStatus,
-    LibFiles,
 )
 from jinja2 import Environment, FileSystemLoader
 
@@ -74,6 +75,19 @@ UI_HOSTNAMES = {
 REMOTES = ["aoc-uploads", "shredder"]
 
 
+def is_list(value):
+    return isinstance(value, list)
+
+def listify(input):
+    if isinstance(input, (list, tuple, np.ndarray)):
+        return input
+    else:
+        return [input]
+
+def index_in(indexable, i):
+    return indexable[i]
+
+
 def do_server_loads(session, cutoff):
     _data = []
     for host in HOSTNAMES:
@@ -93,7 +107,7 @@ def do_server_loads(session, cutoff):
             "x": time_array,
             "y": [t[1] for t in data],
             "name": UI_HOSTNAMES.get(host, host),
-            "type": "scatter",
+            "type": "scattergl",
         }
 
         _data.append(__data)
@@ -119,7 +133,7 @@ def do_disk_space(session, cutoff):
         "x": time_array,
         "y": [t[1] for t in data],
         "name": "Data Volume".replace(" ", "\t"),
-        "type": "scatter",
+        "type": "scattergl",
     }
     _data.append(__data)
 
@@ -139,7 +153,7 @@ def do_disk_space(session, cutoff):
         "x": time_array,
         "y": [t[1] for t in data],
         "name": "Free space".replace(" ", "\t"),
-        "type": "scatter",
+        "type": "scattergl",
         "yaxis": "y2",
     }
     _data.append(__data)
@@ -166,7 +180,7 @@ def do_upload_ages(session, cutoff):
         "x": time_array,
         "y": [t[1] for t in data],
         "name": "Time since last upload".replace(" ", "\t"),
-        "type": "scatter",
+        "type": "scattergl",
     }
     _data.append(__data)
 
@@ -194,7 +208,7 @@ def do_bandwidths(session, cutoff):
             "x": time_array,
             "y": [t[1] for t in data],
             "name": ("{name} transfer rate".format(name=remote).replace(" ", "\t")),
-            "type": "scatter",
+            "type": "scattergl",
         }
         _data.append(__data)
 
@@ -221,7 +235,7 @@ def do_ping_times(session, cutoff):
             "x": time_array,
             "y": [1000 * t[1] for t in data],
             "name": "{name} ping time".format(name=remote).replace(" ", "\t"),
-            "type": "scatter",
+            "type": "scattergl",
         }
         _data.append(__data)
 
@@ -258,7 +272,7 @@ def do_num_files(session, cutoff):
         "x": time_array,
         "y": [t[1] for t in data],
         "name": "Total Number of files".replace(" ", "\t"),
-        "type": "scatter",
+        "type": "scattergl",
     }
 
     _data.append(__data)
@@ -282,11 +296,11 @@ def do_compare_file_types(TIME_WINDOW):
     timesteps = np.linspace(-1 * TIME_WINDOW, 0, 24 * 14 * 6, endpoint=True)
     time_array = Time.now() + TimeDelta(timesteps, format="jd")
     _data = []
-    raw_regex = r"zen.(\d+.\d+).uvh5"
-    processed_regex = r"zen.(\d+.\d+).HH.uvh5"
+    sum_regex = r"zen.(\d+.\d+).sum.uvh5"
+    diff_regex = r"zen.(\d+.\d+).diff.uvh5"
     data_dir = "/mnt/sn1/"
     try:
-        raw_names = [f for f in os.listdir(data_dir) if re.search(raw_regex, f)]
+        sum_names = [f for f in os.listdir(data_dir) if re.search(sum_regex, f)]
     except OSError as err:
         print(
             "Experienced OSError while " "attempting to find files: {err}".format(err)
@@ -294,8 +308,8 @@ def do_compare_file_types(TIME_WINDOW):
         return
 
     try:
-        processed_names = [
-            f for f in os.listdir(data_dir) if re.search(processed_regex, f)
+        diff_names = [
+            f for f in os.listdir(data_dir) if re.search(diff_regex, f)
         ]
     except OSError as err:
         print(
@@ -303,35 +317,35 @@ def do_compare_file_types(TIME_WINDOW):
         )
         return
 
-    raw_jd = Time([float(re.findall(raw_regex, f)[0]) for f in raw_names], format="jd")
-    proc_jd = Time(
-        [float(re.findall(processed_regex, f)[0]) for f in processed_names], format="jd"
+    sum_jd = Time([float(re.findall(sum_regex, f)[0]) for f in sum_names], format="jd")
+    diff_jd = Time(
+        [float(re.findall(diff_regex, f)[0]) for f in diff_names], format="jd"
     )
 
     # try to find the times they were created
-    raw_times = Time(
-        [creation_date(os.path.join(data_dir, n)) for n in raw_names], format="unix"
+    sum_times = Time(
+        [creation_date(os.path.join(data_dir, n)) for n in sum_names], format="unix"
     )
 
-    hh_times = Time(
-        [creation_date(os.path.join(data_dir, n)) for n in processed_names],
+    diff_times = Time(
+        [creation_date(os.path.join(data_dir, n)) for n in diff_names],
         format="unix",
     )
     # Only consider processed files if their JD is equal to or newer than
     # the oldest raw file
-    hh_times = hh_times[proc_jd >= raw_jd.min()]
+    hh_times = diff_times[diff_jd >= sum_jd.min()]
 
     n_files_raw = []
     n_files_processed = []
     for _t in time_array:
-        n_files_raw.append(int(sum(list(_t >= raw_times))))
+        n_files_raw.append(int(sum(list(_t >= sum_times))))
         n_files_processed.append(int(sum(list(_t >= hh_times))))
 
     __data = {
         "x": time_array.isot.tolist(),
         "y": n_files_raw,
-        "name": "Raw files".replace(" ", "\t"),
-        "type": "scatter",
+        "name": "Sum files".replace(" ", "\t"),
+        "type": "scattergl",
     }
 
     _data.append(__data)
@@ -339,8 +353,8 @@ def do_compare_file_types(TIME_WINDOW):
     __data = {
         "x": time_array.isot.tolist(),
         "y": n_files_processed,
-        "name": "Processed files".replace(" ", "\t"),
-        "type": "scatter",
+        "name": "Diff files".replace(" ", "\t"),
+        "type": "scattergl",
     }
 
     _data.append(__data)
@@ -407,6 +421,9 @@ def main():
     template_dir = os.path.join(split_dir[0], "templates")
 
     env = Environment(loader=FileSystemLoader(template_dir), trim_blocks=True)
+    env.filters["islist"] = is_list
+    env.filters["index"] = index_in
+    env.filters["listify"] = listify
     if sys.version_info[0] < 3:
         # py2
         computer_hostname = os.uname()[1]
@@ -447,89 +464,126 @@ def main():
     html_template = env.get_template("librarian_table.html")
     js_template = env.get_template("plotly_base.js")
 
+    json_name_list = []
+    layout_list = []
+    plotname_list = []
+
+    basename = "librarian"
     with db.sessionmaker() as session:
 
         data = do_server_loads(session, cutoff)
-        layout["title"]["text"] = "CPU Loads"
-        rendered_js = js_template.render(
-            plotname="server-loads", data=data, layout=layout
-        )
-        with open("librarian.js", "w") as js_file:
-            js_file.write(rendered_js)
-            js_file.write("\n\n")
+        _layout = copy.deepcopy(layout)
+        _layout["title"]["text"] = "CPU Loads"
+
+        layout_list.append(_layout)
+        plotname_list.append("server-loads")
+        json_name = basename + "_server_loads"
+
+        with open("{}.json".format(json_name), "w") as json_file:
+            json.dump(data, json_file)
+
+        json_name_list.append(json_name)
 
         data = do_upload_ages(session, cutoff)
-        layout["yaxis"]["title"] = "Minutes"
-        layout["yaxis"]["zeroline"] = False
-        layout["title"]["text"] = "Time Since last upload"
-        rendered_js = js_template.render(
-            plotname="upload-ages", data=data, layout=layout
-        )
-        with open("librarian.js", "a") as js_file:
-            js_file.write(rendered_js)
-            js_file.write("\n\n")
+
+        _layout = copy.deepcopy(layout)
+        _layout["yaxis"]["title"] = "Minutes"
+        _layout["yaxis"]["zeroline"] = False
+        _layout["title"]["text"] = "Time Since last upload"
+        layout_list.append(_layout)
+
+        plotname_list.append("upload-ages")
+        json_name = basename + "_upload_ages"
+
+        with open("{}.json".format(json_name), "w") as json_file:
+            json.dump(data, json_file)
+
+        json_name_list.append(json_name)
 
         data = do_disk_space(session, cutoff)
-        layout["yaxis"]["title"] = "Data Volume [GiB]"
-        layout["yaxis"]["zeroline"] = True
-        layout["yaxis2"] = {
+
+        _layout = copy.deepcopy(layout)
+
+        _layout["yaxis"]["title"] = "Data Volume [GiB]"
+        _layout["yaxis"]["zeroline"] = True
+        _layout["yaxis2"] = {
             "title": "Free Space [GiB]",
             "overlaying": "y",
             "side": "right",
         }
-        layout["title"]["text"] = "Disk Usage"
+        _layout["title"]["text"] = "Disk Usage"
+        layout_list.append(_layout)
 
-        rendered_js = js_template.render(
-            plotname="disk-space", data=data, layout=layout
-        )
-        with open("librarian.js", "a") as js_file:
-            js_file.write(rendered_js)
-            js_file.write("\n\n")
+        plotname_list.append("disk-space")
+        json_name = basename + "_disk_space"
 
-        layout.pop("yaxis2", None)
+        with open("{}.json".format(json_name), "w") as json_file:
+            json.dump(data, json_file)
+
+        json_name_list.append(json_name)
+
         data = do_bandwidths(session, cutoff)
-        layout["yaxis"]["title"] = "MB/s"
-        layout["title"]["text"] = "Librarian Transfer Rates"
-        rendered_js = js_template.render(
-            plotname="bandwidths", data=data, layout=layout
-        )
-        with open("librarian.js", "a") as js_file:
-            js_file.write(rendered_js)
-            js_file.write("\n\n")
+        _layout = copy.deepcopy(layout)
+        _layout.pop("yaxis2", None)
+        _layout["yaxis"]["title"] = "MB/s"
+        _layout["title"]["text"] = "Librarian Transfer Rates"
+        layout_list.append(_layout)
+
+        plotname_list.append("bandwidths")
+        json_name = basename + "_bandwidths"
+
+        with open("{}.json".format(json_name), "w") as json_file:
+            json.dump(data, json_file)
+
+        json_name_list.append(json_name)
 
         data = do_num_files(session, cutoff)
-        layout["yaxis"]["title"] = "Number"
-        layout["yaxis"]["zeroline"] = False
-        layout["title"]["text"] = "Total Number of Files in Librarian"
-        rendered_js = js_template.render(plotname="num-files", data=data, layout=layout)
-        with open("librarian.js", "a") as js_file:
-            js_file.write(rendered_js)
-            js_file.write("\n\n")
+        _layout = copy.deepcopy(layout)
+        _layout["yaxis"]["title"] = "Number"
+        _layout["yaxis"]["zeroline"] = False
+        _layout["title"]["text"] = "Total Number of Files in Librarian"
+        layout_list.append(_layout)
+
+        plotname_list.append("num-files")
+        json_name = basename + "_num_files"
+
+        with open("{}.json".format(json_name), "w") as json_file:
+            json.dump(data, json_file)
+
+        json_name_list.append(json_name)
 
         data = do_ping_times(session, cutoff)
-        layout["yaxis"]["title"] = "ms"
-        layout["yaxis"]["rangemode"] = "tozero"
-        layout["yaxis"]["zeroline"] = True
-        layout["title"]["text"] = "Server Ping Times"
-        rendered_js = js_template.render(
-            plotname="ping-times", data=data, layout=layout
-        )
-        with open("librarian.js", "a") as js_file:
-            js_file.write(rendered_js)
-            js_file.write("\n\n")
+        _layout = copy.deepcopy(layout)
+        _layout["yaxis"]["title"] = "ms"
+        _layout["yaxis"]["rangemode"] = "tozero"
+        _layout["yaxis"]["zeroline"] = True
+        _layout["title"]["text"] = "Server Ping Times"
+        layout_list.append(_layout)
+
+        plotname_list.append("ping-times")
+        json_name = basename + "_ping_times"
+
+        with open("{}.json".format(json_name), "w") as json_file:
+            json.dump(data, json_file)
+
+        json_name_list.append(json_name)
 
         data = do_compare_file_types(TIME_WINDOW)
         if data is not None:
-            layout["yaxis"]["title"] = "Files in <br><b>temporary staging</b>"
-            layout["yaxis"]["zeroline"] = True
-            layout["margin"]["l"] = 60
-            layout["title"]["text"] = "Files in <b>Temporary Staging</b>"
-            rendered_js = js_template.render(
-                plotname="file-compare", data=data, layout=layout
-            )
-            with open("librarian.js", "a") as js_file:
-                js_file.write(rendered_js)
-                js_file.write("\n\n")
+            _layout = copy.deepcopy(layout)
+            _layout["yaxis"]["title"] = "Files in <br><b>temporary staging</b>"
+            _layout["yaxis"]["zeroline"] = True
+            _layout["margin"]["l"] = 60
+            _layout["title"]["text"] = "Files in <b>Temporary Staging</b>"
+            layout_list.append(_layout)
+
+            plotname_list.append("file-compare")
+            json_name = basename + "_file_compare"
+
+            with open("{}.json".format(json_name), "w") as json_file:
+                json.dump(data, json_file)
+
+            json_name_list.append(json_name)
 
         tables = []
         tables.append(do_raid_errors(session, cutoff))
@@ -577,14 +631,21 @@ def main():
             colsize=colsize,
             gen_date=now.iso,
             gen_time_unix_ms=now.unix * 1000,
-            js_name="librarian",
+            js_name=basename,
             hostname=computer_hostname,
             scriptname=os.path.basename(__file__),
             tables=tables,
             caption=caption,
         )
 
-        with open("librarian.html", "w") as h_file:
+        rendered_js = js_template.render(
+            json_name=json_name_list, plotname=plotname_list, layout=layout_list
+        )
+
+        with open("{}.js".format(basename), "w") as js_file:
+            js_file.write(rendered_js)
+
+        with open("{}.html".format(basename), "w") as h_file:
             h_file.write(rendered_html)
 
 
