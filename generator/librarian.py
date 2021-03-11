@@ -72,7 +72,7 @@ UI_HOSTNAMES = {
     "bigmem2.rtp.pvt": "bigmem2",
 }
 
-REMOTES = ["aoc-uploads", "shredder"]
+REMOTES = ["aoc-uploads"] #, "shredder"]
 
 
 def is_list(value):
